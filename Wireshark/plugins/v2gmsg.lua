@@ -236,6 +236,23 @@ local function get_value_of_phyvaltype(msg_element)
     return nil, nil
 end
 
+local function get_value_of_phasetype(msg_element)
+    --- extracts RationalNumberType from PhaseType (AnyPhase or ThreePhase L1)
+    --- returns value [double], nil, nil or value [double], value [double], value [double] or nil, nil, nil
+    if #msg_element.children == 1 and msg_element.children[1].name == "AnyPhase" then
+        return (get_value_of_phyvaltype(msg_element.children[1])), nil, nil
+    elseif #msg_element.children == 3
+        and msg_element.children[1].name == "PhaseL1"
+        and msg_element.children[2].name == "PhaseL2"
+        and msg_element.children[3].name == "PhaseL3"
+    then
+        return (get_value_of_phyvaltype(msg_element.children[1])),
+               (get_value_of_phyvaltype(msg_element.children[2])),
+               (get_value_of_phyvaltype(msg_element.children[3]))
+    end
+    return nil, nil, nil
+end
+
 local function add_xml_table_to_tree(xml_table, tree_out, dissector_field, pinfo)
     local new_element
     if xml_table == nil then
@@ -259,7 +276,18 @@ local function add_xml_table_to_tree(xml_table, tree_out, dissector_field, pinfo
 
     -- physical value type (15118-2/DIN)
     local calc_value, unit = get_value_of_phyvaltype(xml_table)
-    if calc_value ~= nil then
+    if calc_value == nil then
+        -- try to extract RationalNumberType from PhaseType (ISO 15118-20)
+        local calc_value_2, calc_value_3
+        calc_value, calc_value_2, calc_value_3 = get_value_of_phasetype(xml_table)
+        if calc_value ~= nil then
+            new_element:append_text(": " .. tostring(calc_value):gsub(",", "."))
+            if calc_value_2 ~= nil and calc_value_3 ~= nil then
+                new_element:append_text(" / " .. tostring(calc_value_2):gsub(",", "."))
+                new_element:append_text(" / " .. tostring(calc_value_3):gsub(",", "."))
+            end
+        end
+    else
         if unit ~= nil then
             if calc_value > 1000 and (unit == "W" or unit == "Wh") then
                 unit = "k" .. unit
@@ -306,8 +334,8 @@ local function add_xml_table_to_tree(xml_table, tree_out, dissector_field, pinfo
         if name == xml_table.name then
             if calc_value ~= nil then
                 tree_out:add(field, calc_value).hidden = true
-            else
-                tree_out:add(field, xml_table.value).hidden = true
+            elseif tonumber(xml_table.value) ~= nil then
+                tree_out:add(field, tonumber(xml_table.value)).hidden = true
             end
             break
         end
