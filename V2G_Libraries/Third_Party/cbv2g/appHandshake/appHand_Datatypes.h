@@ -32,8 +32,8 @@ extern "C" {
 
 
 
-#define appHand_ProtocolNamespace_CHARACTER_SIZE (100)
 #define appHand_AppProtocolType_5_ARRAY_SIZE (5)
+#define appHand_ProtocolNamespace_CHARACTER_SIZE (100)
 
 
 // enum for function numbers
@@ -42,22 +42,15 @@ typedef enum {
     appHand_supportedAppProtocolRes = 1
 } appHand_generatedFunctionNumbersType;
 
-// Element: definition=enum; name=ResponseCode; type={urn:iso:15118:2:2010:AppProtocol}responseCodeType; base type=string; content type=simple;
+// Element: definition=enum; name={urn:iso:15118:2:2010:AppProtocol}ResponseCode; type={urn:iso:15118:2:2010:AppProtocol}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
     appHand_responseCodeType_OK_SuccessfulNegotiation = 0,
     appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation = 1,
     appHand_responseCodeType_Failed_NoNegotiation = 2
 } appHand_responseCodeType;
-static inline const char* get_enum_val_appHand_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK_SuccessfulNegotiation"; }
-    if (i == 1) { return "OK_SuccessfulNegotiationWithMinorDeviation"; }
-    if (i == 2) { return "Failed_NoNegotiation"; }
-    return "ENUM DECODING ERROR";
-}
 
-// Element: definition=complex; name=AppProtocol; type={urn:iso:15118:2:2010:AppProtocol}AppProtocolType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:15118:2:2010:AppProtocol}AppProtocol; type={urn:iso:15118:2:2010:AppProtocol}AppProtocolType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: ProtocolNamespace, protocolNamespaceType (1, 1); VersionNumberMajor, unsignedInt (1, 1); VersionNumberMinor, unsignedInt (1, 1); SchemaID, idType (1, 1); Priority, priorityType (1, 1);
 struct appHand_AppProtocolType {
@@ -113,10 +106,10 @@ struct appHand_exiDocument {
 };
 
 // init for structs
+void init_appHand_AppProtocolType(struct appHand_AppProtocolType* AppProtocolType);
 void init_appHand_exiDocument(struct appHand_exiDocument* exiDoc);
 void init_appHand_supportedAppProtocolReq(struct appHand_supportedAppProtocolReq* supportedAppProtocolReq);
 void init_appHand_supportedAppProtocolRes(struct appHand_supportedAppProtocolRes* supportedAppProtocolRes);
-void init_appHand_AppProtocolType(struct appHand_AppProtocolType* AppProtocolType);
 
 
 #ifdef __cplusplus

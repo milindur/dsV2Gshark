@@ -39,7 +39,7 @@ extern "C" {
 #define ASCII_EXTRA_CHAR 1
 #define ASCII_CHAR_TERMINATOR '\0'
 
-#define EXI_STRING_MAX_LEN 256
+#define EXI_STRING_MAX_LEN 64
 #define EXI_BYTE_ARRAY_MAX_LEN 350
 
 // To support EXI integer 8/7 coding, this needs to be 8/7 of the desired

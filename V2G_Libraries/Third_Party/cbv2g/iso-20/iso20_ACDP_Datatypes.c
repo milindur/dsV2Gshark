@@ -24,45 +24,41 @@
 
 // root elements of EXI doc
 void init_iso20_acdp_exiDocument(struct iso20_acdp_exiDocument* exiDoc) {
-    exiDoc->ACDP_VehiclePositioningReq_isUsed = 0u;
-    exiDoc->ACDP_VehiclePositioningRes_isUsed = 0u;
     exiDoc->ACDP_ConnectReq_isUsed = 0u;
     exiDoc->ACDP_ConnectRes_isUsed = 0u;
     exiDoc->ACDP_DisconnectReq_isUsed = 0u;
     exiDoc->ACDP_DisconnectRes_isUsed = 0u;
     exiDoc->ACDP_SystemStatusReq_isUsed = 0u;
     exiDoc->ACDP_SystemStatusRes_isUsed = 0u;
+    exiDoc->ACDP_VehiclePositioningReq_isUsed = 0u;
+    exiDoc->ACDP_VehiclePositioningRes_isUsed = 0u;
     exiDoc->CLReqControlMode_isUsed = 0u;
     exiDoc->CLResControlMode_isUsed = 0u;
-    exiDoc->Signature_isUsed = 0u;
-    exiDoc->SignatureValue_isUsed = 0u;
-    exiDoc->SignedInfo_isUsed = 0u;
     exiDoc->CanonicalizationMethod_isUsed = 0u;
-    exiDoc->SignatureMethod_isUsed = 0u;
-    exiDoc->Reference_isUsed = 0u;
-    exiDoc->Transforms_isUsed = 0u;
-    exiDoc->Transform_isUsed = 0u;
+    exiDoc->DSAKeyValue_isUsed = 0u;
     exiDoc->DigestMethod_isUsed = 0u;
     exiDoc->KeyInfo_isUsed = 0u;
     exiDoc->KeyValue_isUsed = 0u;
-    exiDoc->RetrievalMethod_isUsed = 0u;
-    exiDoc->X509Data_isUsed = 0u;
-    exiDoc->PGPData_isUsed = 0u;
-    exiDoc->SPKIData_isUsed = 0u;
-    exiDoc->Object_isUsed = 0u;
     exiDoc->Manifest_isUsed = 0u;
+    exiDoc->Object_isUsed = 0u;
+    exiDoc->PGPData_isUsed = 0u;
+    exiDoc->RSAKeyValue_isUsed = 0u;
+    exiDoc->Reference_isUsed = 0u;
+    exiDoc->RetrievalMethod_isUsed = 0u;
+    exiDoc->SPKIData_isUsed = 0u;
+    exiDoc->Signature_isUsed = 0u;
+    exiDoc->SignatureMethod_isUsed = 0u;
     exiDoc->SignatureProperties_isUsed = 0u;
     exiDoc->SignatureProperty_isUsed = 0u;
-    exiDoc->DSAKeyValue_isUsed = 0u;
-    exiDoc->RSAKeyValue_isUsed = 0u;
+    exiDoc->SignatureValue_isUsed = 0u;
+    exiDoc->SignedInfo_isUsed = 0u;
+    exiDoc->Transform_isUsed = 0u;
+    exiDoc->Transforms_isUsed = 0u;
+    exiDoc->X509Data_isUsed = 0u;
 }
 void init_iso20_acdp_TransformType(struct iso20_acdp_TransformType* TransformType) {
     TransformType->ANY_isUsed = 0u;
     TransformType->XPath_isUsed = 0u;
-}
-
-void init_iso20_acdp_TransformsType(struct iso20_acdp_TransformsType* TransformsType) {
-    (void) TransformsType;
 }
 
 void init_iso20_acdp_DSAKeyValueType(struct iso20_acdp_DSAKeyValueType* DSAKeyValueType) {
@@ -74,10 +70,6 @@ void init_iso20_acdp_DSAKeyValueType(struct iso20_acdp_DSAKeyValueType* DSAKeyVa
     DSAKeyValueType->PgenCounter_isUsed = 0u;
 }
 
-void init_iso20_acdp_X509IssuerSerialType(struct iso20_acdp_X509IssuerSerialType* X509IssuerSerialType) {
-    (void) X509IssuerSerialType;
-}
-
 void init_iso20_acdp_DigestMethodType(struct iso20_acdp_DigestMethodType* DigestMethodType) {
     DigestMethodType->ANY_isUsed = 0u;
 }
@@ -86,19 +78,27 @@ void init_iso20_acdp_RSAKeyValueType(struct iso20_acdp_RSAKeyValueType* RSAKeyVa
     (void) RSAKeyValueType;
 }
 
-void init_iso20_acdp_CanonicalizationMethodType(struct iso20_acdp_CanonicalizationMethodType* CanonicalizationMethodType) {
-    CanonicalizationMethodType->ANY_isUsed = 0u;
+void init_iso20_acdp_TransformsType(struct iso20_acdp_TransformsType* TransformsType) {
+    (void) TransformsType;
 }
 
-void init_iso20_acdp_SignatureMethodType(struct iso20_acdp_SignatureMethodType* SignatureMethodType) {
-    SignatureMethodType->HMACOutputLength_isUsed = 0u;
-    SignatureMethodType->ANY_isUsed = 0u;
+void init_iso20_acdp_X509IssuerSerialType(struct iso20_acdp_X509IssuerSerialType* X509IssuerSerialType) {
+    (void) X509IssuerSerialType;
+}
+
+void init_iso20_acdp_CanonicalizationMethodType(struct iso20_acdp_CanonicalizationMethodType* CanonicalizationMethodType) {
+    CanonicalizationMethodType->ANY_isUsed = 0u;
 }
 
 void init_iso20_acdp_KeyValueType(struct iso20_acdp_KeyValueType* KeyValueType) {
     KeyValueType->DSAKeyValue_isUsed = 0u;
     KeyValueType->RSAKeyValue_isUsed = 0u;
     KeyValueType->ANY_isUsed = 0u;
+}
+
+void init_iso20_acdp_PGPDataType(struct iso20_acdp_PGPDataType* PGPDataType) {
+    PGPDataType->choice_1_isUsed = 0u;
+    PGPDataType->choice_2_isUsed = 0u;
 }
 
 void init_iso20_acdp_ReferenceType(struct iso20_acdp_ReferenceType* ReferenceType) {
@@ -114,6 +114,15 @@ void init_iso20_acdp_RetrievalMethodType(struct iso20_acdp_RetrievalMethodType* 
     RetrievalMethodType->Transforms_isUsed = 0u;
 }
 
+void init_iso20_acdp_SPKIDataType(struct iso20_acdp_SPKIDataType* SPKIDataType) {
+    SPKIDataType->ANY_isUsed = 0u;
+}
+
+void init_iso20_acdp_SignatureMethodType(struct iso20_acdp_SignatureMethodType* SignatureMethodType) {
+    SignatureMethodType->HMACOutputLength_isUsed = 0u;
+    SignatureMethodType->ANY_isUsed = 0u;
+}
+
 void init_iso20_acdp_X509DataType(struct iso20_acdp_X509DataType* X509DataType) {
     X509DataType->X509IssuerSerial_isUsed = 0u;
     X509DataType->X509SKI_isUsed = 0u;
@@ -121,24 +130,6 @@ void init_iso20_acdp_X509DataType(struct iso20_acdp_X509DataType* X509DataType) 
     X509DataType->X509Certificate_isUsed = 0u;
     X509DataType->X509CRL_isUsed = 0u;
     X509DataType->ANY_isUsed = 0u;
-}
-
-void init_iso20_acdp_PGPDataType(struct iso20_acdp_PGPDataType* PGPDataType) {
-    PGPDataType->choice_1_isUsed = 0u;
-    PGPDataType->choice_2_isUsed = 0u;
-}
-
-void init_iso20_acdp_SPKIDataType(struct iso20_acdp_SPKIDataType* SPKIDataType) {
-    SPKIDataType->ANY_isUsed = 0u;
-}
-
-void init_iso20_acdp_SignedInfoType(struct iso20_acdp_SignedInfoType* SignedInfoType) {
-    SignedInfoType->Reference.arrayLen = 0u;
-    SignedInfoType->Id_isUsed = 0u;
-}
-
-void init_iso20_acdp_SignatureValueType(struct iso20_acdp_SignatureValueType* SignatureValueType) {
-    SignatureValueType->Id_isUsed = 0u;
 }
 
 void init_iso20_acdp_KeyInfoType(struct iso20_acdp_KeyInfoType* KeyInfoType) {
@@ -160,23 +151,23 @@ void init_iso20_acdp_ObjectType(struct iso20_acdp_ObjectType* ObjectType) {
     ObjectType->ANY_isUsed = 0u;
 }
 
-void init_iso20_acdp_SignatureType(struct iso20_acdp_SignatureType* SignatureType) {
-    SignatureType->Id_isUsed = 0u;
-    SignatureType->KeyInfo_isUsed = 0u;
-    SignatureType->Object_isUsed = 0u;
+void init_iso20_acdp_SignatureValueType(struct iso20_acdp_SignatureValueType* SignatureValueType) {
+    SignatureValueType->Id_isUsed = 0u;
+}
+
+void init_iso20_acdp_SignedInfoType(struct iso20_acdp_SignedInfoType* SignedInfoType) {
+    SignedInfoType->Reference.arrayLen = 0u;
+    SignedInfoType->Id_isUsed = 0u;
 }
 
 void init_iso20_acdp_RationalNumberType(struct iso20_acdp_RationalNumberType* RationalNumberType) {
     (void) RationalNumberType;
 }
 
-void init_iso20_acdp_MessageHeaderType(struct iso20_acdp_MessageHeaderType* MessageHeaderType) {
-    MessageHeaderType->Signature_isUsed = 0u;
-}
-
-void init_iso20_acdp_SignaturePropertyType(struct iso20_acdp_SignaturePropertyType* SignaturePropertyType) {
-    SignaturePropertyType->Id_isUsed = 0u;
-    SignaturePropertyType->ANY_isUsed = 0u;
+void init_iso20_acdp_SignatureType(struct iso20_acdp_SignatureType* SignatureType) {
+    SignatureType->Id_isUsed = 0u;
+    SignatureType->KeyInfo_isUsed = 0u;
+    SignatureType->Object_isUsed = 0u;
 }
 
 void init_iso20_acdp_EVTechnicalStatusType(struct iso20_acdp_EVTechnicalStatusType* EVTechnicalStatusType) {
@@ -188,12 +179,13 @@ void init_iso20_acdp_EVTechnicalStatusType(struct iso20_acdp_EVTechnicalStatusTy
     EVTechnicalStatusType->EVTimeout_isUsed = 0u;
 }
 
-void init_iso20_acdp_ACDP_VehiclePositioningReqType(struct iso20_acdp_ACDP_VehiclePositioningReqType* ACDP_VehiclePositioningReqType) {
-    (void) ACDP_VehiclePositioningReqType;
+void init_iso20_acdp_MessageHeaderType(struct iso20_acdp_MessageHeaderType* MessageHeaderType) {
+    MessageHeaderType->Signature_isUsed = 0u;
 }
 
-void init_iso20_acdp_ACDP_VehiclePositioningResType(struct iso20_acdp_ACDP_VehiclePositioningResType* ACDP_VehiclePositioningResType) {
-    (void) ACDP_VehiclePositioningResType;
+void init_iso20_acdp_SignaturePropertyType(struct iso20_acdp_SignaturePropertyType* SignaturePropertyType) {
+    SignaturePropertyType->Id_isUsed = 0u;
+    SignaturePropertyType->ANY_isUsed = 0u;
 }
 
 void init_iso20_acdp_ACDP_ConnectReqType(struct iso20_acdp_ACDP_ConnectReqType* ACDP_ConnectReqType) {
@@ -210,6 +202,14 @@ void init_iso20_acdp_ACDP_SystemStatusReqType(struct iso20_acdp_ACDP_SystemStatu
 
 void init_iso20_acdp_ACDP_SystemStatusResType(struct iso20_acdp_ACDP_SystemStatusResType* ACDP_SystemStatusResType) {
     (void) ACDP_SystemStatusResType;
+}
+
+void init_iso20_acdp_ACDP_VehiclePositioningReqType(struct iso20_acdp_ACDP_VehiclePositioningReqType* ACDP_VehiclePositioningReqType) {
+    (void) ACDP_VehiclePositioningReqType;
+}
+
+void init_iso20_acdp_ACDP_VehiclePositioningResType(struct iso20_acdp_ACDP_VehiclePositioningResType* ACDP_VehiclePositioningResType) {
+    (void) ACDP_VehiclePositioningResType;
 }
 
 void init_iso20_acdp_CLReqControlModeType(struct iso20_acdp_CLReqControlModeType* CLReqControlModeType) {

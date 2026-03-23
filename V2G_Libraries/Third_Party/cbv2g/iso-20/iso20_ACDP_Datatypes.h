@@ -34,24 +34,24 @@ extern "C" {
 
 
 #define iso20_acdp_Algorithm_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_anyType_BYTES_SIZE (4)
-#define iso20_acdp_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_acdp_CryptoBinary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_acdp_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_Id_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_Type_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_URI_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_acdp_DigestValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_acdp_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_acdp_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_ReferenceType_4_ARRAY_SIZE (4)
-#define iso20_acdp_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define iso20_acdp_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_Id_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_acdp_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_acdp_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_acdp_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_acdp_sessionIDType_BYTES_SIZE (8)
+#define iso20_acdp_ReferenceType_4_ARRAY_SIZE (4)
+#define iso20_acdp_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
 #define iso20_acdp_Target_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_Type_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_URI_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_acdp_anyType_BYTES_SIZE (4)
+#define iso20_acdp_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define iso20_acdp_sessionIDType_BYTES_SIZE (8)
 
 
 // enum for function numbers
@@ -101,15 +101,6 @@ typedef enum {
     iso20_acdp_cpStatusType_StateD = 3,
     iso20_acdp_cpStatusType_StateE = 4
 } iso20_acdp_cpStatusType;
-static inline const char* get_enum_val_iso20_acdp_cpStatusType_reverse(int i)
-{
-    if (i == 0) { return "StateA"; }
-    if (i == 1) { return "StateB"; }
-    if (i == 2) { return "StateC"; }
-    if (i == 3) { return "StateD"; }
-    if (i == 4) { return "StateE"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVErrorCode; type={urn:iso:std:iso:15118:-20:ACDP}errorCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -125,20 +116,40 @@ typedef enum {
     iso20_acdp_errorCodeType_FAILED_Reserved1 = 8,
     iso20_acdp_errorCodeType_FAILED_Reserved2 = 9
 } iso20_acdp_errorCodeType;
-static inline const char* get_enum_val_iso20_acdp_errorCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK_NoEVError"; }
-    if (i == 1) { return "FAILED"; }
-    if (i == 2) { return "FAILED_EmergencyEvent"; }
-    if (i == 3) { return "FAILED_Breaker"; }
-    if (i == 4) { return "FAILED_RESSTemperatureInhibit"; }
-    if (i == 5) { return "FAILED_RESS"; }
-    if (i == 6) { return "FAILED_ChargingCurrentDifferential"; }
-    if (i == 7) { return "FAILED_ChargingVoltageOutOfRange"; }
-    if (i == 8) { return "FAILED_Reserved1"; }
-    if (i == 9) { return "FAILED_Reserved2"; }
-    return "ENUM DECODING ERROR";
-}
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVElectricalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}electricalChargingDeviceStatusType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_acdp_electricalChargingDeviceStatusType_State_A = 0,
+    iso20_acdp_electricalChargingDeviceStatusType_State_B = 1,
+    iso20_acdp_electricalChargingDeviceStatusType_State_C = 2,
+    iso20_acdp_electricalChargingDeviceStatusType_State_D = 3
+} iso20_acdp_electricalChargingDeviceStatusType;
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEIsolationStatus; type={urn:iso:std:iso:15118:-20:ACDP}isolationStatusType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_acdp_isolationStatusType_Invalid = 0,
+    iso20_acdp_isolationStatusType_Safe = 1,
+    iso20_acdp_isolationStatusType_Warning = 2,
+    iso20_acdp_isolationStatusType_Fault = 3
+} iso20_acdp_isolationStatusType;
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEMechanicalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}mechanicalChargingDeviceStatusType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_acdp_mechanicalChargingDeviceStatusType_Home = 0,
+    iso20_acdp_mechanicalChargingDeviceStatusType_Moving = 1,
+    iso20_acdp_mechanicalChargingDeviceStatusType_EndPosition = 2
+} iso20_acdp_mechanicalChargingDeviceStatusType;
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_acdp_processingType_Finished = 0,
+    iso20_acdp_processingType_Ongoing = 1,
+    iso20_acdp_processingType_Ongoing_WaitingForCustomerInteraction = 2
+} iso20_acdp_processingType;
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -184,114 +195,6 @@ typedef enum {
     iso20_acdp_responseCodeType_FAILED_UnknownSession = 38,
     iso20_acdp_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_acdp_responseCodeType;
-static inline const char* get_enum_val_iso20_acdp_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVElectricalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}electricalChargingDeviceStatusType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_acdp_electricalChargingDeviceStatusType_State_A = 0,
-    iso20_acdp_electricalChargingDeviceStatusType_State_B = 1,
-    iso20_acdp_electricalChargingDeviceStatusType_State_C = 2,
-    iso20_acdp_electricalChargingDeviceStatusType_State_D = 3
-} iso20_acdp_electricalChargingDeviceStatusType;
-static inline const char* get_enum_val_iso20_acdp_electricalChargingDeviceStatusType_reverse(int i)
-{
-    if (i == 0) { return "State_A"; }
-    if (i == 1) { return "State_B"; }
-    if (i == 2) { return "State_C"; }
-    if (i == 3) { return "State_D"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_acdp_processingType_Finished = 0,
-    iso20_acdp_processingType_Ongoing = 1,
-    iso20_acdp_processingType_Ongoing_WaitingForCustomerInteraction = 2
-} iso20_acdp_processingType;
-static inline const char* get_enum_val_iso20_acdp_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEMechanicalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}mechanicalChargingDeviceStatusType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_acdp_mechanicalChargingDeviceStatusType_Home = 0,
-    iso20_acdp_mechanicalChargingDeviceStatusType_Moving = 1,
-    iso20_acdp_mechanicalChargingDeviceStatusType_EndPosition = 2
-} iso20_acdp_mechanicalChargingDeviceStatusType;
-static inline const char* get_enum_val_iso20_acdp_mechanicalChargingDeviceStatusType_reverse(int i)
-{
-    if (i == 0) { return "Home"; }
-    if (i == 1) { return "Moving"; }
-    if (i == 2) { return "EndPosition"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEIsolationStatus; type={urn:iso:std:iso:15118:-20:ACDP}isolationStatusType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_acdp_isolationStatusType_Invalid = 0,
-    iso20_acdp_isolationStatusType_Safe = 1,
-    iso20_acdp_isolationStatusType_Warning = 2,
-    iso20_acdp_isolationStatusType_Fault = 3
-} iso20_acdp_isolationStatusType;
-static inline const char* get_enum_val_iso20_acdp_isolationStatusType_reverse(int i)
-{
-    if (i == 0) { return "Invalid"; }
-    if (i == 1) { return "Safe"; }
-    if (i == 2) { return "Warning"; }
-    if (i == 3) { return "Fault"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;
@@ -315,15 +218,6 @@ struct iso20_acdp_TransformType {
         uint16_t charactersLen;
     } XPath;
     unsigned int XPath_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1) (original max unbounded);
-struct iso20_acdp_TransformsType {
-    // Transform, TransformType
-    struct iso20_acdp_TransformType Transform;
 
 };
 
@@ -382,20 +276,6 @@ struct iso20_acdp_DSAKeyValueType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
-struct iso20_acdp_X509IssuerSerialType {
-    // X509IssuerName, string
-    struct {
-        char characters[iso20_acdp_X509IssuerName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509IssuerName;
-    // X509SerialNumber, integer (base: decimal)
-    exi_signed_t X509SerialNumber;
-
-};
-
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DigestMethod; type={http://www.w3.org/2000/09/xmldsig#}DigestMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -434,6 +314,29 @@ struct iso20_acdp_RSAKeyValueType {
 
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
+struct iso20_acdp_TransformsType {
+    // Transform, TransformType
+    struct iso20_acdp_TransformType Transform;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
+struct iso20_acdp_X509IssuerSerialType {
+    // X509IssuerName, string
+    struct {
+        char characters[iso20_acdp_X509IssuerName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509IssuerName;
+    // X509SerialNumber, integer (base: decimal)
+    exi_signed_t X509SerialNumber;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod; type={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -443,28 +346,6 @@ struct iso20_acdp_CanonicalizationMethodType {
         char characters[iso20_acdp_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
     } Algorithm;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
-//          abstract=False; final=False;
-// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
-struct iso20_acdp_SignatureMethodType {
-    // Attribute: Algorithm, anyURI
-    struct {
-        char characters[iso20_acdp_Algorithm_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Algorithm;
-    // HMACOutputLength, HMACOutputLengthType (base: integer)
-    exi_signed_t HMACOutputLength;
-    unsigned int HMACOutputLength_isUsed:1;
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
@@ -485,108 +366,6 @@ struct iso20_acdp_KeyValueType {
     // RSAKeyValue, RSAKeyValueType
     struct iso20_acdp_RSAKeyValueType RSAKeyValue;
     unsigned int RSAKeyValue_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
-struct iso20_acdp_ReferenceType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[iso20_acdp_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_acdp_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_acdp_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_acdp_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-    // DigestMethod, DigestMethodType
-    struct iso20_acdp_DigestMethodType DigestMethod;
-    // DigestValue, DigestValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_acdp_DigestValueType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DigestValue;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
-struct iso20_acdp_RetrievalMethodType {
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_acdp_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_acdp_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_acdp_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
-struct iso20_acdp_X509DataType {
-    // X509IssuerSerial, X509IssuerSerialType
-    struct iso20_acdp_X509IssuerSerialType X509IssuerSerial;
-    unsigned int X509IssuerSerial_isUsed:1;
-    // X509SKI, base64Binary
-    struct {
-        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509SKI;
-    unsigned int X509SKI_isUsed:1;
-
-    // X509SubjectName, string
-    struct {
-        char characters[iso20_acdp_X509SubjectName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509SubjectName;
-    unsigned int X509SubjectName_isUsed:1;
-    // X509Certificate, base64Binary
-    struct {
-        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509Certificate;
-    unsigned int X509Certificate_isUsed:1;
-
-    // X509CRL, base64Binary
-    struct {
-        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509CRL;
-    unsigned int X509CRL_isUsed:1;
-
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
@@ -651,6 +430,64 @@ struct iso20_acdp_PGPDataType {
     };
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
+struct iso20_acdp_ReferenceType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_acdp_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_acdp_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_acdp_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_acdp_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+    // DigestMethod, DigestMethodType
+    struct iso20_acdp_DigestMethodType DigestMethod;
+    // DigestValue, DigestValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_acdp_DigestValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DigestValue;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
+struct iso20_acdp_RetrievalMethodType {
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_acdp_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_acdp_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_acdp_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SPKIData; type={http://www.w3.org/2000/09/xmldsig#}SPKIDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
@@ -671,42 +508,68 @@ struct iso20_acdp_SPKIDataType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
-struct iso20_acdp_SignedInfoType {
-    // Attribute: Id, ID (base: NCName)
+// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
+struct iso20_acdp_SignatureMethodType {
+    // Attribute: Algorithm, anyURI
     struct {
-        char characters[iso20_acdp_Id_CHARACTER_SIZE];
+        char characters[iso20_acdp_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CanonicalizationMethod, CanonicalizationMethodType
-    struct iso20_acdp_CanonicalizationMethodType CanonicalizationMethod;
-    // SignatureMethod, SignatureMethodType
-    struct iso20_acdp_SignatureMethodType SignatureMethod;
-    // Reference, ReferenceType
+    } Algorithm;
+    // HMACOutputLength, HMACOutputLengthType (base: integer)
+    exi_signed_t HMACOutputLength;
+    unsigned int HMACOutputLength_isUsed:1;
+    // ANY, anyType (base: base64Binary)
     struct {
-        struct iso20_acdp_ReferenceType array[iso20_acdp_ReferenceType_4_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } Reference;
+        uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
+
+
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
-struct iso20_acdp_SignatureValueType {
-    // Attribute: Id, ID (base: NCName)
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
+struct iso20_acdp_X509DataType {
+    // X509IssuerSerial, X509IssuerSerialType
+    struct iso20_acdp_X509IssuerSerialType X509IssuerSerial;
+    unsigned int X509IssuerSerial_isUsed:1;
+    // X509SKI, base64Binary
     struct {
-        char characters[iso20_acdp_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CONTENT, SignatureValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_acdp_SignatureValueType_BYTES_SIZE];
+        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
         uint16_t bytesLen;
-    } CONTENT;
+    } X509SKI;
+    unsigned int X509SKI_isUsed:1;
+
+    // X509SubjectName, string
+    struct {
+        char characters[iso20_acdp_X509SubjectName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509SubjectName;
+    unsigned int X509SubjectName_isUsed:1;
+    // X509Certificate, base64Binary
+    struct {
+        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509Certificate;
+    unsigned int X509Certificate_isUsed:1;
+
+    // X509CRL, base64Binary
+    struct {
+        uint8_t bytes[iso20_acdp_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509CRL;
+    unsigned int X509CRL_isUsed:1;
+
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_acdp_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
 
 };
@@ -790,6 +653,57 @@ struct iso20_acdp_ObjectType {
 
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
+struct iso20_acdp_SignatureValueType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_acdp_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CONTENT, SignatureValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_acdp_SignatureValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } CONTENT;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
+struct iso20_acdp_SignedInfoType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_acdp_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CanonicalizationMethod, CanonicalizationMethodType
+    struct iso20_acdp_CanonicalizationMethodType CanonicalizationMethod;
+    // SignatureMethod, SignatureMethodType
+    struct iso20_acdp_SignatureMethodType SignatureMethod;
+    // Reference, ReferenceType
+    struct {
+        struct iso20_acdp_ReferenceType array[iso20_acdp_ReferenceType_4_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } Reference;
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}EVWLANStrength; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Exponent, byte (1, 1); Value, short (1, 1);
+struct iso20_acdp_RationalNumberType {
+    // Exponent, byte (base: short)
+    int8_t Exponent;
+    // Value, short (base: int)
+    int16_t Value;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
@@ -813,14 +727,32 @@ struct iso20_acdp_SignatureType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}EVWLANStrength; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}EVTechnicalStatus; type={urn:iso:std:iso:15118:-20:ACDP}EVTechnicalStatusType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Exponent, byte (1, 1); Value, short (1, 1);
-struct iso20_acdp_RationalNumberType {
-    // Exponent, byte (base: short)
-    int8_t Exponent;
-    // Value, short (base: int)
-    int16_t Value;
+// Particle: EVReadyToCharge, boolean (1, 1); EVImmobilizationRequest, boolean (1, 1); EVImmobilized, boolean (0, 1); EVWLANStrength, RationalNumberType (0, 1); EVCPStatus, cpStatusType (0, 1); EVSOC, percentValueType (0, 1); EVErrorCode, errorCodeType (0, 1); EVTimeout, boolean (0, 1);
+struct iso20_acdp_EVTechnicalStatusType {
+    // EVReadyToCharge, boolean
+    int EVReadyToCharge;
+    // EVImmobilizationRequest, boolean
+    int EVImmobilizationRequest;
+    // EVImmobilized, boolean
+    int EVImmobilized;
+    unsigned int EVImmobilized_isUsed:1;
+    // EVWLANStrength, RationalNumberType
+    struct iso20_acdp_RationalNumberType EVWLANStrength;
+    unsigned int EVWLANStrength_isUsed:1;
+    // EVCPStatus, cpStatusType (base: string)
+    iso20_acdp_cpStatusType EVCPStatus;
+    unsigned int EVCPStatus_isUsed:1;
+    // EVSOC, percentValueType (base: byte)
+    int8_t EVSOC;
+    unsigned int EVSOC_isUsed:1;
+    // EVErrorCode, errorCodeType (base: string)
+    iso20_acdp_errorCodeType EVErrorCode;
+    unsigned int EVErrorCode_isUsed:1;
+    // EVTimeout, boolean
+    int EVTimeout;
+    unsigned int EVTimeout_isUsed:1;
 
 };
 
@@ -864,73 +796,6 @@ struct iso20_acdp_SignaturePropertyType {
     } ANY;
     unsigned int ANY_isUsed:1;
 
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}EVTechnicalStatus; type={urn:iso:std:iso:15118:-20:ACDP}EVTechnicalStatusType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: EVReadyToCharge, boolean (1, 1); EVImmobilizationRequest, boolean (1, 1); EVImmobilized, boolean (0, 1); EVWLANStrength, RationalNumberType (0, 1); EVCPStatus, cpStatusType (0, 1); EVSOC, percentValueType (0, 1); EVErrorCode, errorCodeType (0, 1); EVTimeout, boolean (0, 1);
-struct iso20_acdp_EVTechnicalStatusType {
-    // EVReadyToCharge, boolean
-    int EVReadyToCharge;
-    // EVImmobilizationRequest, boolean
-    int EVImmobilizationRequest;
-    // EVImmobilized, boolean
-    int EVImmobilized;
-    unsigned int EVImmobilized_isUsed:1;
-    // EVWLANStrength, RationalNumberType
-    struct iso20_acdp_RationalNumberType EVWLANStrength;
-    unsigned int EVWLANStrength_isUsed:1;
-    // EVCPStatus, cpStatusType (base: string)
-    iso20_acdp_cpStatusType EVCPStatus;
-    unsigned int EVCPStatus_isUsed:1;
-    // EVSOC, percentValueType (base: byte)
-    int8_t EVSOC;
-    unsigned int EVSOC_isUsed:1;
-    // EVErrorCode, errorCodeType (base: string)
-    iso20_acdp_errorCodeType EVErrorCode;
-    unsigned int EVErrorCode_isUsed:1;
-    // EVTimeout, boolean
-    int EVTimeout;
-    unsigned int EVTimeout_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningReq; type={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVMobilityStatus, boolean (1, 1); EVPositioningSupport, boolean (1, 1);
-struct iso20_acdp_ACDP_VehiclePositioningReqType {
-    // Header, MessageHeaderType
-    struct iso20_acdp_MessageHeaderType Header;
-    // EVMobilityStatus, boolean
-    int EVMobilityStatus;
-    // EVPositioningSupport, boolean
-    int EVPositioningSupport;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningRes; type={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); EVSEPositioningSupport, boolean (1, 1); EVRelativeXDeviation, short (1, 1); EVRelativeYDeviation, short (1, 1); ContactWindowXc, short (1, 1); ContactWindowYc, short (1, 1); EVInChargePosition, boolean (1, 1);
-struct iso20_acdp_ACDP_VehiclePositioningResType {
-    // Header, MessageHeaderType
-    struct iso20_acdp_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_acdp_responseCodeType ResponseCode;
-    // EVSEProcessing, processingType (base: string)
-    iso20_acdp_processingType EVSEProcessing;
-    // EVSEPositioningSupport, boolean
-    int EVSEPositioningSupport;
-    // EVRelativeXDeviation, short (base: int)
-    int16_t EVRelativeXDeviation;
-    // EVRelativeYDeviation, short (base: int)
-    int16_t EVRelativeYDeviation;
-    // ContactWindowXc, short (base: int)
-    int16_t ContactWindowXc;
-    // ContactWindowYc, short (base: int)
-    int16_t ContactWindowYc;
-    // EVInChargePosition, boolean
-    int EVInChargePosition;
 
 };
 
@@ -999,6 +864,44 @@ struct iso20_acdp_ACDP_SystemStatusResType {
     int EVInChargePosition;
     // EVAssociationStatus, boolean
     int EVAssociationStatus;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningReq; type={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVMobilityStatus, boolean (1, 1); EVPositioningSupport, boolean (1, 1);
+struct iso20_acdp_ACDP_VehiclePositioningReqType {
+    // Header, MessageHeaderType
+    struct iso20_acdp_MessageHeaderType Header;
+    // EVMobilityStatus, boolean
+    int EVMobilityStatus;
+    // EVPositioningSupport, boolean
+    int EVPositioningSupport;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningRes; type={urn:iso:std:iso:15118:-20:ACDP}ACDP_VehiclePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); EVSEPositioningSupport, boolean (1, 1); EVRelativeXDeviation, short (1, 1); EVRelativeYDeviation, short (1, 1); ContactWindowXc, short (1, 1); ContactWindowYc, short (1, 1); EVInChargePosition, boolean (1, 1);
+struct iso20_acdp_ACDP_VehiclePositioningResType {
+    // Header, MessageHeaderType
+    struct iso20_acdp_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_acdp_responseCodeType ResponseCode;
+    // EVSEProcessing, processingType (base: string)
+    iso20_acdp_processingType EVSEProcessing;
+    // EVSEPositioningSupport, boolean
+    int EVSEPositioningSupport;
+    // EVRelativeXDeviation, short (base: int)
+    int16_t EVRelativeXDeviation;
+    // EVRelativeYDeviation, short (base: int)
+    int16_t EVRelativeYDeviation;
+    // ContactWindowXc, short (base: int)
+    int16_t ContactWindowXc;
+    // ContactWindowYc, short (base: int)
+    int16_t ContactWindowYc;
+    // EVInChargePosition, boolean
+    int EVInChargePosition;
 
 };
 
@@ -1119,40 +1022,40 @@ struct iso20_acdp_exiDocument {
 };
 
 // init for structs
-void init_iso20_acdp_exiDocument(struct iso20_acdp_exiDocument* exiDoc);
-void init_iso20_acdp_ACDP_VehiclePositioningReqType(struct iso20_acdp_ACDP_VehiclePositioningReqType* ACDP_VehiclePositioningReq);
-void init_iso20_acdp_ACDP_VehiclePositioningResType(struct iso20_acdp_ACDP_VehiclePositioningResType* ACDP_VehiclePositioningRes);
 void init_iso20_acdp_ACDP_ConnectReqType(struct iso20_acdp_ACDP_ConnectReqType* ACDP_DisconnectReq);
 void init_iso20_acdp_ACDP_ConnectResType(struct iso20_acdp_ACDP_ConnectResType* ACDP_DisconnectRes);
 void init_iso20_acdp_ACDP_SystemStatusReqType(struct iso20_acdp_ACDP_SystemStatusReqType* ACDP_SystemStatusReq);
 void init_iso20_acdp_ACDP_SystemStatusResType(struct iso20_acdp_ACDP_SystemStatusResType* ACDP_SystemStatusRes);
+void init_iso20_acdp_ACDP_VehiclePositioningReqType(struct iso20_acdp_ACDP_VehiclePositioningReqType* ACDP_VehiclePositioningReq);
+void init_iso20_acdp_ACDP_VehiclePositioningResType(struct iso20_acdp_ACDP_VehiclePositioningResType* ACDP_VehiclePositioningRes);
 void init_iso20_acdp_CLReqControlModeType(struct iso20_acdp_CLReqControlModeType* CLReqControlMode);
 void init_iso20_acdp_CLResControlModeType(struct iso20_acdp_CLResControlModeType* CLResControlMode);
+void init_iso20_acdp_CanonicalizationMethodType(struct iso20_acdp_CanonicalizationMethodType* CanonicalizationMethod);
+void init_iso20_acdp_DSAKeyValueType(struct iso20_acdp_DSAKeyValueType* DSAKeyValue);
+void init_iso20_acdp_DigestMethodType(struct iso20_acdp_DigestMethodType* DigestMethod);
+void init_iso20_acdp_EVTechnicalStatusType(struct iso20_acdp_EVTechnicalStatusType* EVTechnicalStatusType);
+void init_iso20_acdp_KeyInfoType(struct iso20_acdp_KeyInfoType* KeyInfo);
+void init_iso20_acdp_KeyValueType(struct iso20_acdp_KeyValueType* KeyValue);
+void init_iso20_acdp_ManifestType(struct iso20_acdp_ManifestType* Manifest);
+void init_iso20_acdp_MessageHeaderType(struct iso20_acdp_MessageHeaderType* MessageHeaderType);
+void init_iso20_acdp_ObjectType(struct iso20_acdp_ObjectType* Object);
+void init_iso20_acdp_PGPDataType(struct iso20_acdp_PGPDataType* PGPData);
+void init_iso20_acdp_RSAKeyValueType(struct iso20_acdp_RSAKeyValueType* RSAKeyValue);
+void init_iso20_acdp_RationalNumberType(struct iso20_acdp_RationalNumberType* RationalNumberType);
+void init_iso20_acdp_ReferenceType(struct iso20_acdp_ReferenceType* Reference);
+void init_iso20_acdp_RetrievalMethodType(struct iso20_acdp_RetrievalMethodType* RetrievalMethod);
+void init_iso20_acdp_SPKIDataType(struct iso20_acdp_SPKIDataType* SPKIData);
+void init_iso20_acdp_SignatureMethodType(struct iso20_acdp_SignatureMethodType* SignatureMethod);
+void init_iso20_acdp_SignaturePropertiesType(struct iso20_acdp_SignaturePropertiesType* SignatureProperties);
+void init_iso20_acdp_SignaturePropertyType(struct iso20_acdp_SignaturePropertyType* SignatureProperty);
 void init_iso20_acdp_SignatureType(struct iso20_acdp_SignatureType* Signature);
 void init_iso20_acdp_SignatureValueType(struct iso20_acdp_SignatureValueType* SignatureValue);
 void init_iso20_acdp_SignedInfoType(struct iso20_acdp_SignedInfoType* SignedInfo);
-void init_iso20_acdp_CanonicalizationMethodType(struct iso20_acdp_CanonicalizationMethodType* CanonicalizationMethod);
-void init_iso20_acdp_SignatureMethodType(struct iso20_acdp_SignatureMethodType* SignatureMethod);
-void init_iso20_acdp_ReferenceType(struct iso20_acdp_ReferenceType* Reference);
-void init_iso20_acdp_TransformsType(struct iso20_acdp_TransformsType* Transforms);
 void init_iso20_acdp_TransformType(struct iso20_acdp_TransformType* Transform);
-void init_iso20_acdp_DigestMethodType(struct iso20_acdp_DigestMethodType* DigestMethod);
-void init_iso20_acdp_KeyInfoType(struct iso20_acdp_KeyInfoType* KeyInfo);
-void init_iso20_acdp_KeyValueType(struct iso20_acdp_KeyValueType* KeyValue);
-void init_iso20_acdp_RetrievalMethodType(struct iso20_acdp_RetrievalMethodType* RetrievalMethod);
+void init_iso20_acdp_TransformsType(struct iso20_acdp_TransformsType* Transforms);
 void init_iso20_acdp_X509DataType(struct iso20_acdp_X509DataType* X509Data);
-void init_iso20_acdp_PGPDataType(struct iso20_acdp_PGPDataType* PGPData);
-void init_iso20_acdp_SPKIDataType(struct iso20_acdp_SPKIDataType* SPKIData);
-void init_iso20_acdp_ObjectType(struct iso20_acdp_ObjectType* Object);
-void init_iso20_acdp_ManifestType(struct iso20_acdp_ManifestType* Manifest);
-void init_iso20_acdp_SignaturePropertiesType(struct iso20_acdp_SignaturePropertiesType* SignatureProperties);
-void init_iso20_acdp_SignaturePropertyType(struct iso20_acdp_SignaturePropertyType* SignatureProperty);
-void init_iso20_acdp_DSAKeyValueType(struct iso20_acdp_DSAKeyValueType* DSAKeyValue);
-void init_iso20_acdp_RSAKeyValueType(struct iso20_acdp_RSAKeyValueType* RSAKeyValue);
 void init_iso20_acdp_X509IssuerSerialType(struct iso20_acdp_X509IssuerSerialType* X509IssuerSerialType);
-void init_iso20_acdp_RationalNumberType(struct iso20_acdp_RationalNumberType* RationalNumberType);
-void init_iso20_acdp_MessageHeaderType(struct iso20_acdp_MessageHeaderType* MessageHeaderType);
-void init_iso20_acdp_EVTechnicalStatusType(struct iso20_acdp_EVTechnicalStatusType* EVTechnicalStatusType);
+void init_iso20_acdp_exiDocument(struct iso20_acdp_exiDocument* exiDoc);
 
 
 #ifdef __cplusplus

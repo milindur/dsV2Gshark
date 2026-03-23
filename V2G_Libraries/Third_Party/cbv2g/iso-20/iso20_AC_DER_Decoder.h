@@ -14,13 +14,13 @@
  *****************************************************/
 
 /**
-  * @file iso20_DC_Decoder.h
+  * @file iso20_AC_DER_Decoder.h
   * @brief Description goes here
   *
   **/
 
-#ifndef ISO20_DC_DECODER_H
-#define ISO20_DC_DECODER_H
+#ifndef ISO20_AC_DER_DECODER_H
+#define ISO20_AC_DER_DECODER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,19 +28,19 @@ extern "C" {
 
 
 #include "exi_bitstream.h"
-#include "iso20_DC_Datatypes.h"
+#include "iso20_AC_DER_Datatypes.h"
 
 
 // main function for decoding
-int decode_iso20_dc_exiDocument(exi_bitstream_t* stream, struct iso20_dc_exiDocument* exiDoc, char* xmlOut, size_t xmlOut_size);
+int decode_iso20_ac_der_exiDocument(exi_bitstream_t* stream, struct iso20_ac_der_exiDocument* exiDoc, char* xmlOut, size_t xmlOut_size);
 // decoding function for fragment
-int decode_iso20_dc_exiFragment(exi_bitstream_t* stream, struct iso20_dc_exiFragment* exiFrag, char* xmlOut, size_t xmlOut_size);
+int decode_iso20_ac_der_exiFragment(exi_bitstream_t* stream, struct iso20_ac_der_exiFragment* exiFrag, char* xmlOut, size_t xmlOut_size);
 // decoding function for xmldsig fragment
-int decode_iso20_dc_xmldsigFragment(exi_bitstream_t* stream, struct iso20_dc_xmldsigFragment* xmldsigFrag, char* xmlOut, size_t xmlOut_size);
+int decode_iso20_ac_der_xmldsigFragment(exi_bitstream_t* stream, struct iso20_ac_der_xmldsigFragment* xmldsigFrag, char* xmlOut, size_t xmlOut_size);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ISO20_DC_DECODER_H */
+#endif /* ISO20_AC_DER_DECODER_H */
 

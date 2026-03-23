@@ -34,38 +34,38 @@ extern "C" {
 
 
 #define iso20_wpt_Algorithm_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_anyType_BYTES_SIZE (4)
-#define iso20_wpt_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE (8)
+#define iso20_wpt_BSSID_CHARACTER_SIZE (12 + ASCII_EXTRA_CHAR)
 #define iso20_wpt_CryptoBinary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_wpt_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_DetailedTaxType_10_ARRAY_SIZE (10)
+#define iso20_wpt_DigestValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define iso20_wpt_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_IPAddress_CHARACTER_SIZE (39 + ASCII_EXTRA_CHAR)
 #define iso20_wpt_Id_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
+#define iso20_wpt_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_ReferenceType_4_ARRAY_SIZE (4)
+#define iso20_wpt_SSID_CHARACTER_SIZE (255 + ASCII_EXTRA_CHAR)
+#define iso20_wpt_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define iso20_wpt_Target_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_wpt_Type_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_wpt_URI_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_DigestValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_wpt_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_wpt_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_ReferenceType_4_ARRAY_SIZE (4)
-#define iso20_wpt_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_wpt_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE (255)
-#define iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE (255)
-#define iso20_wpt_SSID_CHARACTER_SIZE (255 + ASCII_EXTRA_CHAR)
-#define iso20_wpt_BSSID_CHARACTER_SIZE (12 + ASCII_EXTRA_CHAR)
-#define iso20_wpt_IPAddress_CHARACTER_SIZE (39 + ASCII_EXTRA_CHAR)
-#define iso20_wpt_sessionIDType_BYTES_SIZE (8)
-#define iso20_wpt_Target_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE (8)
-#define iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE (8)
-#define iso20_wpt_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
-#define iso20_wpt_meterSignatureType_BYTES_SIZE (64)
 #define iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE (8)
-#define iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE (8)
-#define iso20_wpt_DetailedTaxType_10_ARRAY_SIZE (10)
 #define iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE (16)
 #define iso20_wpt_WPT_DataContainerType_BYTES_SIZE (256)
+#define iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE (8)
+#define iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE (8)
+#define iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE (255)
+#define iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE (255)
+#define iso20_wpt_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_wpt_anyType_BYTES_SIZE (4)
+#define iso20_wpt_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define iso20_wpt_meterSignatureType_BYTES_SIZE (64)
+#define iso20_wpt_sessionIDType_BYTES_SIZE (8)
 
 
 // enum for function numbers
@@ -110,6 +110,25 @@ typedef enum {
     iso20_wpt_X509Data = 37
 } iso20_wpt_generatedFunctionNumbersType;
 
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSENotification; type={urn:iso:std:iso:15118:-20:CommonTypes}evseNotificationType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_wpt_evseNotificationType_Pause = 0,
+    iso20_wpt_evseNotificationType_ExitStandby = 1,
+    iso20_wpt_evseNotificationType_Terminate = 2,
+    iso20_wpt_evseNotificationType_ScheduleRenegotiation = 3,
+    iso20_wpt_evseNotificationType_ServiceRenegotiation = 4,
+    iso20_wpt_evseNotificationType_MeteringConfirmation = 5
+} iso20_wpt_evseNotificationType;
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethodType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_wpt_WPT_AlignmentCheckMethodType_PowerCheck = 0,
+    iso20_wpt_WPT_AlignmentCheckMethodType_LPE = 1,
+    iso20_wpt_WPT_AlignmentCheckMethodType_Proprietary = 2
+} iso20_wpt_WPT_AlignmentCheckMethodType;
+
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningMethodType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
@@ -119,15 +138,6 @@ typedef enum {
     iso20_wpt_WPT_FinePositioningMethodType_LPE = 3,
     iso20_wpt_WPT_FinePositioningMethodType_Proprietary = 4
 } iso20_wpt_WPT_FinePositioningMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_FinePositioningMethodType_reverse(int i)
-{
-    if (i == 0) { return "Manual"; }
-    if (i == 1) { return "LF_TxEV"; }
-    if (i == 2) { return "LF_TxPrimaryDevice"; }
-    if (i == 3) { return "LPE"; }
-    if (i == 4) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethodType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -139,67 +149,40 @@ typedef enum {
     iso20_wpt_WPT_PairingMethodType_Optical = 4,
     iso20_wpt_WPT_PairingMethodType_Proprietary = 5
 } iso20_wpt_WPT_PairingMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_PairingMethodType_reverse(int i)
-{
-    if (i == 0) { return "External_confirmation"; }
-    if (i == 1) { return "LPE"; }
-    if (i == 2) { return "LF_TxEV"; }
-    if (i == 3) { return "LF_TxPrimaryDevice"; }
-    if (i == 4) { return "Optical"; }
-    if (i == 5) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
 
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethodType; base type=string; content type=simple;
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVPCChargeDiagnostics; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVPCChargeDiagnosticsType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
-    iso20_wpt_WPT_AlignmentCheckMethodType_PowerCheck = 0,
-    iso20_wpt_WPT_AlignmentCheckMethodType_LPE = 1,
-    iso20_wpt_WPT_AlignmentCheckMethodType_Proprietary = 2
-} iso20_wpt_WPT_AlignmentCheckMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_AlignmentCheckMethodType_reverse(int i)
-{
-    if (i == 0) { return "PowerCheck"; }
-    if (i == 1) { return "LPE"; }
-    if (i == 2) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
+    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCNoIssue = 0,
+    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCTempOverheatDetected = 1,
+    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCPowerTransferAnomalyDetected = 2,
+    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCAnomalyDetected = 3
+} iso20_wpt_WPT_EVPCChargeDiagnosticsType;
 
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSENotification; type={urn:iso:std:iso:15118:-20:CommonTypes}evseNotificationType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_wpt_evseNotificationType_Pause = 0,
-    iso20_wpt_evseNotificationType_ExitStandby = 1,
-    iso20_wpt_evseNotificationType_Terminate = 2,
-    iso20_wpt_evseNotificationType_ScheduleRenegotiation = 3,
-    iso20_wpt_evseNotificationType_ServiceRenegotiation = 4,
-    iso20_wpt_evseNotificationType_MeteringConfirmation = 5
-} iso20_wpt_evseNotificationType;
-static inline const char* get_enum_val_iso20_wpt_evseNotificationType_reverse(int i)
-{
-    if (i == 0) { return "Pause"; }
-    if (i == 1) { return "ExitStandby"; }
-    if (i == 2) { return "Terminate"; }
-    if (i == 3) { return "ScheduleRenegotiation"; }
-    if (i == 4) { return "ServiceRenegotiation"; }
-    if (i == 5) { return "MeteringConfirmation"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
     iso20_wpt_processingType_Finished = 0,
     iso20_wpt_processingType_Ongoing = 1,
     iso20_wpt_processingType_Ongoing_WaitingForCustomerInteraction = 2
 } iso20_wpt_processingType;
-static inline const char* get_enum_val_iso20_wpt_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVResultCode; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVResultType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_wpt_WPT_EVResultType_EVResultUnknown = 0,
+    iso20_wpt_WPT_EVResultType_EVResultSuccess = 1,
+    iso20_wpt_WPT_EVResultType_EVResultFailed = 2
+} iso20_wpt_WPT_EVResultType;
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}PDInputPowerClass; type={urn:iso:std:iso:15118:-20:WPT}WPT_PowerClassType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_wpt_WPT_PowerClassType_MF_WPT1 = 0,
+    iso20_wpt_WPT_PowerClassType_MF_WPT2 = 1,
+    iso20_wpt_WPT_PowerClassType_MF_WPT3 = 2,
+    iso20_wpt_WPT_PowerClassType_MF_WPT4 = 3
+} iso20_wpt_WPT_PowerClassType;
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -245,99 +228,6 @@ typedef enum {
     iso20_wpt_responseCodeType_FAILED_UnknownSession = 38,
     iso20_wpt_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_wpt_responseCodeType;
-static inline const char* get_enum_val_iso20_wpt_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVResultCode; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVResultType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_wpt_WPT_EVResultType_EVResultUnknown = 0,
-    iso20_wpt_WPT_EVResultType_EVResultSuccess = 1,
-    iso20_wpt_WPT_EVResultType_EVResultFailed = 2
-} iso20_wpt_WPT_EVResultType;
-static inline const char* get_enum_val_iso20_wpt_WPT_EVResultType_reverse(int i)
-{
-    if (i == 0) { return "EVResultUnknown"; }
-    if (i == 1) { return "EVResultSuccess"; }
-    if (i == 2) { return "EVResultFailed"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}PDInputPowerClass; type={urn:iso:std:iso:15118:-20:WPT}WPT_PowerClassType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_wpt_WPT_PowerClassType_MF_WPT1 = 0,
-    iso20_wpt_WPT_PowerClassType_MF_WPT2 = 1,
-    iso20_wpt_WPT_PowerClassType_MF_WPT3 = 2,
-    iso20_wpt_WPT_PowerClassType_MF_WPT4 = 3
-} iso20_wpt_WPT_PowerClassType;
-static inline const char* get_enum_val_iso20_wpt_WPT_PowerClassType_reverse(int i)
-{
-    if (i == 0) { return "MF_WPT1"; }
-    if (i == 1) { return "MF_WPT2"; }
-    if (i == 2) { return "MF_WPT3"; }
-    if (i == 3) { return "MF_WPT4"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVPCChargeDiagnostics; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVPCChargeDiagnosticsType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCNoIssue = 0,
-    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCTempOverheatDetected = 1,
-    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCPowerTransferAnomalyDetected = 2,
-    iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCAnomalyDetected = 3
-} iso20_wpt_WPT_EVPCChargeDiagnosticsType;
-static inline const char* get_enum_val_iso20_wpt_WPT_EVPCChargeDiagnosticsType_reverse(int i)
-{
-    if (i == 0) { return "EVPCNoIssue"; }
-    if (i == 1) { return "EVPCTempOverheatDetected"; }
-    if (i == 2) { return "EVPCPowerTransferAnomalyDetected"; }
-    if (i == 3) { return "EVPCAnomalyDetected"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}SPCChargeDiagnostics; type={urn:iso:std:iso:15118:-20:WPT}WPT_SPCChargeDiagnosticsType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -349,16 +239,6 @@ typedef enum {
     iso20_wpt_WPT_SPCChargeDiagnosticsType_SPCPowerTransferAnomalyDetected = 4,
     iso20_wpt_WPT_SPCChargeDiagnosticsType_SPCAnomalyDetected = 5
 } iso20_wpt_WPT_SPCChargeDiagnosticsType;
-static inline const char* get_enum_val_iso20_wpt_WPT_SPCChargeDiagnosticsType_reverse(int i)
-{
-    if (i == 0) { return "SPCNoIssue"; }
-    if (i == 1) { return "SPCFODDetected"; }
-    if (i == 2) { return "SPCLOPDetected"; }
-    if (i == 3) { return "SPCTempOverheatDetected"; }
-    if (i == 4) { return "SPCPowerTransferAnomalyDetected"; }
-    if (i == 5) { return "SPCAnomalyDetected"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;
@@ -382,15 +262,6 @@ struct iso20_wpt_TransformType {
         uint16_t charactersLen;
     } XPath;
     unsigned int XPath_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1) (original max unbounded);
-struct iso20_wpt_TransformsType {
-    // Transform, TransformType
-    struct iso20_wpt_TransformType Transform;
 
 };
 
@@ -449,20 +320,6 @@ struct iso20_wpt_DSAKeyValueType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
-struct iso20_wpt_X509IssuerSerialType {
-    // X509IssuerName, string
-    struct {
-        char characters[iso20_wpt_X509IssuerName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509IssuerName;
-    // X509SerialNumber, integer (base: decimal)
-    exi_signed_t X509SerialNumber;
-
-};
-
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DigestMethod; type={http://www.w3.org/2000/09/xmldsig#}DigestMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -501,6 +358,29 @@ struct iso20_wpt_RSAKeyValueType {
 
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
+struct iso20_wpt_TransformsType {
+    // Transform, TransformType
+    struct iso20_wpt_TransformType Transform;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
+struct iso20_wpt_X509IssuerSerialType {
+    // X509IssuerName, string
+    struct {
+        char characters[iso20_wpt_X509IssuerName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509IssuerName;
+    // X509SerialNumber, integer (base: decimal)
+    exi_signed_t X509SerialNumber;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod; type={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -510,39 +390,6 @@ struct iso20_wpt_CanonicalizationMethodType {
         char characters[iso20_wpt_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
     } Algorithm;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}PulseSequenceOrder; type={urn:iso:std:iso:15118:-20:WPT}WPT_TxRxPulseOrderType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: IndexNumber, unsignedShort (1, 1); TxRxIdentifier, numericIDType (1, 1);
-struct iso20_wpt_WPT_TxRxPulseOrderType {
-    // IndexNumber, unsignedShort (base: unsignedInt)
-    uint16_t IndexNumber;
-    // TxRxIdentifier, numericIDType (base: unsignedInt)
-    uint32_t TxRxIdentifier;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
-//          abstract=False; final=False;
-// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
-struct iso20_wpt_SignatureMethodType {
-    // Attribute: Algorithm, anyURI
-    struct {
-        char characters[iso20_wpt_Algorithm_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Algorithm;
-    // HMACOutputLength, HMACOutputLengthType (base: integer)
-    exi_signed_t HMACOutputLength;
-    unsigned int HMACOutputLength_isUsed:1;
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
@@ -563,121 +410,6 @@ struct iso20_wpt_KeyValueType {
     // RSAKeyValue, RSAKeyValueType
     struct iso20_wpt_RSAKeyValueType RSAKeyValue;
     unsigned int RSAKeyValue_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}TxRxPosition; type={urn:iso:std:iso:15118:-20:WPT}WPT_CoordinateXYZType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Coord_X, short (1, 1); Coord_Y, short (1, 1); Coord_Z, short (1, 1);
-struct iso20_wpt_WPT_CoordinateXYZType {
-    // Coord_X, short (base: int)
-    int16_t Coord_X;
-    // Coord_Y, short (base: int)
-    int16_t Coord_Y;
-    // Coord_Z, short (base: int)
-    int16_t Coord_Z;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
-struct iso20_wpt_ReferenceType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_wpt_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_wpt_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_wpt_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-    // DigestMethod, DigestMethodType
-    struct iso20_wpt_DigestMethodType DigestMethod;
-    // DigestValue, DigestValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_wpt_DigestValueType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DigestValue;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
-struct iso20_wpt_RetrievalMethodType {
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_wpt_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_wpt_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_wpt_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
-struct iso20_wpt_X509DataType {
-    // X509IssuerSerial, X509IssuerSerialType
-    struct iso20_wpt_X509IssuerSerialType X509IssuerSerial;
-    unsigned int X509IssuerSerial_isUsed:1;
-    // X509SKI, base64Binary
-    struct {
-        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509SKI;
-    unsigned int X509SKI_isUsed:1;
-
-    // X509SubjectName, string
-    struct {
-        char characters[iso20_wpt_X509SubjectName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509SubjectName;
-    unsigned int X509SubjectName_isUsed:1;
-    // X509Certificate, base64Binary
-    struct {
-        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509Certificate;
-    unsigned int X509Certificate_isUsed:1;
-
-    // X509CRL, base64Binary
-    struct {
-        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509CRL;
-    unsigned int X509CRL_isUsed:1;
-
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
@@ -742,6 +474,75 @@ struct iso20_wpt_PGPDataType {
     };
 };
 
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}PulseSequenceOrder; type={urn:iso:std:iso:15118:-20:WPT}WPT_TxRxPulseOrderType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: IndexNumber, unsignedShort (1, 1); TxRxIdentifier, numericIDType (1, 1);
+struct iso20_wpt_WPT_TxRxPulseOrderType {
+    // IndexNumber, unsignedShort (base: unsignedInt)
+    uint16_t IndexNumber;
+    // TxRxIdentifier, numericIDType (base: unsignedInt)
+    uint32_t TxRxIdentifier;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
+struct iso20_wpt_ReferenceType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_wpt_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_wpt_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_wpt_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+    // DigestMethod, DigestMethodType
+    struct iso20_wpt_DigestMethodType DigestMethod;
+    // DigestValue, DigestValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_wpt_DigestValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DigestValue;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
+struct iso20_wpt_RetrievalMethodType {
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_wpt_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_wpt_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_wpt_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SPKIData; type={http://www.w3.org/2000/09/xmldsig#}SPKIDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
@@ -762,105 +563,82 @@ struct iso20_wpt_SPKIDataType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
-struct iso20_wpt_SignedInfoType {
-    // Attribute: Id, ID (base: NCName)
+// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
+struct iso20_wpt_SignatureMethodType {
+    // Attribute: Algorithm, anyURI
     struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        char characters[iso20_wpt_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CanonicalizationMethod, CanonicalizationMethodType
-    struct iso20_wpt_CanonicalizationMethodType CanonicalizationMethod;
-    // SignatureMethod, SignatureMethodType
-    struct iso20_wpt_SignatureMethodType SignatureMethod;
-    // Reference, ReferenceType
+    } Algorithm;
+    // HMACOutputLength, HMACOutputLengthType (base: integer)
+    exi_signed_t HMACOutputLength;
+    unsigned int HMACOutputLength_isUsed:1;
+    // ANY, anyType (base: base64Binary)
     struct {
-        struct iso20_wpt_ReferenceType array[iso20_wpt_ReferenceType_4_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } Reference;
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
-struct iso20_wpt_SignatureValueType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CONTENT, SignatureValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_wpt_SignatureValueType_BYTES_SIZE];
+        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
         uint16_t bytesLen;
-    } CONTENT;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}SignalFrequency; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}TxRxPosition; type={urn:iso:std:iso:15118:-20:WPT}WPT_CoordinateXYZType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Exponent, byte (1, 1); Value, short (1, 1);
-struct iso20_wpt_RationalNumberType {
-    // Exponent, byte (base: short)
-    int8_t Exponent;
-    // Value, short (base: int)
-    int16_t Value;
+// Particle: Coord_X, short (1, 1); Coord_Y, short (1, 1); Coord_Z, short (1, 1);
+struct iso20_wpt_WPT_CoordinateXYZType {
+    // Coord_X, short (base: int)
+    int16_t Coord_X;
+    // Coord_Y, short (base: int)
+    int16_t Coord_Y;
+    // Coord_Z, short (base: int)
+    int16_t Coord_Z;
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}RSSIDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxRSSIType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: TxIdentifier, numericIDType (1, 1); RSSI, RationalNumberType (1, 1);
-struct iso20_wpt_WPT_LF_RxRSSIType {
-    // TxIdentifier, numericIDType (base: unsignedInt)
-    uint32_t TxIdentifier;
-    // RSSI, RationalNumberType
-    struct iso20_wpt_RationalNumberType RSSI;
+// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
+struct iso20_wpt_X509DataType {
+    // X509IssuerSerial, X509IssuerSerialType
+    struct iso20_wpt_X509IssuerSerialType X509IssuerSerial;
+    unsigned int X509IssuerSerial_isUsed:1;
+    // X509SKI, base64Binary
+    struct {
+        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509SKI;
+    unsigned int X509SKI_isUsed:1;
 
-};
+    // X509SubjectName, string
+    struct {
+        char characters[iso20_wpt_X509SubjectName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509SubjectName;
+    unsigned int X509SubjectName_isUsed:1;
+    // X509Certificate, base64Binary
+    struct {
+        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509Certificate;
+    unsigned int X509Certificate_isUsed:1;
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}RSSIData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxRSSIListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: RSSIDataList, WPT_LF_RxRSSIType (1, 1);
-struct iso20_wpt_WPT_LF_RxRSSIListType {
-    // RSSIDataList, WPT_LF_RxRSSIType
-    struct iso20_wpt_WPT_LF_RxRSSIType RSSIDataList;
+    // X509CRL, base64Binary
+    struct {
+        uint8_t bytes[iso20_wpt_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509CRL;
+    unsigned int X509CRL_isUsed:1;
 
-};
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: TxIdentifier, numericIDType (1, 1); EIRP, RationalNumberType (1, 1);
-struct iso20_wpt_WPT_LF_TxDataType {
-    // TxIdentifier, numericIDType (base: unsignedInt)
-    uint32_t TxIdentifier;
-    // EIRP, RationalNumberType
-    struct iso20_wpt_RationalNumberType EIRP;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: RxIdentifier, numericIDType (1, 1); RSSIData, WPT_LF_RxRSSIListType (1, 1);
-struct iso20_wpt_WPT_LF_RxDataType {
-    // RxIdentifier, numericIDType (base: unsignedInt)
-    uint32_t RxIdentifier;
-    // RSSIData, WPT_LF_RxRSSIListType
-    struct iso20_wpt_WPT_LF_RxRSSIListType RSSIData;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_TxData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: WPT_LF_TxDataList, WPT_LF_TxDataType (1, 1);
-struct iso20_wpt_WPT_LF_TxDataListType {
-    // WPT_LF_TxDataList, WPT_LF_TxDataType
-    struct iso20_wpt_WPT_LF_TxDataType WPT_LF_TxDataList;
 
 };
 
@@ -911,28 +689,6 @@ struct iso20_wpt_KeyInfoType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}TxSpecData; type={urn:iso:std:iso:15118:-20:WPT}WPT_TxRxSpecDataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: TxRxIdentifier, numericIDType (1, 1); TxRxPosition, WPT_CoordinateXYZType (1, 1); TxRxOrientation, WPT_CoordinateXYZType (1, 1);
-struct iso20_wpt_WPT_TxRxSpecDataType {
-    // TxRxIdentifier, numericIDType (base: unsignedInt)
-    uint32_t TxRxIdentifier;
-    // TxRxPosition, WPT_CoordinateXYZType
-    struct iso20_wpt_WPT_CoordinateXYZType TxRxPosition;
-    // TxRxOrientation, WPT_CoordinateXYZType
-    struct iso20_wpt_WPT_CoordinateXYZType TxRxOrientation;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_RxData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: WPT_LF_RxDataList, WPT_LF_RxDataType (1, 1);
-struct iso20_wpt_WPT_LF_RxDataListType {
-    // WPT_LF_RxDataList, WPT_LF_RxDataType
-    struct iso20_wpt_WPT_LF_RxDataType WPT_LF_RxDataList;
-
-};
-
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
@@ -965,6 +721,117 @@ struct iso20_wpt_ObjectType {
 
 };
 
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}SignalFrequency; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Exponent, byte (1, 1); Value, short (1, 1);
+struct iso20_wpt_RationalNumberType {
+    // Exponent, byte (base: short)
+    int8_t Exponent;
+    // Value, short (base: int)
+    int16_t Value;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}RSSIDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxRSSIType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: TxIdentifier, numericIDType (1, 1); RSSI, RationalNumberType (1, 1);
+struct iso20_wpt_WPT_LF_RxRSSIType {
+    // TxIdentifier, numericIDType (base: unsignedInt)
+    uint32_t TxIdentifier;
+    // RSSI, RationalNumberType
+    struct iso20_wpt_RationalNumberType RSSI;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}RSSIData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxRSSIListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: RSSIDataList, WPT_LF_RxRSSIType (1, 1);
+struct iso20_wpt_WPT_LF_RxRSSIListType {
+    // RSSIDataList, WPT_LF_RxRSSIType
+    struct iso20_wpt_WPT_LF_RxRSSIType RSSIDataList;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: RxIdentifier, numericIDType (1, 1); RSSIData, WPT_LF_RxRSSIListType (1, 1);
+struct iso20_wpt_WPT_LF_RxDataType {
+    // RxIdentifier, numericIDType (base: unsignedInt)
+    uint32_t RxIdentifier;
+    // RSSIData, WPT_LF_RxRSSIListType
+    struct iso20_wpt_WPT_LF_RxRSSIListType RSSIData;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: TxIdentifier, numericIDType (1, 1); EIRP, RationalNumberType (1, 1);
+struct iso20_wpt_WPT_LF_TxDataType {
+    // TxIdentifier, numericIDType (base: unsignedInt)
+    uint32_t TxIdentifier;
+    // EIRP, RationalNumberType
+    struct iso20_wpt_RationalNumberType EIRP;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_RxData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_RxDataListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: WPT_LF_RxDataList, WPT_LF_RxDataType (1, 1);
+struct iso20_wpt_WPT_LF_RxDataListType {
+    // WPT_LF_RxDataList, WPT_LF_RxDataType
+    struct iso20_wpt_WPT_LF_RxDataType WPT_LF_RxDataList;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_TxData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TxDataListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: WPT_LF_TxDataList, WPT_LF_TxDataType (1, 1);
+struct iso20_wpt_WPT_LF_TxDataListType {
+    // WPT_LF_TxDataList, WPT_LF_TxDataType
+    struct iso20_wpt_WPT_LF_TxDataType WPT_LF_TxDataList;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
+struct iso20_wpt_SignatureValueType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CONTENT, SignatureValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_wpt_SignatureValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } CONTENT;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
+struct iso20_wpt_SignedInfoType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CanonicalizationMethod, CanonicalizationMethodType
+    struct iso20_wpt_CanonicalizationMethodType CanonicalizationMethod;
+    // SignatureMethod, SignatureMethodType
+    struct iso20_wpt_SignatureMethodType SignatureMethod;
+    // Reference, ReferenceType
+    struct {
+        struct iso20_wpt_ReferenceType array[iso20_wpt_ReferenceType_4_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } Reference;
+};
+
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}TxPackageSpecData; type={urn:iso:std:iso:15118:-20:WPT}WPT_TxRxPackageSpecDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: PulseSequenceOrder, WPT_TxRxPulseOrderType (2, 255); PulseSeparationTime, unsignedShort (1, 1); PulseDuration, unsignedShort (1, 1); PackageSeparationTime, unsignedShort (1, 1);
@@ -982,21 +849,16 @@ struct iso20_wpt_WPT_TxRxPackageSpecDataType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_TransmitterSetupData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TransmitterDataType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}TxSpecData; type={urn:iso:std:iso:15118:-20:WPT}WPT_TxRxSpecDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: NumberOfTransmitters, unsignedByte (1, 1); SignalFrequency, RationalNumberType (1, 1); TxSpecData, WPT_TxRxSpecDataType (2, 255); TxPackageSpecData, WPT_TxRxPackageSpecDataType (0, 1);
-struct iso20_wpt_WPT_LF_TransmitterDataType {
-    // NumberOfTransmitters, unsignedByte (base: unsignedShort)
-    uint8_t NumberOfTransmitters;
-    // SignalFrequency, RationalNumberType
-    struct iso20_wpt_RationalNumberType SignalFrequency;
-    // TxSpecData, WPT_TxRxSpecDataType
-    struct {
-        struct iso20_wpt_WPT_TxRxSpecDataType array[iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } TxSpecData;    // TxPackageSpecData, WPT_TxRxPackageSpecDataType
-    struct iso20_wpt_WPT_TxRxPackageSpecDataType TxPackageSpecData;
-    unsigned int TxPackageSpecData_isUsed:1;
+// Particle: TxRxIdentifier, numericIDType (1, 1); TxRxPosition, WPT_CoordinateXYZType (1, 1); TxRxOrientation, WPT_CoordinateXYZType (1, 1);
+struct iso20_wpt_WPT_TxRxSpecDataType {
+    // TxRxIdentifier, numericIDType (base: unsignedInt)
+    uint32_t TxRxIdentifier;
+    // TxRxPosition, WPT_CoordinateXYZType
+    struct iso20_wpt_WPT_CoordinateXYZType TxRxPosition;
+    // TxRxOrientation, WPT_CoordinateXYZType
+    struct iso20_wpt_WPT_CoordinateXYZType TxRxOrientation;
 
 };
 
@@ -1028,6 +890,17 @@ struct iso20_wpt_AlternativeSECCType {
 
 };
 
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}EnergyCosts; type={urn:iso:std:iso:15118:-20:CommonTypes}DetailedCostType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
+struct iso20_wpt_DetailedCostType {
+    // Amount, RationalNumberType
+    struct iso20_wpt_RationalNumberType Amount;
+    // CostPerUnit, RationalNumberType
+    struct iso20_wpt_RationalNumberType CostPerUnit;
+
+};
+
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_ReceiverSetupData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_ReceiverDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: NumberOfReceivers, unsignedByte (1, 1); RxSpecData, WPT_TxRxSpecDataType (2, 255);
@@ -1041,29 +914,21 @@ struct iso20_wpt_WPT_LF_ReceiverDataType {
     } RxSpecData;
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackage; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_TransmitterSetupData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_TransmitterDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: PackageIndex, unsignedByte (1, 1); LF_TxData, WPT_LF_TxDataListType (0, 1); LF_RxData, WPT_LF_RxDataListType (0, 1);
-struct iso20_wpt_WPT_LF_DataPackageType {
-    // PackageIndex, unsignedByte (base: unsignedShort)
-    uint8_t PackageIndex;
-    // LF_TxData, WPT_LF_TxDataListType
-    struct iso20_wpt_WPT_LF_TxDataListType LF_TxData;
-    unsigned int LF_TxData_isUsed:1;
-    // LF_RxData, WPT_LF_RxDataListType
-    struct iso20_wpt_WPT_LF_RxDataListType LF_RxData;
-    unsigned int LF_RxData_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}EnergyCosts; type={urn:iso:std:iso:15118:-20:CommonTypes}DetailedCostType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
-struct iso20_wpt_DetailedCostType {
-    // Amount, RationalNumberType
-    struct iso20_wpt_RationalNumberType Amount;
-    // CostPerUnit, RationalNumberType
-    struct iso20_wpt_RationalNumberType CostPerUnit;
+// Particle: NumberOfTransmitters, unsignedByte (1, 1); SignalFrequency, RationalNumberType (1, 1); TxSpecData, WPT_TxRxSpecDataType (2, 255); TxPackageSpecData, WPT_TxRxPackageSpecDataType (0, 1);
+struct iso20_wpt_WPT_LF_TransmitterDataType {
+    // NumberOfTransmitters, unsignedByte (base: unsignedShort)
+    uint8_t NumberOfTransmitters;
+    // SignalFrequency, RationalNumberType
+    struct iso20_wpt_RationalNumberType SignalFrequency;
+    // TxSpecData, WPT_TxRxSpecDataType
+    struct {
+        struct iso20_wpt_WPT_TxRxSpecDataType array[iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } TxSpecData;    // TxPackageSpecData, WPT_TxRxPackageSpecDataType
+    struct iso20_wpt_WPT_TxRxPackageSpecDataType TxPackageSpecData;
+    unsigned int TxPackageSpecData_isUsed:1;
 
 };
 
@@ -1101,47 +966,30 @@ struct iso20_wpt_DetailedTaxType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Header; type={urn:iso:std:iso:15118:-20:CommonTypes}MessageHeaderType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackage; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
-struct iso20_wpt_MessageHeaderType {
-    // SessionID, sessionIDType (base: hexBinary)
-    struct {
-        uint8_t bytes[iso20_wpt_sessionIDType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } SessionID;
-
-    // TimeStamp, unsignedLong (base: nonNegativeInteger)
-    uint64_t TimeStamp;
-    // Signature, SignatureType
-    struct iso20_wpt_SignatureType Signature;
-    unsigned int Signature_isUsed:1;
+// Particle: PackageIndex, unsignedByte (1, 1); LF_TxData, WPT_LF_TxDataListType (0, 1); LF_RxData, WPT_LF_RxDataListType (0, 1);
+struct iso20_wpt_WPT_LF_DataPackageType {
+    // PackageIndex, unsignedByte (base: unsignedShort)
+    uint8_t PackageIndex;
+    // LF_TxData, WPT_LF_TxDataListType
+    struct iso20_wpt_WPT_LF_TxDataListType LF_TxData;
+    unsigned int LF_TxData_isUsed:1;
+    // LF_RxData, WPT_LF_RxDataListType
+    struct iso20_wpt_WPT_LF_RxDataListType LF_RxData;
+    unsigned int LF_RxData_isUsed:1;
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperty; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertyType; base type=; content type=mixed;
-//          abstract=False; final=False; choice=True;
-// Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
-struct iso20_wpt_SignaturePropertyType {
-    // Attribute: Id, ID (base: NCName)
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}AlternativeSECCList; type={urn:iso:std:iso:15118:-20:WPT}AlternativeSECCListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: AlternativeSECC, AlternativeSECCType (1, 8);
+struct iso20_wpt_AlternativeSECCListType {
+    // AlternativeSECC, AlternativeSECCType
     struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: Target, anyURI
-    struct {
-        char characters[iso20_wpt_Target_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Target;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
+        struct iso20_wpt_AlternativeSECCType array[iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } AlternativeSECC;
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}DisplayParameters; type={urn:iso:std:iso:15118:-20:CommonTypes}DisplayParametersType; base type=; content type=ELEMENT-ONLY;
@@ -1181,6 +1029,17 @@ struct iso20_wpt_DisplayParametersType {
 
 };
 
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVDeviceAlignmentCheckMethodList; type={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethodListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (1, 8);
+struct iso20_wpt_WPT_AlignmentCheckMethodListType {
+    // WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (base: string)
+    struct {
+        iso20_wpt_WPT_AlignmentCheckMethodType array[iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } WPT_AlignmentCheckMethod;
+};
+
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVDeviceFinePositioningMethodList; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningMethodListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: WPT_FinePositioningMethod, WPT_FinePositioningMethodType (1, 8);
@@ -1190,6 +1049,32 @@ struct iso20_wpt_WPT_FinePositioningMethodListType {
         iso20_wpt_WPT_FinePositioningMethodType array[iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE];
         uint16_t arrayLen;
     } WPT_FinePositioningMethod;
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVDevicePairingMethodList; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethodListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: WPT_PairingMethod, WPT_PairingMethodType (1, 8);
+struct iso20_wpt_WPT_PairingMethodListType {
+    // WPT_PairingMethod, WPT_PairingMethodType (base: string)
+    struct {
+        iso20_wpt_WPT_PairingMethodType array[iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } WPT_PairingMethod;
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVPCPowerControlParameter; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVPCPowerControlParameterType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: EVPCCoilCurrentRequest, RationalNumberType (1, 1); EVPCCoilCurrentInformation, RationalNumberType (1, 1); EVPCCurrentOutputInformation, RationalNumberType (1, 1); EVPCVoltageOutputInformation, RationalNumberType (1, 1);
+struct iso20_wpt_WPT_EVPCPowerControlParameterType {
+    // EVPCCoilCurrentRequest, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCCoilCurrentRequest;
+    // EVPCCoilCurrentInformation, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCCoilCurrentInformation;
+    // EVPCCurrentOutputInformation, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCCurrentOutputInformation;
+    // EVPCVoltageOutputInformation, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCVoltageOutputInformation;
+
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSEStatus; type={urn:iso:std:iso:15118:-20:CommonTypes}EVSEStatusType; base type=; content type=ELEMENT-ONLY;
@@ -1203,15 +1088,35 @@ struct iso20_wpt_EVSEStatusType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVDevicePairingMethodList; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethodListType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Header; type={urn:iso:std:iso:15118:-20:CommonTypes}MessageHeaderType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: WPT_PairingMethod, WPT_PairingMethodType (1, 8);
-struct iso20_wpt_WPT_PairingMethodListType {
-    // WPT_PairingMethod, WPT_PairingMethodType (base: string)
+// Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
+struct iso20_wpt_MessageHeaderType {
+    // SessionID, sessionIDType (base: hexBinary)
     struct {
-        iso20_wpt_WPT_PairingMethodType array[iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } WPT_PairingMethod;
+        uint8_t bytes[iso20_wpt_sessionIDType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } SessionID;
+
+    // TimeStamp, unsignedLong (base: nonNegativeInteger)
+    uint64_t TimeStamp;
+    // Signature, SignatureType
+    struct iso20_wpt_SignatureType Signature;
+    unsigned int Signature_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_SystemSetupData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_SystemSetupDataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: LF_TransmitterSetupData, WPT_LF_TransmitterDataType (0, 1); LF_ReceiverSetupData, WPT_LF_ReceiverDataType (0, 1);
+struct iso20_wpt_WPT_LF_SystemSetupDataType {
+    // LF_TransmitterSetupData, WPT_LF_TransmitterDataType
+    struct iso20_wpt_WPT_LF_TransmitterDataType LF_TransmitterSetupData;
+    unsigned int LF_TransmitterSetupData_isUsed:1;
+    // LF_ReceiverSetupData, WPT_LF_ReceiverDataType
+    struct iso20_wpt_WPT_LF_ReceiverDataType LF_ReceiverSetupData;
+    unsigned int LF_ReceiverSetupData_isUsed:1;
+
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}MeterInfo; type={urn:iso:std:iso:15118:-20:CommonTypes}MeterInfoType; base type=; content type=ELEMENT-ONLY;
@@ -1250,39 +1155,6 @@ struct iso20_wpt_MeterInfoType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVDeviceAlignmentCheckMethodList; type={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethodListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (1, 8);
-struct iso20_wpt_WPT_AlignmentCheckMethodListType {
-    // WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (base: string)
-    struct {
-        iso20_wpt_WPT_AlignmentCheckMethodType array[iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } WPT_AlignmentCheckMethod;
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: NumPackages, unsignedByte (1, 1); WPT_LF_DataPackage, WPT_LF_DataPackageType (1, 1);
-struct iso20_wpt_WPT_LF_DataPackageListType {
-    // NumPackages, unsignedByte (base: unsignedShort)
-    uint8_t NumPackages;
-    // WPT_LF_DataPackage, WPT_LF_DataPackageType
-    struct iso20_wpt_WPT_LF_DataPackageType WPT_LF_DataPackage;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}AlternativeSECCList; type={urn:iso:std:iso:15118:-20:WPT}AlternativeSECCListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: AlternativeSECC, AlternativeSECCType (1, 8);
-struct iso20_wpt_AlternativeSECCListType {
-    // AlternativeSECC, AlternativeSECCType
-    struct {
-        struct iso20_wpt_AlternativeSECCType array[iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } AlternativeSECC;
-};
-
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Receipt; type={urn:iso:std:iso:15118:-20:CommonTypes}ReceiptType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
@@ -1308,34 +1180,6 @@ struct iso20_wpt_ReceiptType {
     } TaxCosts;
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}LF_SystemSetupData; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_SystemSetupDataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: LF_TransmitterSetupData, WPT_LF_TransmitterDataType (0, 1); LF_ReceiverSetupData, WPT_LF_ReceiverDataType (0, 1);
-struct iso20_wpt_WPT_LF_SystemSetupDataType {
-    // LF_TransmitterSetupData, WPT_LF_TransmitterDataType
-    struct iso20_wpt_WPT_LF_TransmitterDataType LF_TransmitterSetupData;
-    unsigned int LF_TransmitterSetupData_isUsed:1;
-    // LF_ReceiverSetupData, WPT_LF_ReceiverDataType
-    struct iso20_wpt_WPT_LF_ReceiverDataType LF_ReceiverSetupData;
-    unsigned int LF_ReceiverSetupData_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}EVPCPowerControlParameter; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVPCPowerControlParameterType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: EVPCCoilCurrentRequest, RationalNumberType (1, 1); EVPCCoilCurrentInformation, RationalNumberType (1, 1); EVPCCurrentOutputInformation, RationalNumberType (1, 1); EVPCVoltageOutputInformation, RationalNumberType (1, 1);
-struct iso20_wpt_WPT_EVPCPowerControlParameterType {
-    // EVPCCoilCurrentRequest, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCCoilCurrentRequest;
-    // EVPCCoilCurrentInformation, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCCoilCurrentInformation;
-    // EVPCCurrentOutputInformation, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCCurrentOutputInformation;
-    // EVPCVoltageOutputInformation, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCVoltageOutputInformation;
-
-};
-
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}SPCPowerControlParameter; type={urn:iso:std:iso:15118:-20:WPT}WPT_SPCPowerControlParameterType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: SPCPrimaryDeviceCoilCurrentInformation, RationalNumberType (1, 1);
@@ -1345,238 +1189,85 @@ struct iso20_wpt_WPT_SPCPowerControlParameterType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); EVDevicePairingMethodList, WPT_PairingMethodListType (1, 1); EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
-struct iso20_wpt_WPT_FinePositioningSetupReqType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // EVProcessing, processingType (base: string)
-    iso20_wpt_processingType EVProcessing;
-    // EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType
-    struct iso20_wpt_WPT_FinePositioningMethodListType EVDeviceFinePositioningMethodList;
-    // EVDevicePairingMethodList, WPT_PairingMethodListType
-    struct iso20_wpt_WPT_PairingMethodListType EVDevicePairingMethodList;
-    // EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType
-    struct iso20_wpt_WPT_AlignmentCheckMethodListType EVDeviceAlignmentCheckMethodList;
-    // NaturalOffset, unsignedShort (base: unsignedInt)
-    uint16_t NaturalOffset;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperty; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertyType; base type=; content type=mixed;
+//          abstract=False; final=False; choice=True;
+// Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
+struct iso20_wpt_SignaturePropertyType {
+    // Attribute: Id, ID (base: NCName)
     struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
-    // LF_SystemSetupData, WPT_LF_SystemSetupDataType
-    struct iso20_wpt_WPT_LF_SystemSetupDataType LF_SystemSetupData;
-    unsigned int LF_SystemSetupData_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); PrimaryDevicePairingMethodList, WPT_PairingMethodListType (1, 1); PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
-struct iso20_wpt_WPT_FinePositioningSetupResType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_wpt_responseCodeType ResponseCode;
-    // PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType
-    struct iso20_wpt_WPT_FinePositioningMethodListType PrimaryDeviceFinePositioningMethodList;
-    // PrimaryDevicePairingMethodList, WPT_PairingMethodListType
-    struct iso20_wpt_WPT_PairingMethodListType PrimaryDevicePairingMethodList;
-    // PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType
-    struct iso20_wpt_WPT_AlignmentCheckMethodListType PrimaryDeviceAlignmentCheckMethodList;
-    // NaturalOffset, unsignedShort (base: unsignedInt)
-    uint16_t NaturalOffset;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: Target, anyURI
     struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
-    // LF_SystemSetupData, WPT_LF_SystemSetupDataType
-    struct iso20_wpt_WPT_LF_SystemSetupDataType LF_SystemSetupData;
-    unsigned int LF_SystemSetupData_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
-struct iso20_wpt_WPT_FinePositioningReqType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // EVProcessing, processingType (base: string)
-    iso20_wpt_processingType EVProcessing;
-    // EVResultCode, WPT_EVResultType (base: string)
-    iso20_wpt_WPT_EVResultType EVResultCode;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+        char characters[iso20_wpt_Target_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Target;
+    // ANY, anyType (base: base64Binary)
     struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
-    // WPT_LF_DataPackageList, WPT_LF_DataPackageListType
-    struct iso20_wpt_WPT_LF_DataPackageListType WPT_LF_DataPackageList;
-    unsigned int WPT_LF_DataPackageList_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
-struct iso20_wpt_WPT_FinePositioningResType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_wpt_responseCodeType ResponseCode;
-    // EVSEProcessing, processingType (base: string)
-    iso20_wpt_processingType EVSEProcessing;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
-    struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
-    // WPT_LF_DataPackageList, WPT_LF_DataPackageListType
-    struct iso20_wpt_WPT_LF_DataPackageListType WPT_LF_DataPackageList;
-    unsigned int WPT_LF_DataPackageList_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
-struct iso20_wpt_WPT_PairingReqType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // EVProcessing, processingType (base: string)
-    iso20_wpt_processingType EVProcessing;
-    // ObservedIDCode, numericIDType (base: unsignedInt)
-    uint32_t ObservedIDCode;
-    unsigned int ObservedIDCode_isUsed:1;
-    // EVResultCode, WPT_EVResultType (base: string)
-    iso20_wpt_WPT_EVResultType EVResultCode;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
-    struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
+        uint8_t bytes[iso20_wpt_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); AlternativeSECCList, AlternativeSECCListType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
-struct iso20_wpt_WPT_PairingResType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_wpt_responseCodeType ResponseCode;
-    // EVSEProcessing, processingType (base: string)
-    iso20_wpt_processingType EVSEProcessing;
-    // ObservedIDCode, numericIDType (base: unsignedInt)
-    uint32_t ObservedIDCode;
-    unsigned int ObservedIDCode_isUsed:1;
-    // AlternativeSECCList, AlternativeSECCListType
-    struct iso20_wpt_AlternativeSECCListType AlternativeSECCList;
-    unsigned int AlternativeSECCList_isUsed:1;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
-    struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageList; type={urn:iso:std:iso:15118:-20:WPT}WPT_LF_DataPackageListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: NumPackages, unsignedByte (1, 1); WPT_LF_DataPackage, WPT_LF_DataPackageType (1, 1);
+struct iso20_wpt_WPT_LF_DataPackageListType {
+    // NumPackages, unsignedByte (base: unsignedShort)
+    uint8_t NumPackages;
+    // WPT_LF_DataPackage, WPT_LF_DataPackageType
+    struct iso20_wpt_WPT_LF_DataPackageType WPT_LF_DataPackage;
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryReqType; base type=ChargeParameterDiscoveryReqType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVPCMaxReceivablePower, RationalNumberType (1, 1); SDMaxGroundClearence, unsignedShort (1, 1); SDMinGroundClearence, unsignedShort (1, 1); EVPCNaturalFrequency, RationalNumberType (1, 1); EVPCDeviceLocalControl, boolean (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
-struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // EVPCMaxReceivablePower, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCMaxReceivablePower;
-    // SDMaxGroundClearence, unsignedShort (base: unsignedInt)
-    uint16_t SDMaxGroundClearence;
-    // SDMinGroundClearence, unsignedShort (base: unsignedInt)
-    uint16_t SDMinGroundClearence;
-    // EVPCNaturalFrequency, RationalNumberType
-    struct iso20_wpt_RationalNumberType EVPCNaturalFrequency;
-    // EVPCDeviceLocalControl, boolean
-    int EVPCDeviceLocalControl;
-    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
-    struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } VendorSpecificDataContainer;
-    unsigned int VendorSpecificDataContainer_isUsed:1;
-
-
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlModeType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct iso20_wpt_CLReqControlModeType {
+    int _unused;
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryResType; base type=ChargeParameterDiscoveryResType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PDInputPowerClass, WPT_PowerClassType (1, 1); SDMinOutputPower, RationalNumberType (1, 1); SDMaxOutputPower, RationalNumberType (1, 1); SDMaxGroundClearanceSupport, unsignedShort (1, 1); SDMinGroundClearanceSupport, unsignedShort (1, 1); PDMinCoilCurrent, RationalNumberType (1, 1); PDMaxCoilCurrent, RationalNumberType (1, 1); SDManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
-struct iso20_wpt_WPT_ChargeParameterDiscoveryResType {
-    // Header, MessageHeaderType
-    struct iso20_wpt_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_wpt_responseCodeType ResponseCode;
-    // PDInputPowerClass, WPT_PowerClassType (base: string)
-    iso20_wpt_WPT_PowerClassType PDInputPowerClass;
-    // SDMinOutputPower, RationalNumberType
-    struct iso20_wpt_RationalNumberType SDMinOutputPower;
-    // SDMaxOutputPower, RationalNumberType
-    struct iso20_wpt_RationalNumberType SDMaxOutputPower;
-    // SDMaxGroundClearanceSupport, unsignedShort (base: unsignedInt)
-    uint16_t SDMaxGroundClearanceSupport;
-    // SDMinGroundClearanceSupport, unsignedShort (base: unsignedInt)
-    uint16_t SDMinGroundClearanceSupport;
-    // PDMinCoilCurrent, RationalNumberType
-    struct iso20_wpt_RationalNumberType PDMinCoilCurrent;
-    // PDMaxCoilCurrent, RationalNumberType
-    struct iso20_wpt_RationalNumberType PDMaxCoilCurrent;
-    // SDManufacturerSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
-    struct {
-        struct {
-            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
-            uint16_t bytesLen;
-        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } SDManufacturerSpecificDataContainer;
-    unsigned int SDManufacturerSpecificDataContainer_isUsed:1;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlModeType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct iso20_wpt_CLResControlModeType {
+    int _unused;
+};
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
+struct iso20_wpt_ManifestType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Reference, ReferenceType
+    struct {
+        struct iso20_wpt_ReferenceType array[iso20_wpt_ReferenceType_4_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } Reference;
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
+struct iso20_wpt_SignaturePropertiesType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_wpt_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // SignatureProperty, SignaturePropertyType
+    struct iso20_wpt_SignaturePropertyType SignatureProperty;
 
 };
 
@@ -1718,49 +1409,238 @@ struct iso20_wpt_WPT_ChargeLoopResType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlModeType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct iso20_wpt_CLReqControlModeType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlModeType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct iso20_wpt_CLResControlModeType {
-    int _unused;
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
-struct iso20_wpt_ManifestType {
-    // Attribute: Id, ID (base: NCName)
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryReqType; base type=ChargeParameterDiscoveryReqType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVPCMaxReceivablePower, RationalNumberType (1, 1); SDMaxGroundClearence, unsignedShort (1, 1); SDMinGroundClearence, unsignedShort (1, 1); EVPCNaturalFrequency, RationalNumberType (1, 1); EVPCDeviceLocalControl, boolean (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
+struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // EVPCMaxReceivablePower, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCMaxReceivablePower;
+    // SDMaxGroundClearence, unsignedShort (base: unsignedInt)
+    uint16_t SDMaxGroundClearence;
+    // SDMinGroundClearence, unsignedShort (base: unsignedInt)
+    uint16_t SDMinGroundClearence;
+    // EVPCNaturalFrequency, RationalNumberType
+    struct iso20_wpt_RationalNumberType EVPCNaturalFrequency;
+    // EVPCDeviceLocalControl, boolean
+    int EVPCDeviceLocalControl;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
     struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Reference, ReferenceType
-    struct {
-        struct iso20_wpt_ReferenceType array[iso20_wpt_ReferenceType_4_ARRAY_SIZE];
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
         uint16_t arrayLen;
-    } Reference;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
-struct iso20_wpt_SignaturePropertiesType {
-    // Attribute: Id, ID (base: NCName)
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeParameterDiscoveryResType; base type=ChargeParameterDiscoveryResType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PDInputPowerClass, WPT_PowerClassType (1, 1); SDMinOutputPower, RationalNumberType (1, 1); SDMaxOutputPower, RationalNumberType (1, 1); SDMaxGroundClearanceSupport, unsignedShort (1, 1); SDMinGroundClearanceSupport, unsignedShort (1, 1); PDMinCoilCurrent, RationalNumberType (1, 1); PDMaxCoilCurrent, RationalNumberType (1, 1); SDManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
+struct iso20_wpt_WPT_ChargeParameterDiscoveryResType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_wpt_responseCodeType ResponseCode;
+    // PDInputPowerClass, WPT_PowerClassType (base: string)
+    iso20_wpt_WPT_PowerClassType PDInputPowerClass;
+    // SDMinOutputPower, RationalNumberType
+    struct iso20_wpt_RationalNumberType SDMinOutputPower;
+    // SDMaxOutputPower, RationalNumberType
+    struct iso20_wpt_RationalNumberType SDMaxOutputPower;
+    // SDMaxGroundClearanceSupport, unsignedShort (base: unsignedInt)
+    uint16_t SDMaxGroundClearanceSupport;
+    // SDMinGroundClearanceSupport, unsignedShort (base: unsignedInt)
+    uint16_t SDMinGroundClearanceSupport;
+    // PDMinCoilCurrent, RationalNumberType
+    struct iso20_wpt_RationalNumberType PDMinCoilCurrent;
+    // PDMaxCoilCurrent, RationalNumberType
+    struct iso20_wpt_RationalNumberType PDMaxCoilCurrent;
+    // SDManufacturerSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
     struct {
-        char characters[iso20_wpt_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // SignatureProperty, SignaturePropertyType
-    struct iso20_wpt_SignaturePropertyType SignatureProperty;
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } SDManufacturerSpecificDataContainer;
+    unsigned int SDManufacturerSpecificDataContainer_isUsed:1;
+
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
+struct iso20_wpt_WPT_FinePositioningReqType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // EVProcessing, processingType (base: string)
+    iso20_wpt_processingType EVProcessing;
+    // EVResultCode, WPT_EVResultType (base: string)
+    iso20_wpt_WPT_EVResultType EVResultCode;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+    // WPT_LF_DataPackageList, WPT_LF_DataPackageListType
+    struct iso20_wpt_WPT_LF_DataPackageListType WPT_LF_DataPackageList;
+    unsigned int WPT_LF_DataPackageList_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
+struct iso20_wpt_WPT_FinePositioningResType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_wpt_responseCodeType ResponseCode;
+    // EVSEProcessing, processingType (base: string)
+    iso20_wpt_processingType EVSEProcessing;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+    // WPT_LF_DataPackageList, WPT_LF_DataPackageListType
+    struct iso20_wpt_WPT_LF_DataPackageListType WPT_LF_DataPackageList;
+    unsigned int WPT_LF_DataPackageList_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); EVDevicePairingMethodList, WPT_PairingMethodListType (1, 1); EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
+struct iso20_wpt_WPT_FinePositioningSetupReqType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // EVProcessing, processingType (base: string)
+    iso20_wpt_processingType EVProcessing;
+    // EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType
+    struct iso20_wpt_WPT_FinePositioningMethodListType EVDeviceFinePositioningMethodList;
+    // EVDevicePairingMethodList, WPT_PairingMethodListType
+    struct iso20_wpt_WPT_PairingMethodListType EVDevicePairingMethodList;
+    // EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType
+    struct iso20_wpt_WPT_AlignmentCheckMethodListType EVDeviceAlignmentCheckMethodList;
+    // NaturalOffset, unsignedShort (base: unsignedInt)
+    uint16_t NaturalOffset;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+    // LF_SystemSetupData, WPT_LF_SystemSetupDataType
+    struct iso20_wpt_WPT_LF_SystemSetupDataType LF_SystemSetupData;
+    unsigned int LF_SystemSetupData_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningSetupResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); PrimaryDevicePairingMethodList, WPT_PairingMethodListType (1, 1); PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
+struct iso20_wpt_WPT_FinePositioningSetupResType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_wpt_responseCodeType ResponseCode;
+    // PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType
+    struct iso20_wpt_WPT_FinePositioningMethodListType PrimaryDeviceFinePositioningMethodList;
+    // PrimaryDevicePairingMethodList, WPT_PairingMethodListType
+    struct iso20_wpt_WPT_PairingMethodListType PrimaryDevicePairingMethodList;
+    // PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType
+    struct iso20_wpt_WPT_AlignmentCheckMethodListType PrimaryDeviceAlignmentCheckMethodList;
+    // NaturalOffset, unsignedShort (base: unsignedInt)
+    uint16_t NaturalOffset;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+    // LF_SystemSetupData, WPT_LF_SystemSetupDataType
+    struct iso20_wpt_WPT_LF_SystemSetupDataType LF_SystemSetupData;
+    unsigned int LF_SystemSetupData_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
+struct iso20_wpt_WPT_PairingReqType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // EVProcessing, processingType (base: string)
+    iso20_wpt_processingType EVProcessing;
+    // ObservedIDCode, numericIDType (base: unsignedInt)
+    uint32_t ObservedIDCode;
+    unsigned int ObservedIDCode_isUsed:1;
+    // EVResultCode, WPT_EVResultType (base: string)
+    iso20_wpt_WPT_EVResultType EVResultCode;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); AlternativeSECCList, AlternativeSECCListType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
+struct iso20_wpt_WPT_PairingResType {
+    // Header, MessageHeaderType
+    struct iso20_wpt_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_wpt_responseCodeType ResponseCode;
+    // EVSEProcessing, processingType (base: string)
+    iso20_wpt_processingType EVSEProcessing;
+    // ObservedIDCode, numericIDType (base: unsignedInt)
+    uint32_t ObservedIDCode;
+    unsigned int ObservedIDCode_isUsed:1;
+    // AlternativeSECCList, AlternativeSECCListType
+    struct iso20_wpt_AlternativeSECCListType AlternativeSECCList;
+    unsigned int AlternativeSECCList_isUsed:1;
+    // VendorSpecificDataContainer, WPT_DataContainerType (base: base64Binary)
+    struct {
+        struct {
+            uint8_t bytes[iso20_wpt_WPT_DataContainerType_BYTES_SIZE];
+            uint16_t bytesLen;
+        } array[iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } VendorSpecificDataContainer;
+    unsigned int VendorSpecificDataContainer_isUsed:1;
+
 
 };
 
@@ -1843,73 +1723,73 @@ struct iso20_wpt_exiDocument {
 };
 
 // init for structs
-void init_iso20_wpt_exiDocument(struct iso20_wpt_exiDocument* exiDoc);
-void init_iso20_wpt_WPT_FinePositioningSetupReqType(struct iso20_wpt_WPT_FinePositioningSetupReqType* WPT_FinePositioningSetupReq);
-void init_iso20_wpt_WPT_FinePositioningSetupResType(struct iso20_wpt_WPT_FinePositioningSetupResType* WPT_FinePositioningSetupRes);
-void init_iso20_wpt_WPT_FinePositioningReqType(struct iso20_wpt_WPT_FinePositioningReqType* WPT_FinePositioningReq);
-void init_iso20_wpt_WPT_FinePositioningResType(struct iso20_wpt_WPT_FinePositioningResType* WPT_FinePositioningRes);
-void init_iso20_wpt_WPT_PairingReqType(struct iso20_wpt_WPT_PairingReqType* WPT_PairingReq);
-void init_iso20_wpt_WPT_PairingResType(struct iso20_wpt_WPT_PairingResType* WPT_PairingRes);
-void init_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType* WPT_ChargeParameterDiscoveryReq);
-void init_iso20_wpt_WPT_ChargeParameterDiscoveryResType(struct iso20_wpt_WPT_ChargeParameterDiscoveryResType* WPT_ChargeParameterDiscoveryRes);
+void init_iso20_wpt_AlternativeSECCListType(struct iso20_wpt_AlternativeSECCListType* AlternativeSECCListType);
+void init_iso20_wpt_AlternativeSECCType(struct iso20_wpt_AlternativeSECCType* AlternativeSECCType);
+void init_iso20_wpt_CLReqControlModeType(struct iso20_wpt_CLReqControlModeType* CLReqControlMode);
+void init_iso20_wpt_CLResControlModeType(struct iso20_wpt_CLResControlModeType* CLResControlMode);
+void init_iso20_wpt_CanonicalizationMethodType(struct iso20_wpt_CanonicalizationMethodType* CanonicalizationMethod);
+void init_iso20_wpt_DSAKeyValueType(struct iso20_wpt_DSAKeyValueType* DSAKeyValue);
+void init_iso20_wpt_DetailedCostType(struct iso20_wpt_DetailedCostType* DetailedCostType);
+void init_iso20_wpt_DetailedTaxType(struct iso20_wpt_DetailedTaxType* DetailedTaxType);
+void init_iso20_wpt_DigestMethodType(struct iso20_wpt_DigestMethodType* DigestMethod);
+void init_iso20_wpt_DisplayParametersType(struct iso20_wpt_DisplayParametersType* DisplayParametersType);
+void init_iso20_wpt_EVSEStatusType(struct iso20_wpt_EVSEStatusType* EVSEStatusType);
+void init_iso20_wpt_KeyInfoType(struct iso20_wpt_KeyInfoType* KeyInfo);
+void init_iso20_wpt_KeyValueType(struct iso20_wpt_KeyValueType* KeyValue);
+void init_iso20_wpt_ManifestType(struct iso20_wpt_ManifestType* Manifest);
+void init_iso20_wpt_MessageHeaderType(struct iso20_wpt_MessageHeaderType* MessageHeaderType);
+void init_iso20_wpt_MeterInfoType(struct iso20_wpt_MeterInfoType* MeterInfoType);
+void init_iso20_wpt_ObjectType(struct iso20_wpt_ObjectType* Object);
+void init_iso20_wpt_PGPDataType(struct iso20_wpt_PGPDataType* PGPData);
+void init_iso20_wpt_RSAKeyValueType(struct iso20_wpt_RSAKeyValueType* RSAKeyValue);
+void init_iso20_wpt_RationalNumberType(struct iso20_wpt_RationalNumberType* RationalNumberType);
+void init_iso20_wpt_ReceiptType(struct iso20_wpt_ReceiptType* ReceiptType);
+void init_iso20_wpt_ReferenceType(struct iso20_wpt_ReferenceType* Reference);
+void init_iso20_wpt_RetrievalMethodType(struct iso20_wpt_RetrievalMethodType* RetrievalMethod);
+void init_iso20_wpt_SPKIDataType(struct iso20_wpt_SPKIDataType* SPKIData);
+void init_iso20_wpt_SignatureMethodType(struct iso20_wpt_SignatureMethodType* SignatureMethod);
+void init_iso20_wpt_SignaturePropertiesType(struct iso20_wpt_SignaturePropertiesType* SignatureProperties);
+void init_iso20_wpt_SignaturePropertyType(struct iso20_wpt_SignaturePropertyType* SignatureProperty);
+void init_iso20_wpt_SignatureType(struct iso20_wpt_SignatureType* Signature);
+void init_iso20_wpt_SignatureValueType(struct iso20_wpt_SignatureValueType* SignatureValue);
+void init_iso20_wpt_SignedInfoType(struct iso20_wpt_SignedInfoType* SignedInfo);
+void init_iso20_wpt_TransformType(struct iso20_wpt_TransformType* Transform);
+void init_iso20_wpt_TransformsType(struct iso20_wpt_TransformsType* Transforms);
+void init_iso20_wpt_WPT_AlignmentCheckMethodListType(struct iso20_wpt_WPT_AlignmentCheckMethodListType* WPT_AlignmentCheckMethodListType);
 void init_iso20_wpt_WPT_AlignmentCheckReqType(struct iso20_wpt_WPT_AlignmentCheckReqType* WPT_AlignmentCheckReq);
 void init_iso20_wpt_WPT_AlignmentCheckResType(struct iso20_wpt_WPT_AlignmentCheckResType* WPT_AlignmentCheckRes);
 void init_iso20_wpt_WPT_ChargeLoopReqType(struct iso20_wpt_WPT_ChargeLoopReqType* WPT_ChargeLoopReq);
 void init_iso20_wpt_WPT_ChargeLoopResType(struct iso20_wpt_WPT_ChargeLoopResType* WPT_ChargeLoopRes);
-void init_iso20_wpt_CLReqControlModeType(struct iso20_wpt_CLReqControlModeType* CLReqControlMode);
-void init_iso20_wpt_CLResControlModeType(struct iso20_wpt_CLResControlModeType* CLResControlMode);
-void init_iso20_wpt_SignatureType(struct iso20_wpt_SignatureType* Signature);
-void init_iso20_wpt_SignatureValueType(struct iso20_wpt_SignatureValueType* SignatureValue);
-void init_iso20_wpt_SignedInfoType(struct iso20_wpt_SignedInfoType* SignedInfo);
-void init_iso20_wpt_CanonicalizationMethodType(struct iso20_wpt_CanonicalizationMethodType* CanonicalizationMethod);
-void init_iso20_wpt_SignatureMethodType(struct iso20_wpt_SignatureMethodType* SignatureMethod);
-void init_iso20_wpt_ReferenceType(struct iso20_wpt_ReferenceType* Reference);
-void init_iso20_wpt_TransformsType(struct iso20_wpt_TransformsType* Transforms);
-void init_iso20_wpt_TransformType(struct iso20_wpt_TransformType* Transform);
-void init_iso20_wpt_DigestMethodType(struct iso20_wpt_DigestMethodType* DigestMethod);
-void init_iso20_wpt_KeyInfoType(struct iso20_wpt_KeyInfoType* KeyInfo);
-void init_iso20_wpt_KeyValueType(struct iso20_wpt_KeyValueType* KeyValue);
-void init_iso20_wpt_RetrievalMethodType(struct iso20_wpt_RetrievalMethodType* RetrievalMethod);
-void init_iso20_wpt_X509DataType(struct iso20_wpt_X509DataType* X509Data);
-void init_iso20_wpt_PGPDataType(struct iso20_wpt_PGPDataType* PGPData);
-void init_iso20_wpt_SPKIDataType(struct iso20_wpt_SPKIDataType* SPKIData);
-void init_iso20_wpt_ObjectType(struct iso20_wpt_ObjectType* Object);
-void init_iso20_wpt_ManifestType(struct iso20_wpt_ManifestType* Manifest);
-void init_iso20_wpt_SignaturePropertiesType(struct iso20_wpt_SignaturePropertiesType* SignatureProperties);
-void init_iso20_wpt_SignaturePropertyType(struct iso20_wpt_SignaturePropertyType* SignatureProperty);
-void init_iso20_wpt_DSAKeyValueType(struct iso20_wpt_DSAKeyValueType* DSAKeyValue);
-void init_iso20_wpt_RSAKeyValueType(struct iso20_wpt_RSAKeyValueType* RSAKeyValue);
-void init_iso20_wpt_WPT_LF_RxRSSIType(struct iso20_wpt_WPT_LF_RxRSSIType* WPT_LF_RxRSSIType);
-void init_iso20_wpt_X509IssuerSerialType(struct iso20_wpt_X509IssuerSerialType* X509IssuerSerialType);
-void init_iso20_wpt_WPT_LF_RxRSSIListType(struct iso20_wpt_WPT_LF_RxRSSIListType* WPT_LF_RxRSSIListType);
-void init_iso20_wpt_WPT_TxRxPulseOrderType(struct iso20_wpt_WPT_TxRxPulseOrderType* WPT_TxRxPulseOrderType);
-void init_iso20_wpt_WPT_LF_TxDataType(struct iso20_wpt_WPT_LF_TxDataType* WPT_LF_TxDataType);
-void init_iso20_wpt_WPT_LF_RxDataType(struct iso20_wpt_WPT_LF_RxDataType* WPT_LF_RxDataType);
+void init_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType* WPT_ChargeParameterDiscoveryReq);
+void init_iso20_wpt_WPT_ChargeParameterDiscoveryResType(struct iso20_wpt_WPT_ChargeParameterDiscoveryResType* WPT_ChargeParameterDiscoveryRes);
 void init_iso20_wpt_WPT_CoordinateXYZType(struct iso20_wpt_WPT_CoordinateXYZType* WPT_CoordinateXYZType);
-void init_iso20_wpt_RationalNumberType(struct iso20_wpt_RationalNumberType* RationalNumberType);
-void init_iso20_wpt_WPT_LF_TxDataListType(struct iso20_wpt_WPT_LF_TxDataListType* WPT_LF_TxDataListType);
-void init_iso20_wpt_WPT_TxRxSpecDataType(struct iso20_wpt_WPT_TxRxSpecDataType* WPT_TxRxSpecDataType);
-void init_iso20_wpt_WPT_LF_RxDataListType(struct iso20_wpt_WPT_LF_RxDataListType* WPT_LF_RxDataListType);
-void init_iso20_wpt_WPT_TxRxPackageSpecDataType(struct iso20_wpt_WPT_TxRxPackageSpecDataType* WPT_TxRxPackageSpecDataType);
-void init_iso20_wpt_WPT_LF_TransmitterDataType(struct iso20_wpt_WPT_LF_TransmitterDataType* WPT_LF_TransmitterDataType);
-void init_iso20_wpt_AlternativeSECCType(struct iso20_wpt_AlternativeSECCType* AlternativeSECCType);
-void init_iso20_wpt_WPT_LF_ReceiverDataType(struct iso20_wpt_WPT_LF_ReceiverDataType* WPT_LF_ReceiverDataType);
-void init_iso20_wpt_WPT_LF_DataPackageType(struct iso20_wpt_WPT_LF_DataPackageType* WPT_LF_DataPackageType);
-void init_iso20_wpt_DetailedCostType(struct iso20_wpt_DetailedCostType* DetailedCostType);
-void init_iso20_wpt_DetailedTaxType(struct iso20_wpt_DetailedTaxType* DetailedTaxType);
-void init_iso20_wpt_MessageHeaderType(struct iso20_wpt_MessageHeaderType* MessageHeaderType);
-void init_iso20_wpt_DisplayParametersType(struct iso20_wpt_DisplayParametersType* DisplayParametersType);
-void init_iso20_wpt_WPT_FinePositioningMethodListType(struct iso20_wpt_WPT_FinePositioningMethodListType* WPT_FinePositioningMethodListType);
-void init_iso20_wpt_EVSEStatusType(struct iso20_wpt_EVSEStatusType* EVSEStatusType);
-void init_iso20_wpt_WPT_PairingMethodListType(struct iso20_wpt_WPT_PairingMethodListType* WPT_PairingMethodListType);
-void init_iso20_wpt_MeterInfoType(struct iso20_wpt_MeterInfoType* MeterInfoType);
-void init_iso20_wpt_WPT_AlignmentCheckMethodListType(struct iso20_wpt_WPT_AlignmentCheckMethodListType* WPT_AlignmentCheckMethodListType);
-void init_iso20_wpt_WPT_LF_DataPackageListType(struct iso20_wpt_WPT_LF_DataPackageListType* WPT_LF_DataPackageListType);
-void init_iso20_wpt_AlternativeSECCListType(struct iso20_wpt_AlternativeSECCListType* AlternativeSECCListType);
-void init_iso20_wpt_ReceiptType(struct iso20_wpt_ReceiptType* ReceiptType);
-void init_iso20_wpt_WPT_LF_SystemSetupDataType(struct iso20_wpt_WPT_LF_SystemSetupDataType* WPT_LF_SystemSetupDataType);
 void init_iso20_wpt_WPT_EVPCPowerControlParameterType(struct iso20_wpt_WPT_EVPCPowerControlParameterType* WPT_EVPCPowerControlParameterType);
+void init_iso20_wpt_WPT_FinePositioningMethodListType(struct iso20_wpt_WPT_FinePositioningMethodListType* WPT_FinePositioningMethodListType);
+void init_iso20_wpt_WPT_FinePositioningReqType(struct iso20_wpt_WPT_FinePositioningReqType* WPT_FinePositioningReq);
+void init_iso20_wpt_WPT_FinePositioningResType(struct iso20_wpt_WPT_FinePositioningResType* WPT_FinePositioningRes);
+void init_iso20_wpt_WPT_FinePositioningSetupReqType(struct iso20_wpt_WPT_FinePositioningSetupReqType* WPT_FinePositioningSetupReq);
+void init_iso20_wpt_WPT_FinePositioningSetupResType(struct iso20_wpt_WPT_FinePositioningSetupResType* WPT_FinePositioningSetupRes);
+void init_iso20_wpt_WPT_LF_DataPackageListType(struct iso20_wpt_WPT_LF_DataPackageListType* WPT_LF_DataPackageListType);
+void init_iso20_wpt_WPT_LF_DataPackageType(struct iso20_wpt_WPT_LF_DataPackageType* WPT_LF_DataPackageType);
+void init_iso20_wpt_WPT_LF_ReceiverDataType(struct iso20_wpt_WPT_LF_ReceiverDataType* WPT_LF_ReceiverDataType);
+void init_iso20_wpt_WPT_LF_RxDataListType(struct iso20_wpt_WPT_LF_RxDataListType* WPT_LF_RxDataListType);
+void init_iso20_wpt_WPT_LF_RxDataType(struct iso20_wpt_WPT_LF_RxDataType* WPT_LF_RxDataType);
+void init_iso20_wpt_WPT_LF_RxRSSIListType(struct iso20_wpt_WPT_LF_RxRSSIListType* WPT_LF_RxRSSIListType);
+void init_iso20_wpt_WPT_LF_RxRSSIType(struct iso20_wpt_WPT_LF_RxRSSIType* WPT_LF_RxRSSIType);
+void init_iso20_wpt_WPT_LF_SystemSetupDataType(struct iso20_wpt_WPT_LF_SystemSetupDataType* WPT_LF_SystemSetupDataType);
+void init_iso20_wpt_WPT_LF_TransmitterDataType(struct iso20_wpt_WPT_LF_TransmitterDataType* WPT_LF_TransmitterDataType);
+void init_iso20_wpt_WPT_LF_TxDataListType(struct iso20_wpt_WPT_LF_TxDataListType* WPT_LF_TxDataListType);
+void init_iso20_wpt_WPT_LF_TxDataType(struct iso20_wpt_WPT_LF_TxDataType* WPT_LF_TxDataType);
+void init_iso20_wpt_WPT_PairingMethodListType(struct iso20_wpt_WPT_PairingMethodListType* WPT_PairingMethodListType);
+void init_iso20_wpt_WPT_PairingReqType(struct iso20_wpt_WPT_PairingReqType* WPT_PairingReq);
+void init_iso20_wpt_WPT_PairingResType(struct iso20_wpt_WPT_PairingResType* WPT_PairingRes);
 void init_iso20_wpt_WPT_SPCPowerControlParameterType(struct iso20_wpt_WPT_SPCPowerControlParameterType* WPT_SPCPowerControlParameterType);
+void init_iso20_wpt_WPT_TxRxPackageSpecDataType(struct iso20_wpt_WPT_TxRxPackageSpecDataType* WPT_TxRxPackageSpecDataType);
+void init_iso20_wpt_WPT_TxRxPulseOrderType(struct iso20_wpt_WPT_TxRxPulseOrderType* WPT_TxRxPulseOrderType);
+void init_iso20_wpt_WPT_TxRxSpecDataType(struct iso20_wpt_WPT_TxRxSpecDataType* WPT_TxRxSpecDataType);
+void init_iso20_wpt_X509DataType(struct iso20_wpt_X509DataType* X509Data);
+void init_iso20_wpt_X509IssuerSerialType(struct iso20_wpt_X509IssuerSerialType* X509IssuerSerialType);
+void init_iso20_wpt_exiDocument(struct iso20_wpt_exiDocument* exiDoc);
 
 
 #ifdef __cplusplus

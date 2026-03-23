@@ -34,27 +34,27 @@ extern "C" {
 
 
 #define iso20_dc_Algorithm_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_anyType_BYTES_SIZE (4)
-#define iso20_dc_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_dc_CryptoBinary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_dc_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_Id_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_Type_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_URI_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_DetailedTaxType_10_ARRAY_SIZE (10)
 #define iso20_dc_DigestValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_dc_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_dc_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_Id_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
+#define iso20_dc_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define iso20_dc_ReferenceType_4_ARRAY_SIZE (4)
 #define iso20_dc_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
-#define iso20_dc_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_sessionIDType_BYTES_SIZE (8)
 #define iso20_dc_Target_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define iso20_dc_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
+#define iso20_dc_Type_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_URI_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_X509IssuerName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_XPath_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define iso20_dc_anyType_BYTES_SIZE (4)
+#define iso20_dc_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
 #define iso20_dc_meterSignatureType_BYTES_SIZE (64)
-#define iso20_dc_DetailedTaxType_10_ARRAY_SIZE (10)
+#define iso20_dc_sessionIDType_BYTES_SIZE (8)
 
 
 // enum for function numbers
@@ -119,16 +119,14 @@ typedef enum {
     iso20_dc_evseNotificationType_ServiceRenegotiation = 4,
     iso20_dc_evseNotificationType_MeteringConfirmation = 5
 } iso20_dc_evseNotificationType;
-static inline const char* get_enum_val_iso20_dc_evseNotificationType_reverse(int i)
-{
-    if (i == 0) { return "Pause"; }
-    if (i == 1) { return "ExitStandby"; }
-    if (i == 2) { return "Terminate"; }
-    if (i == 3) { return "ScheduleRenegotiation"; }
-    if (i == 4) { return "ServiceRenegotiation"; }
-    if (i == 5) { return "MeteringConfirmation"; }
-    return "ENUM DECODING ERROR";
-}
+
+// Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    iso20_dc_processingType_Finished = 0,
+    iso20_dc_processingType_Ongoing = 1,
+    iso20_dc_processingType_Ongoing_WaitingForCustomerInteraction = 2
+} iso20_dc_processingType;
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -174,65 +172,6 @@ typedef enum {
     iso20_dc_responseCodeType_FAILED_UnknownSession = 38,
     iso20_dc_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_dc_responseCodeType;
-static inline const char* get_enum_val_iso20_dc_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
-
-// Element: definition=enum; name={urn:iso:std:iso:15118:-20:DC}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    iso20_dc_processingType_Finished = 0,
-    iso20_dc_processingType_Ongoing = 1,
-    iso20_dc_processingType_Ongoing_WaitingForCustomerInteraction = 2
-} iso20_dc_processingType;
-static inline const char* get_enum_val_iso20_dc_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;
@@ -256,15 +195,6 @@ struct iso20_dc_TransformType {
         uint16_t charactersLen;
     } XPath;
     unsigned int XPath_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1) (original max unbounded);
-struct iso20_dc_TransformsType {
-    // Transform, TransformType
-    struct iso20_dc_TransformType Transform;
 
 };
 
@@ -323,20 +253,6 @@ struct iso20_dc_DSAKeyValueType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
-struct iso20_dc_X509IssuerSerialType {
-    // X509IssuerName, string
-    struct {
-        char characters[iso20_dc_X509IssuerName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509IssuerName;
-    // X509SerialNumber, integer (base: decimal)
-    exi_signed_t X509SerialNumber;
-
-};
-
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DigestMethod; type={http://www.w3.org/2000/09/xmldsig#}DigestMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -375,6 +291,29 @@ struct iso20_dc_RSAKeyValueType {
 
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
+struct iso20_dc_TransformsType {
+    // Transform, TransformType
+    struct iso20_dc_TransformType Transform;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial; type={http://www.w3.org/2000/09/xmldsig#}X509IssuerSerialType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: X509IssuerName, string (1, 1); X509SerialNumber, integer (1, 1);
+struct iso20_dc_X509IssuerSerialType {
+    // X509IssuerName, string
+    struct {
+        char characters[iso20_dc_X509IssuerName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509IssuerName;
+    // X509SerialNumber, integer (base: decimal)
+    exi_signed_t X509SerialNumber;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod; type={http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); ANY, anyType (0, 1);
@@ -384,28 +323,6 @@ struct iso20_dc_CanonicalizationMethodType {
         char characters[iso20_dc_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
     } Algorithm;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
-//          abstract=False; final=False;
-// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
-struct iso20_dc_SignatureMethodType {
-    // Attribute: Algorithm, anyURI
-    struct {
-        char characters[iso20_dc_Algorithm_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Algorithm;
-    // HMACOutputLength, HMACOutputLengthType (base: integer)
-    exi_signed_t HMACOutputLength;
-    unsigned int HMACOutputLength_isUsed:1;
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
@@ -426,108 +343,6 @@ struct iso20_dc_KeyValueType {
     // RSAKeyValue, RSAKeyValueType
     struct iso20_dc_RSAKeyValueType RSAKeyValue;
     unsigned int RSAKeyValue_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
-struct iso20_dc_ReferenceType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[iso20_dc_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_dc_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_dc_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_dc_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-    // DigestMethod, DigestMethodType
-    struct iso20_dc_DigestMethodType DigestMethod;
-    // DigestValue, DigestValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_dc_DigestValueType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DigestValue;
-
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
-struct iso20_dc_RetrievalMethodType {
-    // Attribute: Type, anyURI
-    struct {
-        char characters[iso20_dc_Type_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Type;
-    unsigned int Type_isUsed:1;
-    // Attribute: URI, anyURI
-    struct {
-        char characters[iso20_dc_URI_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } URI;
-    unsigned int URI_isUsed:1;
-    // Transforms, TransformsType
-    struct iso20_dc_TransformsType Transforms;
-    unsigned int Transforms_isUsed:1;
-
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
-struct iso20_dc_X509DataType {
-    // X509IssuerSerial, X509IssuerSerialType
-    struct iso20_dc_X509IssuerSerialType X509IssuerSerial;
-    unsigned int X509IssuerSerial_isUsed:1;
-    // X509SKI, base64Binary
-    struct {
-        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509SKI;
-    unsigned int X509SKI_isUsed:1;
-
-    // X509SubjectName, string
-    struct {
-        char characters[iso20_dc_X509SubjectName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } X509SubjectName;
-    unsigned int X509SubjectName_isUsed:1;
-    // X509Certificate, base64Binary
-    struct {
-        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509Certificate;
-    unsigned int X509Certificate_isUsed:1;
-
-    // X509CRL, base64Binary
-    struct {
-        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
-        uint16_t bytesLen;
-    } X509CRL;
-    unsigned int X509CRL_isUsed:1;
-
     // ANY, anyType (base: base64Binary)
     struct {
         uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
@@ -592,6 +407,64 @@ struct iso20_dc_PGPDataType {
     };
 };
 
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
+struct iso20_dc_ReferenceType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_dc_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_dc_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_dc_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_dc_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+    // DigestMethod, DigestMethodType
+    struct iso20_dc_DigestMethodType DigestMethod;
+    // DigestValue, DigestValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_dc_DigestValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DigestValue;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RetrievalMethod; type={http://www.w3.org/2000/09/xmldsig#}RetrievalMethodType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
+struct iso20_dc_RetrievalMethodType {
+    // Attribute: Type, anyURI
+    struct {
+        char characters[iso20_dc_Type_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Type;
+    unsigned int Type_isUsed:1;
+    // Attribute: URI, anyURI
+    struct {
+        char characters[iso20_dc_URI_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } URI;
+    unsigned int URI_isUsed:1;
+    // Transforms, TransformsType
+    struct iso20_dc_TransformsType Transforms;
+    unsigned int Transforms_isUsed:1;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SPKIData; type={http://www.w3.org/2000/09/xmldsig#}SPKIDataType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
@@ -612,42 +485,68 @@ struct iso20_dc_SPKIDataType {
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
-struct iso20_dc_SignedInfoType {
-    // Attribute: Id, ID (base: NCName)
+// Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
+struct iso20_dc_SignatureMethodType {
+    // Attribute: Algorithm, anyURI
     struct {
-        char characters[iso20_dc_Id_CHARACTER_SIZE];
+        char characters[iso20_dc_Algorithm_CHARACTER_SIZE];
         uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CanonicalizationMethod, CanonicalizationMethodType
-    struct iso20_dc_CanonicalizationMethodType CanonicalizationMethod;
-    // SignatureMethod, SignatureMethodType
-    struct iso20_dc_SignatureMethodType SignatureMethod;
-    // Reference, ReferenceType
+    } Algorithm;
+    // HMACOutputLength, HMACOutputLengthType (base: integer)
+    exi_signed_t HMACOutputLength;
+    unsigned int HMACOutputLength_isUsed:1;
+    // ANY, anyType (base: base64Binary)
     struct {
-        struct iso20_dc_ReferenceType array[iso20_dc_ReferenceType_4_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } Reference;
+        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
+
+
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
-struct iso20_dc_SignatureValueType {
-    // Attribute: Id, ID (base: NCName)
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}X509Data; type={http://www.w3.org/2000/09/xmldsig#}X509DataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
+struct iso20_dc_X509DataType {
+    // X509IssuerSerial, X509IssuerSerialType
+    struct iso20_dc_X509IssuerSerialType X509IssuerSerial;
+    unsigned int X509IssuerSerial_isUsed:1;
+    // X509SKI, base64Binary
     struct {
-        char characters[iso20_dc_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // CONTENT, SignatureValueType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_dc_SignatureValueType_BYTES_SIZE];
+        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
         uint16_t bytesLen;
-    } CONTENT;
+    } X509SKI;
+    unsigned int X509SKI_isUsed:1;
+
+    // X509SubjectName, string
+    struct {
+        char characters[iso20_dc_X509SubjectName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } X509SubjectName;
+    unsigned int X509SubjectName_isUsed:1;
+    // X509Certificate, base64Binary
+    struct {
+        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509Certificate;
+    unsigned int X509Certificate_isUsed:1;
+
+    // X509CRL, base64Binary
+    struct {
+        uint8_t bytes[iso20_dc_base64Binary_BYTES_SIZE];
+        uint16_t bytesLen;
+    } X509CRL;
+    unsigned int X509CRL_isUsed:1;
+
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
 
 };
@@ -731,7 +630,47 @@ struct iso20_dc_ObjectType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}EVMaximumChargePower; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
+struct iso20_dc_SignatureValueType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_dc_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CONTENT, SignatureValueType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_dc_SignatureValueType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } CONTENT;
+
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
+struct iso20_dc_SignedInfoType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_dc_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // CanonicalizationMethod, CanonicalizationMethodType
+    struct iso20_dc_CanonicalizationMethodType CanonicalizationMethod;
+    // SignatureMethod, SignatureMethodType
+    struct iso20_dc_SignatureMethodType SignatureMethod;
+    // Reference, ReferenceType
+    struct {
+        struct iso20_dc_ReferenceType array[iso20_dc_ReferenceType_4_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } Reference;
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}EVMaximumChargePower; type={urn:iso:std:iso:15118:-20:CommonTypes}RationalNumberType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Exponent, byte (1, 1); Value, short (1, 1);
 struct iso20_dc_RationalNumberType {
@@ -787,47 +726,18 @@ struct iso20_dc_DetailedTaxType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Header; type={urn:iso:std:iso:15118:-20:CommonTypes}MessageHeaderType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlModeType; base type=; content type=empty;
 //          abstract=False; final=False;
-// Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
-struct iso20_dc_MessageHeaderType {
-    // SessionID, sessionIDType (base: hexBinary)
-    struct {
-        uint8_t bytes[iso20_dc_sessionIDType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } SessionID;
-
-    // TimeStamp, unsignedLong (base: nonNegativeInteger)
-    uint64_t TimeStamp;
-    // Signature, SignatureType
-    struct iso20_dc_SignatureType Signature;
-    unsigned int Signature_isUsed:1;
-
+// Particle: 
+struct iso20_dc_CLReqControlModeType {
+    int _unused;
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperty; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertyType; base type=; content type=mixed;
-//          abstract=False; final=False; choice=True;
-// Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
-struct iso20_dc_SignaturePropertyType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[iso20_dc_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: Target, anyURI
-    struct {
-        char characters[iso20_dc_Target_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Target;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlModeType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct iso20_dc_CLResControlModeType {
+    int _unused;
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CPDReqEnergyTransferMode; type={urn:iso:std:iso:15118:-20:DC}DC_CPDReqEnergyTransferModeType; base type=; content type=ELEMENT-ONLY;
@@ -849,6 +759,28 @@ struct iso20_dc_DC_CPDReqEnergyTransferModeType {
     // TargetSOC, percentValueType (base: byte)
     int8_t TargetSOC;
     unsigned int TargetSOC_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CPDResEnergyTransferMode; type={urn:iso:std:iso:15118:-20:DC}DC_CPDResEnergyTransferModeType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMinimumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1); EVSEMinimumVoltage, RationalNumberType (1, 1); EVSEPowerRampLimitation, RationalNumberType (0, 1);
+struct iso20_dc_DC_CPDResEnergyTransferModeType {
+    // EVSEMaximumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumChargePower;
+    // EVSEMinimumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumChargePower;
+    // EVSEMaximumChargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumChargeCurrent;
+    // EVSEMinimumChargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumChargeCurrent;
+    // EVSEMaximumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumVoltage;
+    // EVSEMinimumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumVoltage;
+    // EVSEPowerRampLimitation, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEPowerRampLimitation;
+    unsigned int EVSEPowerRampLimitation_isUsed:1;
 
 };
 
@@ -889,25 +821,56 @@ struct iso20_dc_DisplayParametersType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CPDResEnergyTransferMode; type={urn:iso:std:iso:15118:-20:DC}DC_CPDResEnergyTransferModeType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMinimumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1); EVSEMinimumVoltage, RationalNumberType (1, 1); EVSEPowerRampLimitation, RationalNumberType (0, 1);
-struct iso20_dc_DC_CPDResEnergyTransferModeType {
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1);
+struct iso20_dc_Dynamic_DC_CLReqControlModeType {
+    // DepartureTime, unsignedInt (base: unsignedLong)
+    uint32_t DepartureTime;
+    unsigned int DepartureTime_isUsed:1;
+    // EVTargetEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVTargetEnergyRequest;
+    // EVMaximumEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumEnergyRequest;
+    // EVMinimumEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumEnergyRequest;
+    // EVMaximumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumChargePower;
+    // EVMinimumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumChargePower;
+    // EVMaximumChargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumChargeCurrent;
+    // EVMaximumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumVoltage;
+    // EVMinimumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumVoltage;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLResControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLResControlModeType; base type=Dynamic_CLResControlModeType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1);
+struct iso20_dc_Dynamic_DC_CLResControlModeType {
+    // DepartureTime, unsignedInt (base: unsignedLong)
+    uint32_t DepartureTime;
+    unsigned int DepartureTime_isUsed:1;
+    // MinimumSOC, percentValueType (base: byte)
+    int8_t MinimumSOC;
+    unsigned int MinimumSOC_isUsed:1;
+    // TargetSOC, percentValueType (base: byte)
+    int8_t TargetSOC;
+    unsigned int TargetSOC_isUsed:1;
+    // AckMaxDelay, unsignedShort (base: unsignedInt)
+    uint16_t AckMaxDelay;
+    unsigned int AckMaxDelay_isUsed:1;
     // EVSEMaximumChargePower, RationalNumberType
     struct iso20_dc_RationalNumberType EVSEMaximumChargePower;
     // EVSEMinimumChargePower, RationalNumberType
     struct iso20_dc_RationalNumberType EVSEMinimumChargePower;
     // EVSEMaximumChargeCurrent, RationalNumberType
     struct iso20_dc_RationalNumberType EVSEMaximumChargeCurrent;
-    // EVSEMinimumChargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumChargeCurrent;
     // EVSEMaximumVoltage, RationalNumberType
     struct iso20_dc_RationalNumberType EVSEMaximumVoltage;
-    // EVSEMinimumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumVoltage;
-    // EVSEPowerRampLimitation, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEPowerRampLimitation;
-    unsigned int EVSEPowerRampLimitation_isUsed:1;
 
 };
 
@@ -919,6 +882,24 @@ struct iso20_dc_EVSEStatusType {
     uint16_t NotificationMaxDelay;
     // EVSENotification, evseNotificationType (base: string)
     iso20_dc_evseNotificationType EVSENotification;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Header; type={urn:iso:std:iso:15118:-20:CommonTypes}MessageHeaderType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
+struct iso20_dc_MessageHeaderType {
+    // SessionID, sessionIDType (base: hexBinary)
+    struct {
+        uint8_t bytes[iso20_dc_sessionIDType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } SessionID;
+
+    // TimeStamp, unsignedLong (base: nonNegativeInteger)
+    uint64_t TimeStamp;
+    // Signature, SignatureType
+    struct iso20_dc_SignatureType Signature;
+    unsigned int Signature_isUsed:1;
 
 };
 
@@ -958,30 +939,29 @@ struct iso20_dc_MeterInfoType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1);
-struct iso20_dc_Dynamic_DC_CLReqControlModeType {
-    // DepartureTime, unsignedInt (base: unsignedLong)
-    uint32_t DepartureTime;
-    unsigned int DepartureTime_isUsed:1;
-    // EVTargetEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVTargetEnergyRequest;
-    // EVMaximumEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumEnergyRequest;
-    // EVMinimumEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumEnergyRequest;
-    // EVMaximumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumChargePower;
-    // EVMinimumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumChargePower;
-    // EVMaximumChargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumChargeCurrent;
-    // EVMaximumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumVoltage;
-    // EVMinimumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumVoltage;
-
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Receipt; type={urn:iso:std:iso:15118:-20:CommonTypes}ReceiptType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
+struct iso20_dc_ReceiptType {
+    // TimeAnchor, unsignedLong (base: nonNegativeInteger)
+    uint64_t TimeAnchor;
+    // EnergyCosts, DetailedCostType
+    struct iso20_dc_DetailedCostType EnergyCosts;
+    unsigned int EnergyCosts_isUsed:1;
+    // OccupancyCosts, DetailedCostType
+    struct iso20_dc_DetailedCostType OccupancyCosts;
+    unsigned int OccupancyCosts_isUsed:1;
+    // AdditionalServicesCosts, DetailedCostType
+    struct iso20_dc_DetailedCostType AdditionalServicesCosts;
+    unsigned int AdditionalServicesCosts_isUsed:1;
+    // OverstayCosts, DetailedCostType
+    struct iso20_dc_DetailedCostType OverstayCosts;
+    unsigned int OverstayCosts_isUsed:1;
+    // TaxCosts, DetailedTaxType
+    struct {
+        struct iso20_dc_DetailedTaxType array[iso20_dc_DetailedTaxType_10_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } TaxCosts;
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
@@ -1019,38 +999,6 @@ struct iso20_dc_Scheduled_DC_CLReqControlModeType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLReqControlModeType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct iso20_dc_CLReqControlModeType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}Receipt; type={urn:iso:std:iso:15118:-20:CommonTypes}ReceiptType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
-struct iso20_dc_ReceiptType {
-    // TimeAnchor, unsignedLong (base: nonNegativeInteger)
-    uint64_t TimeAnchor;
-    // EnergyCosts, DetailedCostType
-    struct iso20_dc_DetailedCostType EnergyCosts;
-    unsigned int EnergyCosts_isUsed:1;
-    // OccupancyCosts, DetailedCostType
-    struct iso20_dc_DetailedCostType OccupancyCosts;
-    unsigned int OccupancyCosts_isUsed:1;
-    // AdditionalServicesCosts, DetailedCostType
-    struct iso20_dc_DetailedCostType AdditionalServicesCosts;
-    unsigned int AdditionalServicesCosts_isUsed:1;
-    // OverstayCosts, DetailedCostType
-    struct iso20_dc_DetailedCostType OverstayCosts;
-    unsigned int OverstayCosts_isUsed:1;
-    // TaxCosts, DetailedTaxType
-    struct {
-        struct iso20_dc_DetailedTaxType array[iso20_dc_DetailedTaxType_10_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } TaxCosts;
-};
-
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLResControlMode; type={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLResControlModeType; base type=Scheduled_CLResControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSEMaximumChargePower, RationalNumberType (0, 1); EVSEMinimumChargePower, RationalNumberType (0, 1); EVSEMaximumChargeCurrent, RationalNumberType (0, 1); EVSEMaximumVoltage, RationalNumberType (0, 1);
@@ -1070,111 +1018,28 @@ struct iso20_dc_Scheduled_DC_CLResControlModeType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLResControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLResControlModeType; base type=Dynamic_CLResControlModeType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1);
-struct iso20_dc_Dynamic_DC_CLResControlModeType {
-    // DepartureTime, unsignedInt (base: unsignedLong)
-    uint32_t DepartureTime;
-    unsigned int DepartureTime_isUsed:1;
-    // MinimumSOC, percentValueType (base: byte)
-    int8_t MinimumSOC;
-    unsigned int MinimumSOC_isUsed:1;
-    // TargetSOC, percentValueType (base: byte)
-    int8_t TargetSOC;
-    unsigned int TargetSOC_isUsed:1;
-    // AckMaxDelay, unsignedShort (base: unsignedInt)
-    uint16_t AckMaxDelay;
-    unsigned int AckMaxDelay_isUsed:1;
-    // EVSEMaximumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumChargePower;
-    // EVSEMinimumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumChargePower;
-    // EVSEMaximumChargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumChargeCurrent;
-    // EVSEMaximumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumVoltage;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperty; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertyType; base type=; content type=mixed;
+//          abstract=False; final=False; choice=True;
+// Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
+struct iso20_dc_SignaturePropertyType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[iso20_dc_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: Target, anyURI
+    struct {
+        char characters[iso20_dc_Target_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Target;
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[iso20_dc_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
 
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlMode; type={urn:iso:std:iso:15118:-20:CommonTypes}CLResControlModeType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct iso20_dc_CLResControlModeType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CableCheckReq; type={urn:iso:std:iso:15118:-20:DC}DC_CableCheckReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1);
-struct iso20_dc_DC_CableCheckReqType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CableCheckRes; type={urn:iso:std:iso:15118:-20:DC}DC_CableCheckResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1);
-struct iso20_dc_DC_CableCheckResType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_dc_responseCodeType ResponseCode;
-    // EVSEProcessing, processingType (base: string)
-    iso20_dc_processingType EVSEProcessing;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_PreChargeReq; type={urn:iso:std:iso:15118:-20:DC}DC_PreChargeReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVPresentVoltage, RationalNumberType (1, 1); EVTargetVoltage, RationalNumberType (1, 1);
-struct iso20_dc_DC_PreChargeReqType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // EVProcessing, processingType (base: string)
-    iso20_dc_processingType EVProcessing;
-    // EVPresentVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVPresentVoltage;
-    // EVTargetVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVTargetVoltage;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_PreChargeRes; type={urn:iso:std:iso:15118:-20:DC}DC_PreChargeResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEPresentVoltage, RationalNumberType (1, 1);
-struct iso20_dc_DC_PreChargeResType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_dc_responseCodeType ResponseCode;
-    // EVSEPresentVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEPresentVoltage;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionReq; type={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1);
-struct iso20_dc_DC_WeldingDetectionReqType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // EVProcessing, processingType (base: string)
-    iso20_dc_processingType EVProcessing;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionRes; type={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEPresentVoltage, RationalNumberType (1, 1);
-struct iso20_dc_DC_WeldingDetectionResType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_dc_responseCodeType ResponseCode;
-    // EVSEPresentVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEPresentVoltage;
 
 };
 
@@ -1208,21 +1073,6 @@ struct iso20_dc_BPT_DC_CPDReqEnergyTransferModeType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryReq; type={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryReqType; base type=ChargeParameterDiscoveryReqType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); BPT_DC_CPDReqEnergyTransferMode, BPT_DC_CPDReqEnergyTransferModeType (0, 1); DC_CPDReqEnergyTransferMode, DC_CPDReqEnergyTransferModeType (0, 1);
-struct iso20_dc_DC_ChargeParameterDiscoveryReqType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // BPT_DC_CPDReqEnergyTransferMode, BPT_DC_CPDReqEnergyTransferModeType (base: DC_CPDReqEnergyTransferModeType)
-    struct iso20_dc_BPT_DC_CPDReqEnergyTransferModeType BPT_DC_CPDReqEnergyTransferMode;
-    unsigned int BPT_DC_CPDReqEnergyTransferMode_isUsed:1;
-    // DC_CPDReqEnergyTransferMode, DC_CPDReqEnergyTransferModeType
-    struct iso20_dc_DC_CPDReqEnergyTransferModeType DC_CPDReqEnergyTransferMode;
-    unsigned int DC_CPDReqEnergyTransferMode_isUsed:1;
-
-};
-
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}BPT_DC_CPDResEnergyTransferMode; type={urn:iso:std:iso:15118:-20:DC}BPT_DC_CPDResEnergyTransferModeType; base type=DC_CPDResEnergyTransferModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMinimumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1); EVSEMinimumVoltage, RationalNumberType (1, 1); EVSEPowerRampLimitation, RationalNumberType (0, 1); EVSEMaximumDischargePower, RationalNumberType (1, 1); EVSEMinimumDischargePower, RationalNumberType (1, 1); EVSEMaximumDischargeCurrent, RationalNumberType (1, 1); EVSEMinimumDischargeCurrent, RationalNumberType (1, 1);
@@ -1253,20 +1103,76 @@ struct iso20_dc_BPT_DC_CPDResEnergyTransferModeType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryRes; type={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryResType; base type=ChargeParameterDiscoveryResType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLReqControlModeType; base type=Dynamic_DC_CLReqControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); BPT_DC_CPDResEnergyTransferMode, BPT_DC_CPDResEnergyTransferModeType (0, 1); DC_CPDResEnergyTransferMode, DC_CPDResEnergyTransferModeType (0, 1);
-struct iso20_dc_DC_ChargeParameterDiscoveryResType {
-    // Header, MessageHeaderType
-    struct iso20_dc_MessageHeaderType Header;
-    // ResponseCode, responseCodeType (base: string)
-    iso20_dc_responseCodeType ResponseCode;
-    // BPT_DC_CPDResEnergyTransferMode, BPT_DC_CPDResEnergyTransferModeType (base: DC_CPDResEnergyTransferModeType)
-    struct iso20_dc_BPT_DC_CPDResEnergyTransferModeType BPT_DC_CPDResEnergyTransferMode;
-    unsigned int BPT_DC_CPDResEnergyTransferMode_isUsed:1;
-    // DC_CPDResEnergyTransferMode, DC_CPDResEnergyTransferModeType
-    struct iso20_dc_DC_CPDResEnergyTransferModeType DC_CPDResEnergyTransferMode;
-    unsigned int DC_CPDResEnergyTransferMode_isUsed:1;
+// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1); EVMaximumDischargePower, RationalNumberType (1, 1); EVMinimumDischargePower, RationalNumberType (1, 1); EVMaximumDischargeCurrent, RationalNumberType (1, 1); EVMaximumV2XEnergyRequest, RationalNumberType (0, 1); EVMinimumV2XEnergyRequest, RationalNumberType (0, 1);
+struct iso20_dc_BPT_Dynamic_DC_CLReqControlModeType {
+    // DepartureTime, unsignedInt (base: unsignedLong)
+    uint32_t DepartureTime;
+    unsigned int DepartureTime_isUsed:1;
+    // EVTargetEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVTargetEnergyRequest;
+    // EVMaximumEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumEnergyRequest;
+    // EVMinimumEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumEnergyRequest;
+    // EVMaximumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumChargePower;
+    // EVMinimumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumChargePower;
+    // EVMaximumChargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumChargeCurrent;
+    // EVMaximumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumVoltage;
+    // EVMinimumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumVoltage;
+    // EVMaximumDischargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumDischargePower;
+    // EVMinimumDischargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumDischargePower;
+    // EVMaximumDischargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumDischargeCurrent;
+    // EVMaximumV2XEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMaximumV2XEnergyRequest;
+    unsigned int EVMaximumV2XEnergyRequest_isUsed:1;
+    // EVMinimumV2XEnergyRequest, RationalNumberType
+    struct iso20_dc_RationalNumberType EVMinimumV2XEnergyRequest;
+    unsigned int EVMinimumV2XEnergyRequest_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLResControlMode; type={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLResControlModeType; base type=Dynamic_DC_CLResControlModeType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1); EVSEMaximumDischargePower, RationalNumberType (1, 1); EVSEMinimumDischargePower, RationalNumberType (1, 1); EVSEMaximumDischargeCurrent, RationalNumberType (1, 1); EVSEMinimumVoltage, RationalNumberType (1, 1);
+struct iso20_dc_BPT_Dynamic_DC_CLResControlModeType {
+    // DepartureTime, unsignedInt (base: unsignedLong)
+    uint32_t DepartureTime;
+    unsigned int DepartureTime_isUsed:1;
+    // MinimumSOC, percentValueType (base: byte)
+    int8_t MinimumSOC;
+    unsigned int MinimumSOC_isUsed:1;
+    // TargetSOC, percentValueType (base: byte)
+    int8_t TargetSOC;
+    unsigned int TargetSOC_isUsed:1;
+    // AckMaxDelay, unsignedShort (base: unsignedInt)
+    uint16_t AckMaxDelay;
+    unsigned int AckMaxDelay_isUsed:1;
+    // EVSEMaximumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumChargePower;
+    // EVSEMinimumChargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumChargePower;
+    // EVSEMaximumChargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumChargeCurrent;
+    // EVSEMaximumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumVoltage;
+    // EVSEMaximumDischargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumDischargePower;
+    // EVSEMinimumDischargePower, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumDischargePower;
+    // EVSEMaximumDischargeCurrent, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMaximumDischargeCurrent;
+    // EVSEMinimumVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEMinimumVoltage;
 
 };
 
@@ -1345,41 +1251,25 @@ struct iso20_dc_BPT_Scheduled_DC_CLResControlModeType {
 
 };
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLReqControlModeType; base type=Dynamic_DC_CLReqControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CableCheckReq; type={urn:iso:std:iso:15118:-20:DC}DC_CableCheckReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1); EVMaximumDischargePower, RationalNumberType (1, 1); EVMinimumDischargePower, RationalNumberType (1, 1); EVMaximumDischargeCurrent, RationalNumberType (1, 1); EVMaximumV2XEnergyRequest, RationalNumberType (0, 1); EVMinimumV2XEnergyRequest, RationalNumberType (0, 1);
-struct iso20_dc_BPT_Dynamic_DC_CLReqControlModeType {
-    // DepartureTime, unsignedInt (base: unsignedLong)
-    uint32_t DepartureTime;
-    unsigned int DepartureTime_isUsed:1;
-    // EVTargetEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVTargetEnergyRequest;
-    // EVMaximumEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumEnergyRequest;
-    // EVMinimumEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumEnergyRequest;
-    // EVMaximumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumChargePower;
-    // EVMinimumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumChargePower;
-    // EVMaximumChargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumChargeCurrent;
-    // EVMaximumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumVoltage;
-    // EVMinimumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumVoltage;
-    // EVMaximumDischargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumDischargePower;
-    // EVMinimumDischargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumDischargePower;
-    // EVMaximumDischargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumDischargeCurrent;
-    // EVMaximumV2XEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMaximumV2XEnergyRequest;
-    unsigned int EVMaximumV2XEnergyRequest_isUsed:1;
-    // EVMinimumV2XEnergyRequest, RationalNumberType
-    struct iso20_dc_RationalNumberType EVMinimumV2XEnergyRequest;
-    unsigned int EVMinimumV2XEnergyRequest_isUsed:1;
+// Particle: Header, MessageHeaderType (1, 1);
+struct iso20_dc_DC_CableCheckReqType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_CableCheckRes; type={urn:iso:std:iso:15118:-20:DC}DC_CableCheckResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1);
+struct iso20_dc_DC_CableCheckResType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_dc_responseCodeType ResponseCode;
+    // EVSEProcessing, processingType (base: string)
+    iso20_dc_processingType EVSEProcessing;
 
 };
 
@@ -1411,41 +1301,6 @@ struct iso20_dc_DC_ChargeLoopReqType {
     // Scheduled_DC_CLReqControlMode, Scheduled_DC_CLReqControlModeType (base: Scheduled_CLReqControlModeType)
     struct iso20_dc_Scheduled_DC_CLReqControlModeType Scheduled_DC_CLReqControlMode;
     unsigned int Scheduled_DC_CLReqControlMode_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLResControlMode; type={urn:iso:std:iso:15118:-20:DC}BPT_Dynamic_DC_CLResControlModeType; base type=Dynamic_DC_CLResControlModeType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMaximumChargeCurrent, RationalNumberType (1, 1); EVSEMaximumVoltage, RationalNumberType (1, 1); EVSEMaximumDischargePower, RationalNumberType (1, 1); EVSEMinimumDischargePower, RationalNumberType (1, 1); EVSEMaximumDischargeCurrent, RationalNumberType (1, 1); EVSEMinimumVoltage, RationalNumberType (1, 1);
-struct iso20_dc_BPT_Dynamic_DC_CLResControlModeType {
-    // DepartureTime, unsignedInt (base: unsignedLong)
-    uint32_t DepartureTime;
-    unsigned int DepartureTime_isUsed:1;
-    // MinimumSOC, percentValueType (base: byte)
-    int8_t MinimumSOC;
-    unsigned int MinimumSOC_isUsed:1;
-    // TargetSOC, percentValueType (base: byte)
-    int8_t TargetSOC;
-    unsigned int TargetSOC_isUsed:1;
-    // AckMaxDelay, unsignedShort (base: unsignedInt)
-    uint16_t AckMaxDelay;
-    unsigned int AckMaxDelay_isUsed:1;
-    // EVSEMaximumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumChargePower;
-    // EVSEMinimumChargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumChargePower;
-    // EVSEMaximumChargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumChargeCurrent;
-    // EVSEMaximumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumVoltage;
-    // EVSEMaximumDischargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumDischargePower;
-    // EVSEMinimumDischargePower, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumDischargePower;
-    // EVSEMaximumDischargeCurrent, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMaximumDischargeCurrent;
-    // EVSEMinimumVoltage, RationalNumberType
-    struct iso20_dc_RationalNumberType EVSEMinimumVoltage;
 
 };
 
@@ -1491,6 +1346,90 @@ struct iso20_dc_DC_ChargeLoopResType {
     // Scheduled_DC_CLResControlMode, Scheduled_DC_CLResControlModeType (base: Scheduled_CLResControlModeType)
     struct iso20_dc_Scheduled_DC_CLResControlModeType Scheduled_DC_CLResControlMode;
     unsigned int Scheduled_DC_CLResControlMode_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryReq; type={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryReqType; base type=ChargeParameterDiscoveryReqType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); BPT_DC_CPDReqEnergyTransferMode, BPT_DC_CPDReqEnergyTransferModeType (0, 1); DC_CPDReqEnergyTransferMode, DC_CPDReqEnergyTransferModeType (0, 1);
+struct iso20_dc_DC_ChargeParameterDiscoveryReqType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // BPT_DC_CPDReqEnergyTransferMode, BPT_DC_CPDReqEnergyTransferModeType (base: DC_CPDReqEnergyTransferModeType)
+    struct iso20_dc_BPT_DC_CPDReqEnergyTransferModeType BPT_DC_CPDReqEnergyTransferMode;
+    unsigned int BPT_DC_CPDReqEnergyTransferMode_isUsed:1;
+    // DC_CPDReqEnergyTransferMode, DC_CPDReqEnergyTransferModeType
+    struct iso20_dc_DC_CPDReqEnergyTransferModeType DC_CPDReqEnergyTransferMode;
+    unsigned int DC_CPDReqEnergyTransferMode_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryRes; type={urn:iso:std:iso:15118:-20:DC}DC_ChargeParameterDiscoveryResType; base type=ChargeParameterDiscoveryResType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); BPT_DC_CPDResEnergyTransferMode, BPT_DC_CPDResEnergyTransferModeType (0, 1); DC_CPDResEnergyTransferMode, DC_CPDResEnergyTransferModeType (0, 1);
+struct iso20_dc_DC_ChargeParameterDiscoveryResType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_dc_responseCodeType ResponseCode;
+    // BPT_DC_CPDResEnergyTransferMode, BPT_DC_CPDResEnergyTransferModeType (base: DC_CPDResEnergyTransferModeType)
+    struct iso20_dc_BPT_DC_CPDResEnergyTransferModeType BPT_DC_CPDResEnergyTransferMode;
+    unsigned int BPT_DC_CPDResEnergyTransferMode_isUsed:1;
+    // DC_CPDResEnergyTransferMode, DC_CPDResEnergyTransferModeType
+    struct iso20_dc_DC_CPDResEnergyTransferModeType DC_CPDResEnergyTransferMode;
+    unsigned int DC_CPDResEnergyTransferMode_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_PreChargeReq; type={urn:iso:std:iso:15118:-20:DC}DC_PreChargeReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVPresentVoltage, RationalNumberType (1, 1); EVTargetVoltage, RationalNumberType (1, 1);
+struct iso20_dc_DC_PreChargeReqType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // EVProcessing, processingType (base: string)
+    iso20_dc_processingType EVProcessing;
+    // EVPresentVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVPresentVoltage;
+    // EVTargetVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVTargetVoltage;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_PreChargeRes; type={urn:iso:std:iso:15118:-20:DC}DC_PreChargeResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEPresentVoltage, RationalNumberType (1, 1);
+struct iso20_dc_DC_PreChargeResType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_dc_responseCodeType ResponseCode;
+    // EVSEPresentVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEPresentVoltage;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionReq; type={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1);
+struct iso20_dc_DC_WeldingDetectionReqType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // EVProcessing, processingType (base: string)
+    iso20_dc_processingType EVProcessing;
+
+};
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionRes; type={urn:iso:std:iso:15118:-20:DC}DC_WeldingDetectionResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEPresentVoltage, RationalNumberType (1, 1);
+struct iso20_dc_DC_WeldingDetectionResType {
+    // Header, MessageHeaderType
+    struct iso20_dc_MessageHeaderType Header;
+    // ResponseCode, responseCodeType (base: string)
+    iso20_dc_responseCodeType ResponseCode;
+    // EVSEPresentVoltage, RationalNumberType
+    struct iso20_dc_RationalNumberType EVSEPresentVoltage;
 
 };
 
@@ -1545,7 +1484,9 @@ struct iso20_dc_exiDocument {
         struct iso20_dc_DC_CPDResEnergyTransferModeType DC_CPDResEnergyTransferMode;
         struct iso20_dc_BPT_DC_CPDReqEnergyTransferModeType BPT_DC_CPDReqEnergyTransferMode;
         struct iso20_dc_BPT_DC_CPDResEnergyTransferModeType BPT_DC_CPDResEnergyTransferMode;
+        struct iso20_dc_CLReqControlModeType CLReqControlMode;
         struct iso20_dc_Scheduled_DC_CLReqControlModeType Scheduled_DC_CLReqControlMode;
+        struct iso20_dc_CLResControlModeType CLResControlMode;
         struct iso20_dc_Scheduled_DC_CLResControlModeType Scheduled_DC_CLResControlMode;
         struct iso20_dc_BPT_Scheduled_DC_CLReqControlModeType BPT_Scheduled_DC_CLReqControlMode;
         struct iso20_dc_BPT_Scheduled_DC_CLResControlModeType BPT_Scheduled_DC_CLResControlMode;
@@ -1553,8 +1494,6 @@ struct iso20_dc_exiDocument {
         struct iso20_dc_Dynamic_DC_CLResControlModeType Dynamic_DC_CLResControlMode;
         struct iso20_dc_BPT_Dynamic_DC_CLReqControlModeType BPT_Dynamic_DC_CLReqControlMode;
         struct iso20_dc_BPT_Dynamic_DC_CLResControlModeType BPT_Dynamic_DC_CLResControlMode;
-        struct iso20_dc_CLReqControlModeType CLReqControlMode;
-        struct iso20_dc_CLResControlModeType CLResControlMode;
         struct iso20_dc_SignatureType Signature;
         struct iso20_dc_SignatureValueType SignatureValue;
         struct iso20_dc_SignedInfoType SignedInfo;
@@ -1591,7 +1530,9 @@ struct iso20_dc_exiDocument {
     unsigned int DC_CPDResEnergyTransferMode_isUsed:1;
     unsigned int BPT_DC_CPDReqEnergyTransferMode_isUsed:1;
     unsigned int BPT_DC_CPDResEnergyTransferMode_isUsed:1;
+    unsigned int CLReqControlMode_isUsed:1;
     unsigned int Scheduled_DC_CLReqControlMode_isUsed:1;
+    unsigned int CLResControlMode_isUsed:1;
     unsigned int Scheduled_DC_CLResControlMode_isUsed:1;
     unsigned int BPT_Scheduled_DC_CLReqControlMode_isUsed:1;
     unsigned int BPT_Scheduled_DC_CLResControlMode_isUsed:1;
@@ -1599,8 +1540,6 @@ struct iso20_dc_exiDocument {
     unsigned int Dynamic_DC_CLResControlMode_isUsed:1;
     unsigned int BPT_Dynamic_DC_CLReqControlMode_isUsed:1;
     unsigned int BPT_Dynamic_DC_CLResControlMode_isUsed:1;
-    unsigned int CLReqControlMode_isUsed:1;
-    unsigned int CLResControlMode_isUsed:1;
     unsigned int Signature_isUsed:1;
     unsigned int SignatureValue_isUsed:1;
     unsigned int SignedInfo_isUsed:1;
@@ -1685,61 +1624,61 @@ struct iso20_dc_xmldsigFragment {
 };
 
 // init for structs
-void init_iso20_dc_exiDocument(struct iso20_dc_exiDocument* exiDoc);
-void init_iso20_dc_DC_ChargeParameterDiscoveryReqType(struct iso20_dc_DC_ChargeParameterDiscoveryReqType* DC_ChargeParameterDiscoveryReq);
-void init_iso20_dc_DC_ChargeParameterDiscoveryResType(struct iso20_dc_DC_ChargeParameterDiscoveryResType* DC_ChargeParameterDiscoveryRes);
-void init_iso20_dc_DC_CableCheckReqType(struct iso20_dc_DC_CableCheckReqType* DC_CableCheckReq);
-void init_iso20_dc_DC_CableCheckResType(struct iso20_dc_DC_CableCheckResType* DC_CableCheckRes);
-void init_iso20_dc_DC_PreChargeReqType(struct iso20_dc_DC_PreChargeReqType* DC_PreChargeReq);
-void init_iso20_dc_DC_PreChargeResType(struct iso20_dc_DC_PreChargeResType* DC_PreChargeRes);
-void init_iso20_dc_DC_ChargeLoopReqType(struct iso20_dc_DC_ChargeLoopReqType* DC_ChargeLoopReq);
-void init_iso20_dc_DC_ChargeLoopResType(struct iso20_dc_DC_ChargeLoopResType* DC_ChargeLoopRes);
-void init_iso20_dc_DC_WeldingDetectionReqType(struct iso20_dc_DC_WeldingDetectionReqType* DC_WeldingDetectionReq);
-void init_iso20_dc_DC_WeldingDetectionResType(struct iso20_dc_DC_WeldingDetectionResType* DC_WeldingDetectionRes);
-void init_iso20_dc_DC_CPDReqEnergyTransferModeType(struct iso20_dc_DC_CPDReqEnergyTransferModeType* DC_CPDReqEnergyTransferMode);
-void init_iso20_dc_DC_CPDResEnergyTransferModeType(struct iso20_dc_DC_CPDResEnergyTransferModeType* DC_CPDResEnergyTransferMode);
 void init_iso20_dc_BPT_DC_CPDReqEnergyTransferModeType(struct iso20_dc_BPT_DC_CPDReqEnergyTransferModeType* BPT_DC_CPDReqEnergyTransferMode);
 void init_iso20_dc_BPT_DC_CPDResEnergyTransferModeType(struct iso20_dc_BPT_DC_CPDResEnergyTransferModeType* BPT_DC_CPDResEnergyTransferMode);
-void init_iso20_dc_Scheduled_DC_CLReqControlModeType(struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlMode);
-void init_iso20_dc_Scheduled_DC_CLResControlModeType(struct iso20_dc_Scheduled_DC_CLResControlModeType* Scheduled_DC_CLResControlMode);
-void init_iso20_dc_BPT_Scheduled_DC_CLReqControlModeType(struct iso20_dc_BPT_Scheduled_DC_CLReqControlModeType* BPT_Scheduled_DC_CLReqControlMode);
-void init_iso20_dc_BPT_Scheduled_DC_CLResControlModeType(struct iso20_dc_BPT_Scheduled_DC_CLResControlModeType* BPT_Scheduled_DC_CLResControlMode);
-void init_iso20_dc_Dynamic_DC_CLReqControlModeType(struct iso20_dc_Dynamic_DC_CLReqControlModeType* Dynamic_DC_CLReqControlMode);
-void init_iso20_dc_Dynamic_DC_CLResControlModeType(struct iso20_dc_Dynamic_DC_CLResControlModeType* Dynamic_DC_CLResControlMode);
 void init_iso20_dc_BPT_Dynamic_DC_CLReqControlModeType(struct iso20_dc_BPT_Dynamic_DC_CLReqControlModeType* BPT_Dynamic_DC_CLReqControlMode);
 void init_iso20_dc_BPT_Dynamic_DC_CLResControlModeType(struct iso20_dc_BPT_Dynamic_DC_CLResControlModeType* BPT_Dynamic_DC_CLResControlMode);
+void init_iso20_dc_BPT_Scheduled_DC_CLReqControlModeType(struct iso20_dc_BPT_Scheduled_DC_CLReqControlModeType* BPT_Scheduled_DC_CLReqControlMode);
+void init_iso20_dc_BPT_Scheduled_DC_CLResControlModeType(struct iso20_dc_BPT_Scheduled_DC_CLResControlModeType* BPT_Scheduled_DC_CLResControlMode);
 void init_iso20_dc_CLReqControlModeType(struct iso20_dc_CLReqControlModeType* CLReqControlMode);
 void init_iso20_dc_CLResControlModeType(struct iso20_dc_CLResControlModeType* CLResControlMode);
+void init_iso20_dc_CanonicalizationMethodType(struct iso20_dc_CanonicalizationMethodType* CanonicalizationMethod);
+void init_iso20_dc_DC_CPDReqEnergyTransferModeType(struct iso20_dc_DC_CPDReqEnergyTransferModeType* DC_CPDReqEnergyTransferMode);
+void init_iso20_dc_DC_CPDResEnergyTransferModeType(struct iso20_dc_DC_CPDResEnergyTransferModeType* DC_CPDResEnergyTransferMode);
+void init_iso20_dc_DC_CableCheckReqType(struct iso20_dc_DC_CableCheckReqType* DC_CableCheckReq);
+void init_iso20_dc_DC_CableCheckResType(struct iso20_dc_DC_CableCheckResType* DC_CableCheckRes);
+void init_iso20_dc_DC_ChargeLoopReqType(struct iso20_dc_DC_ChargeLoopReqType* DC_ChargeLoopReq);
+void init_iso20_dc_DC_ChargeLoopResType(struct iso20_dc_DC_ChargeLoopResType* DC_ChargeLoopRes);
+void init_iso20_dc_DC_ChargeParameterDiscoveryReqType(struct iso20_dc_DC_ChargeParameterDiscoveryReqType* DC_ChargeParameterDiscoveryReq);
+void init_iso20_dc_DC_ChargeParameterDiscoveryResType(struct iso20_dc_DC_ChargeParameterDiscoveryResType* DC_ChargeParameterDiscoveryRes);
+void init_iso20_dc_DC_PreChargeReqType(struct iso20_dc_DC_PreChargeReqType* DC_PreChargeReq);
+void init_iso20_dc_DC_PreChargeResType(struct iso20_dc_DC_PreChargeResType* DC_PreChargeRes);
+void init_iso20_dc_DC_WeldingDetectionReqType(struct iso20_dc_DC_WeldingDetectionReqType* DC_WeldingDetectionReq);
+void init_iso20_dc_DC_WeldingDetectionResType(struct iso20_dc_DC_WeldingDetectionResType* DC_WeldingDetectionRes);
+void init_iso20_dc_DSAKeyValueType(struct iso20_dc_DSAKeyValueType* DSAKeyValue);
+void init_iso20_dc_DetailedCostType(struct iso20_dc_DetailedCostType* DetailedCostType);
+void init_iso20_dc_DetailedTaxType(struct iso20_dc_DetailedTaxType* DetailedTaxType);
+void init_iso20_dc_DigestMethodType(struct iso20_dc_DigestMethodType* DigestMethod);
+void init_iso20_dc_DisplayParametersType(struct iso20_dc_DisplayParametersType* DisplayParametersType);
+void init_iso20_dc_Dynamic_DC_CLReqControlModeType(struct iso20_dc_Dynamic_DC_CLReqControlModeType* Dynamic_DC_CLReqControlMode);
+void init_iso20_dc_Dynamic_DC_CLResControlModeType(struct iso20_dc_Dynamic_DC_CLResControlModeType* Dynamic_DC_CLResControlMode);
+void init_iso20_dc_EVSEStatusType(struct iso20_dc_EVSEStatusType* EVSEStatusType);
+void init_iso20_dc_KeyInfoType(struct iso20_dc_KeyInfoType* KeyInfo);
+void init_iso20_dc_KeyValueType(struct iso20_dc_KeyValueType* KeyValue);
+void init_iso20_dc_ManifestType(struct iso20_dc_ManifestType* Manifest);
+void init_iso20_dc_MessageHeaderType(struct iso20_dc_MessageHeaderType* MessageHeaderType);
+void init_iso20_dc_MeterInfoType(struct iso20_dc_MeterInfoType* MeterInfoType);
+void init_iso20_dc_ObjectType(struct iso20_dc_ObjectType* Object);
+void init_iso20_dc_PGPDataType(struct iso20_dc_PGPDataType* PGPData);
+void init_iso20_dc_RSAKeyValueType(struct iso20_dc_RSAKeyValueType* RSAKeyValue);
+void init_iso20_dc_RationalNumberType(struct iso20_dc_RationalNumberType* RationalNumberType);
+void init_iso20_dc_ReceiptType(struct iso20_dc_ReceiptType* ReceiptType);
+void init_iso20_dc_ReferenceType(struct iso20_dc_ReferenceType* Reference);
+void init_iso20_dc_RetrievalMethodType(struct iso20_dc_RetrievalMethodType* RetrievalMethod);
+void init_iso20_dc_SPKIDataType(struct iso20_dc_SPKIDataType* SPKIData);
+void init_iso20_dc_Scheduled_DC_CLReqControlModeType(struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlMode);
+void init_iso20_dc_Scheduled_DC_CLResControlModeType(struct iso20_dc_Scheduled_DC_CLResControlModeType* Scheduled_DC_CLResControlMode);
+void init_iso20_dc_SignatureMethodType(struct iso20_dc_SignatureMethodType* SignatureMethod);
+void init_iso20_dc_SignaturePropertiesType(struct iso20_dc_SignaturePropertiesType* SignatureProperties);
+void init_iso20_dc_SignaturePropertyType(struct iso20_dc_SignaturePropertyType* SignatureProperty);
 void init_iso20_dc_SignatureType(struct iso20_dc_SignatureType* Signature);
 void init_iso20_dc_SignatureValueType(struct iso20_dc_SignatureValueType* SignatureValue);
 void init_iso20_dc_SignedInfoType(struct iso20_dc_SignedInfoType* SignedInfo);
-void init_iso20_dc_CanonicalizationMethodType(struct iso20_dc_CanonicalizationMethodType* CanonicalizationMethod);
-void init_iso20_dc_SignatureMethodType(struct iso20_dc_SignatureMethodType* SignatureMethod);
-void init_iso20_dc_ReferenceType(struct iso20_dc_ReferenceType* Reference);
-void init_iso20_dc_TransformsType(struct iso20_dc_TransformsType* Transforms);
 void init_iso20_dc_TransformType(struct iso20_dc_TransformType* Transform);
-void init_iso20_dc_DigestMethodType(struct iso20_dc_DigestMethodType* DigestMethod);
-void init_iso20_dc_KeyInfoType(struct iso20_dc_KeyInfoType* KeyInfo);
-void init_iso20_dc_KeyValueType(struct iso20_dc_KeyValueType* KeyValue);
-void init_iso20_dc_RetrievalMethodType(struct iso20_dc_RetrievalMethodType* RetrievalMethod);
+void init_iso20_dc_TransformsType(struct iso20_dc_TransformsType* Transforms);
 void init_iso20_dc_X509DataType(struct iso20_dc_X509DataType* X509Data);
-void init_iso20_dc_PGPDataType(struct iso20_dc_PGPDataType* PGPData);
-void init_iso20_dc_SPKIDataType(struct iso20_dc_SPKIDataType* SPKIData);
-void init_iso20_dc_ObjectType(struct iso20_dc_ObjectType* Object);
-void init_iso20_dc_ManifestType(struct iso20_dc_ManifestType* Manifest);
-void init_iso20_dc_SignaturePropertiesType(struct iso20_dc_SignaturePropertiesType* SignatureProperties);
-void init_iso20_dc_SignaturePropertyType(struct iso20_dc_SignaturePropertyType* SignatureProperty);
-void init_iso20_dc_DSAKeyValueType(struct iso20_dc_DSAKeyValueType* DSAKeyValue);
-void init_iso20_dc_RSAKeyValueType(struct iso20_dc_RSAKeyValueType* RSAKeyValue);
 void init_iso20_dc_X509IssuerSerialType(struct iso20_dc_X509IssuerSerialType* X509IssuerSerialType);
-void init_iso20_dc_RationalNumberType(struct iso20_dc_RationalNumberType* RationalNumberType);
-void init_iso20_dc_DetailedCostType(struct iso20_dc_DetailedCostType* DetailedCostType);
-void init_iso20_dc_DetailedTaxType(struct iso20_dc_DetailedTaxType* DetailedTaxType);
-void init_iso20_dc_MessageHeaderType(struct iso20_dc_MessageHeaderType* MessageHeaderType);
-void init_iso20_dc_DisplayParametersType(struct iso20_dc_DisplayParametersType* DisplayParametersType);
-void init_iso20_dc_EVSEStatusType(struct iso20_dc_EVSEStatusType* EVSEStatusType);
-void init_iso20_dc_MeterInfoType(struct iso20_dc_MeterInfoType* MeterInfoType);
-void init_iso20_dc_ReceiptType(struct iso20_dc_ReceiptType* ReceiptType);
+void init_iso20_dc_exiDocument(struct iso20_dc_exiDocument* exiDoc);
 void init_iso20_dc_exiFragment(struct iso20_dc_exiFragment* exiFrag);
 void init_iso20_dc_xmldsigFragment(struct iso20_dc_xmldsigFragment* xmldsigFrag);
 

@@ -14,13 +14,13 @@
  *****************************************************/
 
 /**
-  * @file iso20_AC_Encoder.h
+  * @file iso20_AC_DER_Encoder.h
   * @brief Description goes here
   *
   **/
 
-#ifndef ISO20_AC_ENCODER_H
-#define ISO20_AC_ENCODER_H
+#ifndef ISO20_AC_DER_ENCODER_H
+#define ISO20_AC_DER_ENCODER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,19 +28,19 @@ extern "C" {
 
 
 #include "exi_bitstream.h"
-#include "iso20_AC_Datatypes.h"
+#include "iso20_AC_DER_Datatypes.h"
 
 
 // main function for encoding
-int encode_iso20_ac_exiDocument(exi_bitstream_t* stream, struct iso20_ac_exiDocument* exiDoc);
+int encode_iso20_ac_der_exiDocument(exi_bitstream_t* stream, struct iso20_ac_der_exiDocument* exiDoc);
 // encoding function for fragment
-int encode_iso20_ac_exiFragment(exi_bitstream_t* stream, struct iso20_ac_exiFragment* exiFrag);
+int encode_iso20_ac_der_exiFragment(exi_bitstream_t* stream, struct iso20_ac_der_exiFragment* exiFrag);
 // encoding function for xmldsig fragment
-int encode_iso20_ac_xmldsigFragment(exi_bitstream_t* stream, struct iso20_ac_xmldsigFragment* xmldsigFrag);
+int encode_iso20_ac_der_xmldsigFragment(exi_bitstream_t* stream, struct iso20_ac_der_xmldsigFragment* xmldsigFrag);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ISO20_AC_ENCODER_H */
+#endif /* ISO20_AC_DER_ENCODER_H */
 

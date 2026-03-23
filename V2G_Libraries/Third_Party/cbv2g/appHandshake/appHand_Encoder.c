@@ -32,7 +32,7 @@ static int encode_appHand_AppProtocolType(exi_bitstream_t* stream, const struct 
 static int encode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, const struct appHand_supportedAppProtocolReq* supportedAppProtocolReq);
 static int encode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, const struct appHand_supportedAppProtocolRes* supportedAppProtocolRes);
 
-// Element: definition=complex; name=AppProtocol; type={urn:iso:15118:2:2010:AppProtocol}AppProtocolType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:15118:2:2010:AppProtocol}AppProtocol; type={urn:iso:15118:2:2010:AppProtocol}AppProtocolType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: ProtocolNamespace, protocolNamespaceType (1, 1); VersionNumberMajor, unsignedInt (1, 1); VersionNumberMinor, unsignedInt (1, 1); SchemaID, idType (1, 1); Priority, priorityType (1, 1);
 static int encode_appHand_AppProtocolType(exi_bitstream_t* stream, const struct appHand_AppProtocolType* AppProtocolType) {
