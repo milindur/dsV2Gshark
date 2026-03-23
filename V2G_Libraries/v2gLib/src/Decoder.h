@@ -42,7 +42,7 @@ class Decoder
                    size_t xmlOut_size,
                    int (*decodeFunction)(exi_bitstream_t *, T *, char *, size_t));
 
-    const std::string AUTODECODER_NAMESPACES[8] = {
+    const std::string AUTODECODER_NAMESPACES[10] = {
         NAMESPACE_SAP,
         NAMESPACE_DIN,
         NAMESPACE_ISO_2,
@@ -50,7 +50,9 @@ class Decoder
         NAMESPACE_ISO_20_AC,
         NAMESPACE_ISO_20_DC,
         NAMESPACE_ISO_20_ACDP,
-        NAMESPACE_ISO_20_WPT};
+        NAMESPACE_ISO_20_WPT,
+        NAMESPACE_ISO_20_AC_DER_IEC,
+        NAMESPACE_ISO_20_AC_DER};
     const int AUTODECODER_NAMESPACES_INDEX_20_GROUP = 3;
 
     int autodecoder_last_index_used = 0;

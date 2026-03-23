@@ -39,6 +39,7 @@ local I20_AC = 32771
 local I20_DC = 32772
 local I20_ACDP = 32773
 local I20_WPT = 32774
+local I20_AC_DER_IEC = 32784 -- 0x8010, ISO 15118-20 Amd1 AC DER / AC DER IEC
 -- 32775 - 33024 reserved
 local I20_SCHEDULE_RENEG = 33025 -- Note: not tested yet. ISO-20 support is expirimental in this version!
 local I20_METER_CONF = 33026 -- Note: not tested yet. ISO-20 support is expirimental in this version!
@@ -59,6 +60,7 @@ local payload_types = {
     [I20_DC] = "ISO 15118-20 Main DC",
     [I20_ACDP] = "ISO 15118-20 ACDP",
     [I20_WPT] = "ISO 15118-20 WPT",
+    [I20_AC_DER_IEC] = "ISO 15118-20 AC-DER-IEC",
     [I20_SCHEDULE_RENEG] = "ISO 15118-20 Schedule Renegotiation", -- 0x8101
     [I20_METER_CONF] = "ISO 15118-20 Metering Confirmation",
     [I20_ACDP_SYS_STATUS] = "ISO 15118-20 ACDP System Status",
@@ -153,6 +155,12 @@ local function v2gtp_pdu_dissect(buf, pinfo, root)
             return Dissector.get("v2gmsg"):call(buf(V2GTP_HDR_LENGTH):tvb(), pinfo, root)
         elseif p_type_num == I20_WPT then
             pinfo.private["Schema"] = "urn:iso:std:iso:15118:-20:WPT"
+            return Dissector.get("v2gmsg"):call(buf(V2GTP_HDR_LENGTH):tvb(), pinfo, root)
+        elseif p_type_num == I20_AC_DER_IEC then
+            -- for now do not set schema for 8010 payloads, s.t. it is derived from the SAP
+            -- this is because 15118-20 Amd1 DIS and FDIS use different schemas,
+            -- and it is not possible to distinguish them based on the payload type alone
+            -- pinfo.private["Schema"] = "urn:iso:std:iso:15118:-20:AC-DER-IEC"
             return Dissector.get("v2gmsg"):call(buf(V2GTP_HDR_LENGTH):tvb(), pinfo, root)
         elseif p_type_num == I20_SCHEDULE_RENEG then
             -- the schema must be derived from the SAP in this case. TODO: test this as soon as sidestreams are used

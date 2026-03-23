@@ -78,6 +78,14 @@ static void *xsd_open(const char *URI)
     {
         return xsd_prepare(XSD_ISO20_WPT, XSD_ISO20_WPT_zipped_len);
     }
+    else if (strcmp("schemas/15118-20/V2G_CI_AC_DER_IEC.xsd", URI) == 0)
+    {
+        return xsd_prepare(XSD_ISO20_AC_DER_IEC, XSD_ISO20_AC_DER_IEC_zipped_len);
+    }
+    else if (strcmp("schemas/15118-20/V2G_CI_AC_DER.xsd", URI) == 0)
+    {
+        return xsd_prepare(XSD_ISO20_AC_DER, XSD_ISO20_AC_DER_zipped_len);
+    }
     else if (strcmp("schemas/15118-20/xmldsig-core-schema.xsd", URI) == 0)
     {
         return xsd_prepare(XSD_XMLDSIG_CORE, XSD_XMLDSIG_CORE_zipped_len);
@@ -206,6 +214,8 @@ void XmlValidator::init_validators()
     Validator_ctxt_ISO20_AC = create_parser("schemas/15118-20/V2G_CI_AC.xsd");
     Validator_ctxt_ISO20_ACDP = create_parser("schemas/15118-20/V2G_CI_ACDP.xsd");
     Validator_ctxt_ISO20_WPT = create_parser("schemas/15118-20/V2G_CI_WPT.xsd");
+    Validator_ctxt_ISO20_AC_DER_IEC = create_parser("schemas/15118-20/V2G_CI_AC_DER_IEC.xsd");
+    Validator_ctxt_ISO20_AC_DER = create_parser("schemas/15118-20/V2G_CI_AC_DER.xsd");
 }
 
 void XmlValidator::cleanup_validators()
@@ -260,6 +270,14 @@ bool XmlValidator::validate_xml(const char *xml, const char *xsdnamespace, char 
     else if (strcmp(NAMESPACE_ISO_20_WPT, xsdnamespace) == 0)
     {
         valid_ctxt = Validator_ctxt_ISO20_WPT;
+    }
+    else if (strcmp(NAMESPACE_ISO_20_AC_DER_IEC, xsdnamespace) == 0)
+    {
+        valid_ctxt = Validator_ctxt_ISO20_AC_DER_IEC;
+    }
+    else if (strcmp(NAMESPACE_ISO_20_AC_DER, xsdnamespace) == 0)
+    {
+        valid_ctxt = Validator_ctxt_ISO20_AC_DER;
     }
 
     xmlTextReaderPtr reader = NULL;

@@ -31,6 +31,8 @@ class XmlValidator
     xmlSchemaValidCtxtPtr Validator_ctxt_ISO20_AC = NULL;
     xmlSchemaValidCtxtPtr Validator_ctxt_ISO20_ACDP = NULL;
     xmlSchemaValidCtxtPtr Validator_ctxt_ISO20_WPT = NULL;
+    xmlSchemaValidCtxtPtr Validator_ctxt_ISO20_AC_DER_IEC = NULL;
+    xmlSchemaValidCtxtPtr Validator_ctxt_ISO20_AC_DER = NULL;
 
     xmlSchemaValidCtxtPtr create_parser(const char *URL);
 };
