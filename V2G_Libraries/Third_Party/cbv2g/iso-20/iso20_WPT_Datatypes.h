@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -119,15 +118,6 @@ typedef enum {
     iso20_wpt_WPT_FinePositioningMethodType_LPE = 3,
     iso20_wpt_WPT_FinePositioningMethodType_Proprietary = 4
 } iso20_wpt_WPT_FinePositioningMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_FinePositioningMethodType_reverse(int i)
-{
-    if (i == 0) { return "Manual"; }
-    if (i == 1) { return "LF_TxEV"; }
-    if (i == 2) { return "LF_TxPrimaryDevice"; }
-    if (i == 3) { return "LPE"; }
-    if (i == 4) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingMethodType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -139,16 +129,6 @@ typedef enum {
     iso20_wpt_WPT_PairingMethodType_Optical = 4,
     iso20_wpt_WPT_PairingMethodType_Proprietary = 5
 } iso20_wpt_WPT_PairingMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_PairingMethodType_reverse(int i)
-{
-    if (i == 0) { return "External_confirmation"; }
-    if (i == 1) { return "LPE"; }
-    if (i == 2) { return "LF_TxEV"; }
-    if (i == 3) { return "LF_TxPrimaryDevice"; }
-    if (i == 4) { return "Optical"; }
-    if (i == 5) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethod; type={urn:iso:std:iso:15118:-20:WPT}WPT_AlignmentCheckMethodType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -157,13 +137,6 @@ typedef enum {
     iso20_wpt_WPT_AlignmentCheckMethodType_LPE = 1,
     iso20_wpt_WPT_AlignmentCheckMethodType_Proprietary = 2
 } iso20_wpt_WPT_AlignmentCheckMethodType;
-static inline const char* get_enum_val_iso20_wpt_WPT_AlignmentCheckMethodType_reverse(int i)
-{
-    if (i == 0) { return "PowerCheck"; }
-    if (i == 1) { return "LPE"; }
-    if (i == 2) { return "Proprietary"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSENotification; type={urn:iso:std:iso:15118:-20:CommonTypes}evseNotificationType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -175,16 +148,6 @@ typedef enum {
     iso20_wpt_evseNotificationType_ServiceRenegotiation = 4,
     iso20_wpt_evseNotificationType_MeteringConfirmation = 5
 } iso20_wpt_evseNotificationType;
-static inline const char* get_enum_val_iso20_wpt_evseNotificationType_reverse(int i)
-{
-    if (i == 0) { return "Pause"; }
-    if (i == 1) { return "ExitStandby"; }
-    if (i == 2) { return "Terminate"; }
-    if (i == 3) { return "ScheduleRenegotiation"; }
-    if (i == 4) { return "ServiceRenegotiation"; }
-    if (i == 5) { return "MeteringConfirmation"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -193,13 +156,6 @@ typedef enum {
     iso20_wpt_processingType_Ongoing = 1,
     iso20_wpt_processingType_Ongoing_WaitingForCustomerInteraction = 2
 } iso20_wpt_processingType;
-static inline const char* get_enum_val_iso20_wpt_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -245,50 +201,6 @@ typedef enum {
     iso20_wpt_responseCodeType_FAILED_UnknownSession = 38,
     iso20_wpt_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_wpt_responseCodeType;
-static inline const char* get_enum_val_iso20_wpt_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVResultCode; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVResultType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -297,13 +209,6 @@ typedef enum {
     iso20_wpt_WPT_EVResultType_EVResultSuccess = 1,
     iso20_wpt_WPT_EVResultType_EVResultFailed = 2
 } iso20_wpt_WPT_EVResultType;
-static inline const char* get_enum_val_iso20_wpt_WPT_EVResultType_reverse(int i)
-{
-    if (i == 0) { return "EVResultUnknown"; }
-    if (i == 1) { return "EVResultSuccess"; }
-    if (i == 2) { return "EVResultFailed"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}PDInputPowerClass; type={urn:iso:std:iso:15118:-20:WPT}WPT_PowerClassType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -313,14 +218,6 @@ typedef enum {
     iso20_wpt_WPT_PowerClassType_MF_WPT3 = 2,
     iso20_wpt_WPT_PowerClassType_MF_WPT4 = 3
 } iso20_wpt_WPT_PowerClassType;
-static inline const char* get_enum_val_iso20_wpt_WPT_PowerClassType_reverse(int i)
-{
-    if (i == 0) { return "MF_WPT1"; }
-    if (i == 1) { return "MF_WPT2"; }
-    if (i == 2) { return "MF_WPT3"; }
-    if (i == 3) { return "MF_WPT4"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}EVPCChargeDiagnostics; type={urn:iso:std:iso:15118:-20:WPT}WPT_EVPCChargeDiagnosticsType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -330,14 +227,6 @@ typedef enum {
     iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCPowerTransferAnomalyDetected = 2,
     iso20_wpt_WPT_EVPCChargeDiagnosticsType_EVPCAnomalyDetected = 3
 } iso20_wpt_WPT_EVPCChargeDiagnosticsType;
-static inline const char* get_enum_val_iso20_wpt_WPT_EVPCChargeDiagnosticsType_reverse(int i)
-{
-    if (i == 0) { return "EVPCNoIssue"; }
-    if (i == 1) { return "EVPCTempOverheatDetected"; }
-    if (i == 2) { return "EVPCPowerTransferAnomalyDetected"; }
-    if (i == 3) { return "EVPCAnomalyDetected"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:WPT}SPCChargeDiagnostics; type={urn:iso:std:iso:15118:-20:WPT}WPT_SPCChargeDiagnosticsType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -349,16 +238,6 @@ typedef enum {
     iso20_wpt_WPT_SPCChargeDiagnosticsType_SPCPowerTransferAnomalyDetected = 4,
     iso20_wpt_WPT_SPCChargeDiagnosticsType_SPCAnomalyDetected = 5
 } iso20_wpt_WPT_SPCChargeDiagnosticsType;
-static inline const char* get_enum_val_iso20_wpt_WPT_SPCChargeDiagnosticsType_reverse(int i)
-{
-    if (i == 0) { return "SPCNoIssue"; }
-    if (i == 1) { return "SPCFODDetected"; }
-    if (i == 2) { return "SPCLOPDetected"; }
-    if (i == 3) { return "SPCTempOverheatDetected"; }
-    if (i == 4) { return "SPCPowerTransferAnomalyDetected"; }
-    if (i == 5) { return "SPCAnomalyDetected"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;

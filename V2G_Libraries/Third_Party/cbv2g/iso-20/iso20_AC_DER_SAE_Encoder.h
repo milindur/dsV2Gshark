@@ -1,0 +1,45 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/*
+ * Copyright chargebyte GmbH and Contributors to EVerest
+ */
+
+/*****************************************************
+ *
+ * @author
+ * @version
+ *
+ * The Code is generated! Changes may be overwritten.
+ *
+ *****************************************************/
+
+/**
+  * @file iso20_AC_DER_SAE_Encoder.h
+  * @brief Description goes here
+  *
+  **/
+
+#ifndef ISO20_AC_DER_SAE_ENCODER_H
+#define ISO20_AC_DER_SAE_ENCODER_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "exi_bitstream.h"
+#include "iso20_AC_DER_SAE_Datatypes.h"
+
+
+// main function for encoding
+int encode_iso20_ac_der_sae_exiDocument(exi_bitstream_t* stream, struct iso20_ac_der_sae_exiDocument* exiDoc);
+// encoding function for fragment
+int encode_iso20_ac_der_sae_exiFragment(exi_bitstream_t* stream, struct iso20_ac_der_sae_exiFragment* exiFrag);
+// encoding function for xmldsig fragment
+int encode_iso20_ac_der_sae_xmldsigFragment(exi_bitstream_t* stream, struct iso20_ac_der_sae_xmldsigFragment* xmldsigFrag);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ISO20_AC_DER_SAE_ENCODER_H */
+

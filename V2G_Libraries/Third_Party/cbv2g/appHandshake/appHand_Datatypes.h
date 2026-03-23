@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -49,13 +48,6 @@ typedef enum {
     appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation = 1,
     appHand_responseCodeType_Failed_NoNegotiation = 2
 } appHand_responseCodeType;
-static inline const char* get_enum_val_appHand_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK_SuccessfulNegotiation"; }
-    if (i == 1) { return "OK_SuccessfulNegotiationWithMinorDeviation"; }
-    if (i == 2) { return "Failed_NoNegotiation"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name=AppProtocol; type={urn:iso:15118:2:2010:AppProtocol}AppProtocolType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;

@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -101,15 +100,6 @@ typedef enum {
     iso20_acdp_cpStatusType_StateD = 3,
     iso20_acdp_cpStatusType_StateE = 4
 } iso20_acdp_cpStatusType;
-static inline const char* get_enum_val_iso20_acdp_cpStatusType_reverse(int i)
-{
-    if (i == 0) { return "StateA"; }
-    if (i == 1) { return "StateB"; }
-    if (i == 2) { return "StateC"; }
-    if (i == 3) { return "StateD"; }
-    if (i == 4) { return "StateE"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVErrorCode; type={urn:iso:std:iso:15118:-20:ACDP}errorCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -125,20 +115,6 @@ typedef enum {
     iso20_acdp_errorCodeType_FAILED_Reserved1 = 8,
     iso20_acdp_errorCodeType_FAILED_Reserved2 = 9
 } iso20_acdp_errorCodeType;
-static inline const char* get_enum_val_iso20_acdp_errorCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK_NoEVError"; }
-    if (i == 1) { return "FAILED"; }
-    if (i == 2) { return "FAILED_EmergencyEvent"; }
-    if (i == 3) { return "FAILED_Breaker"; }
-    if (i == 4) { return "FAILED_RESSTemperatureInhibit"; }
-    if (i == 5) { return "FAILED_RESS"; }
-    if (i == 6) { return "FAILED_ChargingCurrentDifferential"; }
-    if (i == 7) { return "FAILED_ChargingVoltageOutOfRange"; }
-    if (i == 8) { return "FAILED_Reserved1"; }
-    if (i == 9) { return "FAILED_Reserved2"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -184,50 +160,6 @@ typedef enum {
     iso20_acdp_responseCodeType_FAILED_UnknownSession = 38,
     iso20_acdp_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_acdp_responseCodeType;
-static inline const char* get_enum_val_iso20_acdp_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVElectricalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}electricalChargingDeviceStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -237,14 +169,6 @@ typedef enum {
     iso20_acdp_electricalChargingDeviceStatusType_State_C = 2,
     iso20_acdp_electricalChargingDeviceStatusType_State_D = 3
 } iso20_acdp_electricalChargingDeviceStatusType;
-static inline const char* get_enum_val_iso20_acdp_electricalChargingDeviceStatusType_reverse(int i)
-{
-    if (i == 0) { return "State_A"; }
-    if (i == 1) { return "State_B"; }
-    if (i == 2) { return "State_C"; }
-    if (i == 3) { return "State_D"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -253,13 +177,6 @@ typedef enum {
     iso20_acdp_processingType_Ongoing = 1,
     iso20_acdp_processingType_Ongoing_WaitingForCustomerInteraction = 2
 } iso20_acdp_processingType;
-static inline const char* get_enum_val_iso20_acdp_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEMechanicalChargingDeviceStatus; type={urn:iso:std:iso:15118:-20:ACDP}mechanicalChargingDeviceStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -268,13 +185,6 @@ typedef enum {
     iso20_acdp_mechanicalChargingDeviceStatusType_Moving = 1,
     iso20_acdp_mechanicalChargingDeviceStatusType_EndPosition = 2
 } iso20_acdp_mechanicalChargingDeviceStatusType;
-static inline const char* get_enum_val_iso20_acdp_mechanicalChargingDeviceStatusType_reverse(int i)
-{
-    if (i == 0) { return "Home"; }
-    if (i == 1) { return "Moving"; }
-    if (i == 2) { return "EndPosition"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:ACDP}EVSEIsolationStatus; type={urn:iso:std:iso:15118:-20:ACDP}isolationStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -284,14 +194,6 @@ typedef enum {
     iso20_acdp_isolationStatusType_Warning = 2,
     iso20_acdp_isolationStatusType_Fault = 3
 } iso20_acdp_isolationStatusType;
-static inline const char* get_enum_val_iso20_acdp_isolationStatusType_reverse(int i)
-{
-    if (i == 0) { return "Invalid"; }
-    if (i == 1) { return "Safe"; }
-    if (i == 2) { return "Warning"; }
-    if (i == 3) { return "Fault"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;

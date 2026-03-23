@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -35,10 +34,11 @@ static int exi_bitstream_has_overflow(exi_bitstream_t* stream)
             stream->byte_pos++;
             stream->bit_count = 0;
         }
-        else
-        {
-            return EXI_ERROR__BITSTREAM_OVERFLOW;
-        }
+    }
+
+    if (stream->byte_pos >= stream->data_size)
+    {
+        return EXI_ERROR__BITSTREAM_OVERFLOW;
     }
 
     return EXI_ERROR__NO_ERROR;

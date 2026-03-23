@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -69,7 +68,7 @@ extern "C" {
 #define iso20_PriceRuleStackType_64_ARRAY_SIZE (64)
 #define iso20_OverstayRuleType_5_ARRAY_SIZE (5)
 #define iso20_AdditionalServiceType_5_ARRAY_SIZE (5)
-#define iso20_ParameterType_21_ARRAY_SIZE (21)
+#define iso20_ParameterType_8_ARRAY_SIZE (8)
 #define iso20_nameType_128_ARRAY_SIZE (128)
 #define iso20_ProviderID_CHARACTER_SIZE (80 + ASCII_EXTRA_CHAR)
 #define iso20_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
@@ -85,7 +84,7 @@ extern "C" {
 #define iso20_X509IssuerSerialType_20_ARRAY_SIZE (20)
 #define iso20_genChallengeType_BYTES_SIZE (16)
 #define iso20_ServiceType_8_ARRAY_SIZE (8)
-#define iso20_ParameterSetType_21_ARRAY_SIZE (21)
+#define iso20_ParameterSetType_4_ARRAY_SIZE (4)
 #define iso20_identifierType_8_ARRAY_SIZE (8)
 #define iso20_EMAID_CHARACTER_SIZE (255 + ASCII_EXTRA_CHAR)
 #define iso20_dhPublicKeyType_BYTES_SIZE (133)
@@ -164,12 +163,6 @@ typedef enum {
     iso20_powerToleranceAcceptanceType_PowerToleranceNotConfirmed = 0,
     iso20_powerToleranceAcceptanceType_PowerToleranceConfirmed = 1
 } iso20_powerToleranceAcceptanceType;
-static inline const char* get_enum_val_iso20_powerToleranceAcceptanceType_reverse(int i)
-{
-    if (i == 0) { return "PowerToleranceNotConfirmed"; }
-    if (i == 1) { return "PowerToleranceConfirmed"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}EVSENotification; type={urn:iso:std:iso:15118:-20:CommonTypes}evseNotificationType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -181,16 +174,6 @@ typedef enum {
     iso20_evseNotificationType_ServiceRenegotiation = 4,
     iso20_evseNotificationType_MeteringConfirmation = 5
 } iso20_evseNotificationType;
-static inline const char* get_enum_val_iso20_evseNotificationType_reverse(int i)
-{
-    if (i == 0) { return "Pause"; }
-    if (i == 1) { return "ExitStandby"; }
-    if (i == 2) { return "Terminate"; }
-    if (i == 3) { return "ScheduleRenegotiation"; }
-    if (i == 4) { return "ServiceRenegotiation"; }
-    if (i == 5) { return "MeteringConfirmation"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}ECDHCurve; type={urn:iso:std:iso:15118:-20:CommonMessages}ecdhCurveType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -198,12 +181,6 @@ typedef enum {
     iso20_ecdhCurveType_SECP521 = 0,
     iso20_ecdhCurveType_X448 = 1
 } iso20_ecdhCurveType;
-static inline const char* get_enum_val_iso20_ecdhCurveType_reverse(int i)
-{
-    if (i == 0) { return "SECP521"; }
-    if (i == 1) { return "X448"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonTypes}ResponseCode; type={urn:iso:std:iso:15118:-20:CommonTypes}responseCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -249,50 +226,6 @@ typedef enum {
     iso20_responseCodeType_FAILED_UnknownSession = 38,
     iso20_responseCodeType_FAILED_WrongChargeParameter = 39
 } iso20_responseCodeType;
-static inline const char* get_enum_val_iso20_responseCodeType_reverse(int i)
-{
-    if (i == 0) { return "OK"; }
-    if (i == 1) { return "OK_CertificateExpiresSoon"; }
-    if (i == 2) { return "OK_NewSessionEstablished"; }
-    if (i == 3) { return "OK_OldSessionJoined"; }
-    if (i == 4) { return "OK_PowerToleranceConfirmed"; }
-    if (i == 5) { return "WARNING_AuthorizationSelectionInvalid"; }
-    if (i == 6) { return "WARNING_CertificateExpired"; }
-    if (i == 7) { return "WARNING_CertificateNotYetValid"; }
-    if (i == 8) { return "WARNING_CertificateRevoked"; }
-    if (i == 9) { return "WARNING_CertificateValidationError"; }
-    if (i == 10) { return "WARNING_ChallengeInvalid"; }
-    if (i == 11) { return "WARNING_EIMAuthorizationFailure"; }
-    if (i == 12) { return "WARNING_eMSPUnknown"; }
-    if (i == 13) { return "WARNING_EVPowerProfileViolation"; }
-    if (i == 14) { return "WARNING_GeneralPnCAuthorizationError"; }
-    if (i == 15) { return "WARNING_NoCertificateAvailable"; }
-    if (i == 16) { return "WARNING_NoContractMatchingPCIDFound"; }
-    if (i == 17) { return "WARNING_PowerToleranceNotConfirmed"; }
-    if (i == 18) { return "WARNING_ScheduleRenegotiationFailed"; }
-    if (i == 19) { return "WARNING_StandbyNotAllowed"; }
-    if (i == 20) { return "WARNING_WPT"; }
-    if (i == 21) { return "FAILED"; }
-    if (i == 22) { return "FAILED_AssociationError"; }
-    if (i == 23) { return "FAILED_ContactorError"; }
-    if (i == 24) { return "FAILED_EVPowerProfileInvalid"; }
-    if (i == 25) { return "FAILED_EVPowerProfileViolation"; }
-    if (i == 26) { return "FAILED_MeteringSignatureNotValid"; }
-    if (i == 27) { return "FAILED_NoEnergyTransferServiceSelected"; }
-    if (i == 28) { return "FAILED_NoServiceRenegotiationSupported"; }
-    if (i == 29) { return "FAILED_PauseNotAllowed"; }
-    if (i == 30) { return "FAILED_PowerDeliveryNotApplied"; }
-    if (i == 31) { return "FAILED_PowerToleranceNotConfirmed"; }
-    if (i == 32) { return "FAILED_ScheduleRenegotiation"; }
-    if (i == 33) { return "FAILED_ScheduleSelectionInvalid"; }
-    if (i == 34) { return "FAILED_SequenceError"; }
-    if (i == 35) { return "FAILED_ServiceIDInvalid"; }
-    if (i == 36) { return "FAILED_ServiceSelectionInvalid"; }
-    if (i == 37) { return "FAILED_SignatureError"; }
-    if (i == 38) { return "FAILED_UnknownSession"; }
-    if (i == 39) { return "FAILED_WrongChargeParameter"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}ChargingSession; type={urn:iso:std:iso:15118:-20:CommonMessages}chargingSessionType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -301,13 +234,6 @@ typedef enum {
     iso20_chargingSessionType_Terminate = 1,
     iso20_chargingSessionType_ServiceRenegotiation = 2
 } iso20_chargingSessionType;
-static inline const char* get_enum_val_iso20_chargingSessionType_reverse(int i)
-{
-    if (i == 0) { return "Pause"; }
-    if (i == 1) { return "Terminate"; }
-    if (i == 2) { return "ServiceRenegotiation"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}EVCheckInStatus; type={urn:iso:std:iso:15118:-20:CommonMessages}evCheckInStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -316,13 +242,6 @@ typedef enum {
     iso20_evCheckInStatusType_Processing = 1,
     iso20_evCheckInStatusType_Completed = 2
 } iso20_evCheckInStatusType;
-static inline const char* get_enum_val_iso20_evCheckInStatusType_reverse(int i)
-{
-    if (i == 0) { return "CheckIn"; }
-    if (i == 1) { return "Processing"; }
-    if (i == 2) { return "Completed"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}EVCheckOutStatus; type={urn:iso:std:iso:15118:-20:CommonMessages}evCheckOutStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -331,13 +250,6 @@ typedef enum {
     iso20_evCheckOutStatusType_Processing = 1,
     iso20_evCheckOutStatusType_Completed = 2
 } iso20_evCheckOutStatusType;
-static inline const char* get_enum_val_iso20_evCheckOutStatusType_reverse(int i)
-{
-    if (i == 0) { return "CheckOut"; }
-    if (i == 1) { return "Processing"; }
-    if (i == 2) { return "Completed"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}AuthorizationServices; type={urn:iso:std:iso:15118:-20:CommonMessages}authorizationType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -345,12 +257,6 @@ typedef enum {
     iso20_authorizationType_EIM = 0,
     iso20_authorizationType_PnC = 1
 } iso20_authorizationType;
-static inline const char* get_enum_val_iso20_authorizationType_reverse(int i)
-{
-    if (i == 0) { return "EIM"; }
-    if (i == 1) { return "PnC"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}EVSEProcessing; type={urn:iso:std:iso:15118:-20:CommonTypes}processingType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -359,13 +265,6 @@ typedef enum {
     iso20_processingType_Ongoing = 1,
     iso20_processingType_Ongoing_WaitingForCustomerInteraction = 2
 } iso20_processingType;
-static inline const char* get_enum_val_iso20_processingType_reverse(int i)
-{
-    if (i == 0) { return "Finished"; }
-    if (i == 1) { return "Ongoing"; }
-    if (i == 2) { return "Ongoing_WaitingForCustomerInteraction"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}ChargeProgress; type={urn:iso:std:iso:15118:-20:CommonMessages}chargeProgressType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -375,14 +274,6 @@ typedef enum {
     iso20_chargeProgressType_Standby = 2,
     iso20_chargeProgressType_ScheduleRenegotiation = 3
 } iso20_chargeProgressType;
-static inline const char* get_enum_val_iso20_chargeProgressType_reverse(int i)
-{
-    if (i == 0) { return "Start"; }
-    if (i == 1) { return "Stop"; }
-    if (i == 2) { return "Standby"; }
-    if (i == 3) { return "ScheduleRenegotiation"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}ParkingMethod; type={urn:iso:std:iso:15118:-20:CommonMessages}parkingMethodType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -391,13 +282,6 @@ typedef enum {
     iso20_parkingMethodType_MVGuideManual = 1,
     iso20_parkingMethodType_Manual = 2
 } iso20_parkingMethodType;
-static inline const char* get_enum_val_iso20_parkingMethodType_reverse(int i)
-{
-    if (i == 0) { return "AutoParking"; }
-    if (i == 1) { return "MVGuideManual"; }
-    if (i == 2) { return "Manual"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}EVSECheckOutStatus; type={urn:iso:std:iso:15118:-20:CommonMessages}evseCheckOutStatusType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -405,12 +289,6 @@ typedef enum {
     iso20_evseCheckOutStatusType_Scheduled = 0,
     iso20_evseCheckOutStatusType_Completed = 1
 } iso20_evseCheckOutStatusType;
-static inline const char* get_enum_val_iso20_evseCheckOutStatusType_reverse(int i)
-{
-    if (i == 0) { return "Scheduled"; }
-    if (i == 1) { return "Completed"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=enum; name={urn:iso:std:iso:15118:-20:CommonMessages}BPT_ChannelSelection; type={urn:iso:std:iso:15118:-20:CommonMessages}channelSelectionType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -418,12 +296,6 @@ typedef enum {
     iso20_channelSelectionType_Charge = 0,
     iso20_channelSelectionType_Discharge = 1
 } iso20_channelSelectionType;
-static inline const char* get_enum_val_iso20_channelSelectionType_reverse(int i)
-{
-    if (i == 0) { return "Charge"; }
-    if (i == 1) { return "Discharge"; }
-    return "ENUM DECODING ERROR";
-}
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transform; type={http://www.w3.org/2000/09/xmldsig#}TransformType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;
@@ -1319,13 +1191,13 @@ struct iso20_ServiceType {
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSet; type={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSetType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 21) (original max 32);
+// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8) (original max 32);
 struct iso20_ParameterSetType {
     // ParameterSetID, serviceIDType (base: unsignedShort)
     uint16_t ParameterSetID;
     // Parameter, ParameterType
     struct {
-        struct iso20_ParameterType array[iso20_ParameterType_21_ARRAY_SIZE];
+        struct iso20_ParameterType array[iso20_ParameterType_8_ARRAY_SIZE];
         uint16_t arrayLen;
     } Parameter;
 };
@@ -1826,11 +1698,11 @@ struct iso20_ServiceListType {
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterList; type={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSet, ParameterSetType (1, 21) (original max 32);
+// Particle: ParameterSet, ParameterSetType (1, 4) (original max 32);
 struct iso20_ServiceParameterListType {
     // ParameterSet, ParameterSetType
     struct {
-        struct iso20_ParameterSetType array[iso20_ParameterSetType_21_ARRAY_SIZE];
+        struct iso20_ParameterSetType array[iso20_ParameterSetType_4_ARRAY_SIZE];
         uint16_t arrayLen;
     } ParameterSet;
 };
@@ -2571,6 +2443,7 @@ struct iso20_exiFragment {
         struct iso20_AbsolutePriceScheduleType AbsolutePriceSchedule;
         struct iso20_CertificateInstallationReqType CertificateInstallationReq;
         struct iso20_MeteringConfirmationReqType MeteringConfirmationReq;
+        struct iso20_SignedCertificateChainType OEMProvisioningCertificateChain;
         struct iso20_PnC_AReqAuthorizationModeType PnC_AReqAuthorizationMode;
         struct iso20_SignedInfoType SignedInfo;
         struct iso20_SignedInstallationDataType SignedInstallationData;
@@ -2578,6 +2451,7 @@ struct iso20_exiFragment {
     unsigned int AbsolutePriceSchedule_isUsed:1;
     unsigned int CertificateInstallationReq_isUsed:1;
     unsigned int MeteringConfirmationReq_isUsed:1;
+    unsigned int OEMProvisioningCertificateChain_isUsed:1;
     unsigned int PnC_AReqAuthorizationMode_isUsed:1;
     unsigned int SignedInfo_isUsed:1;
     unsigned int SignedInstallationData_isUsed:1;

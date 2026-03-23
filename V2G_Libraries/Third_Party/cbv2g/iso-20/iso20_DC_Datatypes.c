@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2022 - 2023 chargebyte GmbH
- * Copyright (C) 2022 - 2023 Contributors to EVerest
+ * Copyright chargebyte GmbH and Contributors to EVerest
  */
 
 /*****************************************************
@@ -38,7 +37,9 @@ void init_iso20_dc_exiDocument(struct iso20_dc_exiDocument* exiDoc) {
     exiDoc->DC_CPDResEnergyTransferMode_isUsed = 0u;
     exiDoc->BPT_DC_CPDReqEnergyTransferMode_isUsed = 0u;
     exiDoc->BPT_DC_CPDResEnergyTransferMode_isUsed = 0u;
+    exiDoc->CLReqControlMode_isUsed = 0u;
     exiDoc->Scheduled_DC_CLReqControlMode_isUsed = 0u;
+    exiDoc->CLResControlMode_isUsed = 0u;
     exiDoc->Scheduled_DC_CLResControlMode_isUsed = 0u;
     exiDoc->BPT_Scheduled_DC_CLReqControlMode_isUsed = 0u;
     exiDoc->BPT_Scheduled_DC_CLResControlMode_isUsed = 0u;
@@ -46,8 +47,6 @@ void init_iso20_dc_exiDocument(struct iso20_dc_exiDocument* exiDoc) {
     exiDoc->Dynamic_DC_CLResControlMode_isUsed = 0u;
     exiDoc->BPT_Dynamic_DC_CLReqControlMode_isUsed = 0u;
     exiDoc->BPT_Dynamic_DC_CLResControlMode_isUsed = 0u;
-    exiDoc->CLReqControlMode_isUsed = 0u;
-    exiDoc->CLResControlMode_isUsed = 0u;
     exiDoc->Signature_isUsed = 0u;
     exiDoc->SignatureValue_isUsed = 0u;
     exiDoc->SignedInfo_isUsed = 0u;
@@ -262,18 +261,18 @@ void init_iso20_dc_ReceiptType(struct iso20_dc_ReceiptType* ReceiptType) {
     ReceiptType->OverstayCosts_isUsed = 0u;
 }
 
-void init_iso20_dc_Scheduled_DC_CLResControlModeType(struct iso20_dc_Scheduled_DC_CLResControlModeType* Scheduled_DC_CLResControlModeType) {
-    Scheduled_DC_CLResControlModeType->EVSEMaximumChargePower_isUsed = 0u;
-    Scheduled_DC_CLResControlModeType->EVSEMinimumChargePower_isUsed = 0u;
-    Scheduled_DC_CLResControlModeType->EVSEMaximumChargeCurrent_isUsed = 0u;
-    Scheduled_DC_CLResControlModeType->EVSEMaximumVoltage_isUsed = 0u;
-}
-
 void init_iso20_dc_Dynamic_DC_CLResControlModeType(struct iso20_dc_Dynamic_DC_CLResControlModeType* Dynamic_DC_CLResControlModeType) {
     Dynamic_DC_CLResControlModeType->DepartureTime_isUsed = 0u;
     Dynamic_DC_CLResControlModeType->MinimumSOC_isUsed = 0u;
     Dynamic_DC_CLResControlModeType->TargetSOC_isUsed = 0u;
     Dynamic_DC_CLResControlModeType->AckMaxDelay_isUsed = 0u;
+}
+
+void init_iso20_dc_Scheduled_DC_CLResControlModeType(struct iso20_dc_Scheduled_DC_CLResControlModeType* Scheduled_DC_CLResControlModeType) {
+    Scheduled_DC_CLResControlModeType->EVSEMaximumChargePower_isUsed = 0u;
+    Scheduled_DC_CLResControlModeType->EVSEMinimumChargePower_isUsed = 0u;
+    Scheduled_DC_CLResControlModeType->EVSEMaximumChargeCurrent_isUsed = 0u;
+    Scheduled_DC_CLResControlModeType->EVSEMaximumVoltage_isUsed = 0u;
 }
 
 void init_iso20_dc_CLResControlModeType(struct iso20_dc_CLResControlModeType* CLResControlModeType) {
