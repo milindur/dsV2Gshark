@@ -25,6 +25,8 @@
 #define NAMESPACE_ISO_20_DC "urn:iso:std:iso:15118:-20:DC"
 #define NAMESPACE_ISO_20_ACDP "urn:iso:std:iso:15118:-20:ACDP"
 #define NAMESPACE_ISO_20_WPT "urn:iso:std:iso:15118:-20:WPT"
+#define NAMESPACE_ISO_20_AC_DER_IEC "urn:iso:std:iso:15118:-20:AC-DER-IEC"
+#define NAMESPACE_ISO_20_AC_DER "urn:iso:std:iso:15118:-20:AC-DER"
 
 uint8_t *hex_str_to_uint8(const char *string);
 std::string uint8_to_hex_string(const uint8_t *v, const size_t s);

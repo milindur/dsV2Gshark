@@ -31,6 +31,10 @@
 #include <iso20_ACDP_Decoder.h>
 #include <iso20_WPT_Datatypes.h>
 #include <iso20_WPT_Decoder.h>
+#include <iso20_AC_DER_IEC_Datatypes.h>
+#include <iso20_AC_DER_IEC_Decoder.h>
+#include <iso20_AC_DER_Datatypes.h>
+#include <iso20_AC_DER_Decoder.h>
 #include <din_msgDefDatatypes.h>
 #include <din_msgDefDecoder.h>
 #include <appHand_Datatypes.h>
@@ -109,6 +113,14 @@ result_decode Decoder::decode_message(const std::string &exiIn, const std::strin
     else if (schemaIn == NAMESPACE_ISO_20_WPT)
     {
         result.errn = decode_exi<iso20_wpt_exiDocument>(buffer, len, xml_buffer, MAX_MESSAGE_SIZE, decode_iso20_wpt_exiDocument);
+    }
+    else if (schemaIn == NAMESPACE_ISO_20_AC_DER_IEC)
+    {
+        result.errn = decode_exi<iso20_ac_der_iec_exiDocument>(buffer, len, xml_buffer, MAX_MESSAGE_SIZE, decode_iso20_ac_der_iec_exiDocument);
+    }
+    else if (schemaIn == NAMESPACE_ISO_20_AC_DER)
+    {
+        result.errn = decode_exi<iso20_ac_der_exiDocument>(buffer, len, xml_buffer, MAX_MESSAGE_SIZE, decode_iso20_ac_der_exiDocument);
     }
     else
     {

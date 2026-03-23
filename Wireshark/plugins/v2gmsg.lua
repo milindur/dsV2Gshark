@@ -121,6 +121,8 @@ schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:DC"] = "ISO-20 DC"
 schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:AC"] = "ISO-20 AC"
 schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:ACDP"] = "ISO-20 ACDP"
 schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:WPT"] = "ISO-20 WPT"
+schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:AC-DER-IEC"] = "ISO-20 AC-DER-IEC"
+schema_namespace_to_schema_ID["urn:iso:std:iso:15118:-20:AC-DER"] = "ISO-20 AC-DER"
 
 -- reset everything on init (e.g., if new pcap is opened on same instance)
 function p_v2gmsg.init()
