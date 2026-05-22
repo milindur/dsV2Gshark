@@ -8159,14 +8159,62 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             }
             break;
         case 72:
-            // Grammar: ID=72; read/write bits=1; LOOP (PulseSequenceOrder)
+            // Grammar: ID=72; read/write bits=1; START (PulseSequenceOrder)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=72
+                    // Event: START (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=73
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PulseSequenceOrder", 23);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_WPT_TxRxPulseOrderType(stream, &WPT_TxRxPackageSpecDataType->PulseSequenceOrder.array[WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 73;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PulseSequenceOrder>", 25);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 73:
+            // Grammar: ID=73; read/write bits=2; LOOP (PulseSequenceOrder), START (PulseSeparationTime)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=74
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8189,7 +8237,7 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < 255)
                     {
-                        grammar_id = 72;
+                        grammar_id = 74;
                     }
                     else
                     {
@@ -8208,21 +8256,8 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PulseSequenceOrder>", 25);
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 73:
-            // Grammar: ID=73; read/write bits=1; START (PulseSeparationTime)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (PulseSeparationTime, unsignedShort (unsignedInt)); next=74
+                case 1:
+                    // Event: START (PulseSeparationTime, unsignedShort (unsignedInt)); next=75
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8239,7 +8274,7 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_TxRxPackageSpecDataType->PulseSeparationTime); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 74;
+                        grammar_id = 75;
                     }
                         // XML: close tag
                         {
@@ -8261,14 +8296,60 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             }
             break;
         case 74:
-            // Grammar: ID=74; read/write bits=1; START (PulseDuration)
+            // Grammar: ID=74; read/write bits=1; START (PulseSeparationTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PulseDuration, unsignedShort (unsignedInt)); next=75
+                    // Event: START (PulseSeparationTime, unsignedShort (unsignedInt)); next=75
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PulseSeparationTime", 24);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &WPT_TxRxPackageSpecDataType->PulseSeparationTime);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_TxRxPackageSpecDataType->PulseSeparationTime); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 75;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PulseSeparationTime>", 26);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 75:
+            // Grammar: ID=75; read/write bits=1; START (PulseDuration)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (PulseDuration, unsignedShort (unsignedInt)); next=76
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8285,7 +8366,7 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_TxRxPackageSpecDataType->PulseDuration); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 75;
+                        grammar_id = 76;
                     }
                         // XML: close tag
                         {
@@ -8306,8 +8387,8 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                 }
             }
             break;
-        case 75:
-            // Grammar: ID=75; read/write bits=1; START (PackageSeparationTime)
+        case 76:
+            // Grammar: ID=76; read/write bits=1; START (PackageSeparationTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -8387,7 +8468,7 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
 //          abstract=False; final=False;
 // Particle: TxRxIdentifier, numericIDType (1, 1); TxRxPosition, WPT_CoordinateXYZType (1, 1); TxRxOrientation, WPT_CoordinateXYZType (1, 1);
 static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_TxRxSpecDataType* WPT_TxRxSpecDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 76;
+    int grammar_id = 77;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -8398,15 +8479,15 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
     {
         switch (grammar_id)
         {
-        case 76:
-            // Grammar: ID=76; read/write bits=1; START (TxRxIdentifier)
+        case 77:
+            // Grammar: ID=77; read/write bits=1; START (TxRxIdentifier)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxRxIdentifier, numericIDType (unsignedInt)); next=77
+                    // Event: START (TxRxIdentifier, numericIDType (unsignedInt)); next=78
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8423,7 +8504,7 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_TxRxSpecDataType->TxRxIdentifier); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 77;
+                        grammar_id = 78;
                     }
                         // XML: close tag
                         {
@@ -8444,15 +8525,15 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 77:
-            // Grammar: ID=77; read/write bits=1; START (TxRxPosition)
+        case 78:
+            // Grammar: ID=78; read/write bits=1; START (TxRxPosition)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxRxPosition, WPT_CoordinateXYZType (WPT_CoordinateXYZType)); next=78
+                    // Event: START (TxRxPosition, WPT_CoordinateXYZType (WPT_CoordinateXYZType)); next=79
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8466,7 +8547,7 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
                     error = decode_iso20_wpt_WPT_CoordinateXYZType(stream, &WPT_TxRxSpecDataType->TxRxPosition, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 78;
+                        grammar_id = 79;
                     }
                         // XML: close tag
                         {
@@ -8487,8 +8568,8 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 78:
-            // Grammar: ID=78; read/write bits=1; START (TxRxOrientation)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (TxRxOrientation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -8565,7 +8646,7 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: SSID, identifierType (0, 1); BSSID, bssidType (0, 1); IPAddress, ipaddressType (0, 1); Port, unsignedShort (0, 1);
 static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct iso20_wpt_AlternativeSECCType* AlternativeSECCType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 79;
+    int grammar_id = 80;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -8576,15 +8657,15 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
     {
         switch (grammar_id)
         {
-        case 79:
-            // Grammar: ID=79; read/write bits=3; START (SSID), START (BSSID), START (IPAddress), START (Port), END Element
+        case 80:
+            // Grammar: ID=80; read/write bits=3; START (SSID), START (BSSID), START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SSID, identifierType (string)); next=80
+                    // Event: START (SSID, identifierType (string)); next=81
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8639,7 +8720,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->SSID_isUsed = 1u;
-                                grammar_id = 80;
+                                grammar_id = 81;
                             }
                             else
                             {
@@ -8661,7 +8742,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (BSSID, bssidType (string)); next=81
+                    // Event: START (BSSID, bssidType (string)); next=82
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8716,7 +8797,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->BSSID_isUsed = 1u;
-                                grammar_id = 81;
+                                grammar_id = 82;
                             }
                             else
                             {
@@ -8738,7 +8819,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 2:
-                    // Event: START (IPAddress, ipaddressType (string)); next=82
+                    // Event: START (IPAddress, ipaddressType (string)); next=83
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8793,7 +8874,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 82;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -8859,15 +8940,15 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 80:
-            // Grammar: ID=80; read/write bits=3; START (BSSID), START (IPAddress), START (Port), END Element
+        case 81:
+            // Grammar: ID=81; read/write bits=3; START (BSSID), START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BSSID, bssidType (string)); next=81
+                    // Event: START (BSSID, bssidType (string)); next=82
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8922,7 +9003,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->BSSID_isUsed = 1u;
-                                grammar_id = 81;
+                                grammar_id = 82;
                             }
                             else
                             {
@@ -8944,7 +9025,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (IPAddress, ipaddressType (string)); next=82
+                    // Event: START (IPAddress, ipaddressType (string)); next=83
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -8999,7 +9080,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 82;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -9065,15 +9146,15 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 81:
-            // Grammar: ID=81; read/write bits=2; START (IPAddress), START (Port), END Element
+        case 82:
+            // Grammar: ID=82; read/write bits=2; START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (IPAddress, ipaddressType (string)); next=82
+                    // Event: START (IPAddress, ipaddressType (string)); next=83
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9128,7 +9209,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 82;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -9194,8 +9275,8 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 82:
-            // Grammar: ID=82; read/write bits=2; START (Port), END Element
+        case 83:
+            // Grammar: ID=83; read/write bits=2; START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -9281,7 +9362,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False;
 // Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
 static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso20_wpt_DetailedCostType* DetailedCostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 83;
+    int grammar_id = 84;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -9292,15 +9373,15 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
     {
         switch (grammar_id)
         {
-        case 83:
-            // Grammar: ID=83; read/write bits=1; START (Amount)
+        case 84:
+            // Grammar: ID=84; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=84
+                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=85
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9314,7 +9395,7 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
                     error = decode_iso20_wpt_RationalNumberType(stream, &DetailedCostType->Amount, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 84;
+                        grammar_id = 85;
                     }
                         // XML: close tag
                         {
@@ -9335,8 +9416,8 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 84:
-            // Grammar: ID=84; read/write bits=1; START (CostPerUnit)
+        case 85:
+            // Grammar: ID=85; read/write bits=1; START (CostPerUnit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -9413,7 +9494,7 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False;
 // Particle: NumberOfReceivers, unsignedByte (1, 1); RxSpecData, WPT_TxRxSpecDataType (2, 255);
 static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_ReceiverDataType* WPT_LF_ReceiverDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 85;
+    int grammar_id = 86;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -9424,15 +9505,15 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
     {
         switch (grammar_id)
         {
-        case 85:
-            // Grammar: ID=85; read/write bits=1; START (NumberOfReceivers)
+        case 86:
+            // Grammar: ID=86; read/write bits=1; START (NumberOfReceivers)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumberOfReceivers, unsignedByte (unsignedShort)); next=86
+                    // Event: START (NumberOfReceivers, unsignedByte (unsignedShort)); next=87
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9474,7 +9555,7 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 86;
+                                grammar_id = 87;
                             }
                             else
                             {
@@ -9501,15 +9582,15 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 86:
-            // Grammar: ID=86; read/write bits=2; START (RxSpecData), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+        case 87:
+            // Grammar: ID=87; read/write bits=1; START (RxSpecData)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=87
+                    // Event: START (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=88
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9529,7 +9610,7 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                         // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 87;
+                    grammar_id = 88;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -9543,10 +9624,53 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RxSpecData>", 17);
                     }
                     break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (RxSpecData)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=89
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RxSpecData", 15);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (WPT_LF_ReceiverDataType->RxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_WPT_TxRxSpecDataType(stream, &WPT_LF_ReceiverDataType->RxSpecData.array[WPT_LF_ReceiverDataType->RxSpecData.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 89;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RxSpecData>", 17);
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -9554,15 +9678,15 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; LOOP (RxSpecData)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+        case 89:
+            // Grammar: ID=89; read/write bits=2; LOOP (RxSpecData), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=87
+                    // Event: LOOP (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=89
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9585,11 +9709,11 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (WPT_LF_ReceiverDataType->RxSpecData.arrayLen < 255)
                     {
-                        grammar_id = 87;
+                        grammar_id = 89;
                     }
                     else
                     {
-                        grammar_id = -1;
+                        grammar_id = 2;
                     }
                         // XML: close tag
                         {
@@ -9603,6 +9727,11 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                         }
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RxSpecData>", 17);
                     }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -9645,7 +9774,7 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: NumberOfTransmitters, unsignedByte (1, 1); SignalFrequency, RationalNumberType (1, 1); TxSpecData, WPT_TxRxSpecDataType (2, 255); TxPackageSpecData, WPT_TxRxPackageSpecDataType (0, 1);
 static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_TransmitterDataType* WPT_LF_TransmitterDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 88;
+    int grammar_id = 90;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -9656,15 +9785,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
     {
         switch (grammar_id)
         {
-        case 88:
-            // Grammar: ID=88; read/write bits=1; START (NumberOfTransmitters)
+        case 90:
+            // Grammar: ID=90; read/write bits=1; START (NumberOfTransmitters)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumberOfTransmitters, unsignedByte (unsignedShort)); next=89
+                    // Event: START (NumberOfTransmitters, unsignedByte (unsignedShort)); next=91
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9706,7 +9835,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 91;
                             }
                             else
                             {
@@ -9733,15 +9862,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 89:
-            // Grammar: ID=89; read/write bits=1; START (SignalFrequency)
+        case 91:
+            // Grammar: ID=91; read/write bits=1; START (SignalFrequency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignalFrequency, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (SignalFrequency, RationalNumberType (RationalNumberType)); next=92
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9755,7 +9884,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_LF_TransmitterDataType->SignalFrequency, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 90;
+                        grammar_id = 92;
                     }
                         // XML: close tag
                         {
@@ -9776,15 +9905,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 90:
-            // Grammar: ID=90; read/write bits=2; START (TxSpecData), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+        case 92:
+            // Grammar: ID=92; read/write bits=1; START (TxSpecData)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=91
+                    // Event: START (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=93
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9804,7 +9933,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                         // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 91;
+                    grammar_id = 93;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -9818,10 +9947,53 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TxSpecData>", 17);
                     }
                     break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 93:
+            // Grammar: ID=93; read/write bits=1; START (TxSpecData)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=94
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TxSpecData", 15);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (WPT_LF_TransmitterDataType->TxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_WPT_TxRxSpecDataType(stream, &WPT_LF_TransmitterDataType->TxSpecData.array[WPT_LF_TransmitterDataType->TxSpecData.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 94;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TxSpecData>", 17);
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -9829,15 +10001,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 91:
-            // Grammar: ID=91; read/write bits=1; LOOP (TxSpecData)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+        case 94:
+            // Grammar: ID=94; read/write bits=2; LOOP (TxSpecData), START (TxPackageSpecData), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=91
+                    // Event: LOOP (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=95
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9860,7 +10032,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (WPT_LF_TransmitterDataType->TxSpecData.arrayLen < 255)
                     {
-                        grammar_id = 91;
+                        grammar_id = 95;
                     }
                     else
                     {
@@ -9879,14 +10051,50 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TxSpecData>", 17);
                     }
                     break;
+                case 1:
+                    // Event: START (TxPackageSpecData, WPT_TxRxPackageSpecDataType (WPT_TxRxPackageSpecDataType)); next=2
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TxPackageSpecData", 22);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_TxRxPackageSpecDataType(stream, &WPT_LF_TransmitterDataType->TxPackageSpecData, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_LF_TransmitterDataType->TxPackageSpecData_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TxPackageSpecData>", 24);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
                     break;
                 }
             }
             break;
-        case 92:
-            // Grammar: ID=92; read/write bits=2; START (TxPackageSpecData), END Element
+        case 95:
+            // Grammar: ID=95; read/write bits=2; START (TxPackageSpecData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -9969,7 +10177,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_wpt_SignatureType* SignatureType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 93;
+    int grammar_id = 96;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -9980,15 +10188,15 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
     {
         switch (grammar_id)
         {
-        case 93:
-            // Grammar: ID=93; read/write bits=2; START (Id), START (SignedInfo)
+        case 96:
+            // Grammar: ID=96; read/write bits=2; START (Id), START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=94
+                    // Event: START (Id, ID (NCName)); next=97
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -10013,11 +10221,11 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                         }
                     }
                     SignatureType->Id_isUsed = 1u;
-                    grammar_id = 94;
+                    grammar_id = 97;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=95
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=98
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10031,7 +10239,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     error = decode_iso20_wpt_SignedInfoType(stream, &SignatureType->SignedInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 95;
+                        grammar_id = 98;
                     }
                         // XML: close tag
                         {
@@ -10052,15 +10260,15 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (SignedInfo)
+        case 97:
+            // Grammar: ID=97; read/write bits=1; START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=95
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=98
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10074,7 +10282,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     error = decode_iso20_wpt_SignedInfoType(stream, &SignatureType->SignedInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 95;
+                        grammar_id = 98;
                     }
                         // XML: close tag
                         {
@@ -10095,15 +10303,15 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (SignatureValue)
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (SignatureValue)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=96
+                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=99
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10117,7 +10325,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     error = decode_iso20_wpt_SignatureValueType(stream, &SignatureType->SignatureValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 96;
+                        grammar_id = 99;
                     }
                         // XML: close tag
                         {
@@ -10138,15 +10346,15 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 96:
-            // Grammar: ID=96; read/write bits=2; START (KeyInfo), START (Object), END Element
+        case 99:
+            // Grammar: ID=99; read/write bits=2; START (KeyInfo), START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=98
+                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=101
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10161,7 +10369,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     if (error == 0)
                     {
                         SignatureType->KeyInfo_isUsed = 1u;
-                        grammar_id = 98;
+                        grammar_id = 101;
                     }
                         // XML: close tag
                         {
@@ -10177,7 +10385,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 1:
-                    // Event: START (Object, ObjectType (ObjectType)); next=97
+                    // Event: START (Object, ObjectType (ObjectType)); next=100
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10192,7 +10400,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 97;
+                        grammar_id = 100;
                     }
                         // XML: close tag
                         {
@@ -10218,8 +10426,8 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 97:
-            // Grammar: ID=97; read/write bits=2; START (Object), END Element
+        case 100:
+            // Grammar: ID=100; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -10263,15 +10471,15 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 98:
-            // Grammar: ID=98; read/write bits=2; START (Object), END Element
+        case 101:
+            // Grammar: ID=101; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=99
+                    // Event: START (Object, ObjectType (ObjectType)); next=102
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10286,7 +10494,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 99;
+                        grammar_id = 102;
                     }
                         // XML: close tag
                         {
@@ -10312,8 +10520,8 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 99:
-            // Grammar: ID=99; read/write bits=2; START (Object), END Element
+        case 102:
+            // Grammar: ID=102; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -10392,7 +10600,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); Amount, RationalNumberType (1, 1);
 static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso20_wpt_DetailedTaxType* DetailedTaxType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 100;
+    int grammar_id = 103;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -10403,15 +10611,15 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
     {
         switch (grammar_id)
         {
-        case 100:
-            // Grammar: ID=100; read/write bits=1; START (TaxRuleID)
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=101
+                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=104
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10428,7 +10636,7 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DetailedTaxType->TaxRuleID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 101;
+                        grammar_id = 104;
                     }
                         // XML: close tag
                         {
@@ -10449,8 +10657,8 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 101:
-            // Grammar: ID=101; read/write bits=1; START (Amount)
+        case 104:
+            // Grammar: ID=104; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -10527,7 +10735,7 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False;
 // Particle: PackageIndex, unsignedByte (1, 1); LF_TxData, WPT_LF_TxDataListType (0, 1); LF_RxData, WPT_LF_RxDataListType (0, 1);
 static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_DataPackageType* WPT_LF_DataPackageType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 102;
+    int grammar_id = 105;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -10538,15 +10746,15 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
     {
         switch (grammar_id)
         {
-        case 102:
-            // Grammar: ID=102; read/write bits=1; START (PackageIndex)
+        case 105:
+            // Grammar: ID=105; read/write bits=1; START (PackageIndex)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PackageIndex, unsignedByte (unsignedShort)); next=103
+                    // Event: START (PackageIndex, unsignedByte (unsignedShort)); next=106
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10588,7 +10796,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 103;
+                                grammar_id = 106;
                             }
                             else
                             {
@@ -10615,8 +10823,8 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 103:
-            // Grammar: ID=103; read/write bits=2; START (LF_TxData), START (LF_RxData)
+        case 106:
+            // Grammar: ID=106; read/write bits=2; START (LF_TxData), START (LF_RxData)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -10725,7 +10933,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: AlternativeSECC, AlternativeSECCType (1, 8);
 static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, struct iso20_wpt_AlternativeSECCListType* AlternativeSECCListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 104;
+    int grammar_id = 107;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -10736,15 +10944,15 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
     {
         switch (grammar_id)
         {
-        case 104:
-            // Grammar: ID=104; read/write bits=1; START (AlternativeSECC)
+        case 107:
+            // Grammar: ID=107; read/write bits=1; START (AlternativeSECC)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=105
+                    // Event: START (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=108
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10764,7 +10972,7 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                         // static array not large enough, only iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 105;
+                    grammar_id = 108;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -10784,15 +10992,15 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 105:
-            // Grammar: ID=105; read/write bits=2; LOOP (AlternativeSECC), END Element
+        case 108:
+            // Grammar: ID=108; read/write bits=2; LOOP (AlternativeSECC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=105
+                    // Event: LOOP (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=108
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10815,7 +11023,7 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (AlternativeSECCListType->AlternativeSECC.arrayLen < 8)
                     {
-                        grammar_id = 105;
+                        grammar_id = 108;
                     }
                     else
                     {
@@ -10880,7 +11088,7 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: PresentSOC, percentValueType (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); MaximumSOC, percentValueType (0, 1); RemainingTimeToMinimumSOC, unsignedInt (0, 1); RemainingTimeToTargetSOC, unsignedInt (0, 1); RemainingTimeToMaximumSOC, unsignedInt (0, 1); ChargingComplete, boolean (0, 1); BatteryEnergyCapacity, RationalNumberType (0, 1); InletHot, boolean (0, 1);
 static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struct iso20_wpt_DisplayParametersType* DisplayParametersType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 106;
+    int grammar_id = 109;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -10891,15 +11099,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 106:
-            // Grammar: ID=106; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 109:
+            // Grammar: ID=109; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PresentSOC, percentValueType (byte)); next=107
+                    // Event: START (PresentSOC, percentValueType (byte)); next=110
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -10942,7 +11150,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 107;
+                                grammar_id = 110;
                             }
                             else
                             {
@@ -10964,7 +11172,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=108
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=111
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11007,7 +11215,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 108;
+                                grammar_id = 111;
                             }
                             else
                             {
@@ -11029,7 +11237,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=109
+                    // Event: START (TargetSOC, percentValueType (byte)); next=112
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11072,7 +11280,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 109;
+                                grammar_id = 112;
                             }
                             else
                             {
@@ -11094,7 +11302,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=110
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=113
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11137,7 +11345,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 110;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -11159,7 +11367,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=111
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=114
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11177,7 +11385,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMinimumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 111;
+                        grammar_id = 114;
                     }
                         // XML: close tag
                         {
@@ -11193,7 +11401,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11211,7 +11419,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -11227,7 +11435,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 6:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11245,7 +11453,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -11261,7 +11469,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 7:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11304,7 +11512,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -11326,7 +11534,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 8:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11341,7 +11549,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -11432,15 +11640,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 107:
-            // Grammar: ID=107; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 110:
+            // Grammar: ID=110; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=108
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=111
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11483,7 +11691,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 108;
+                                grammar_id = 111;
                             }
                             else
                             {
@@ -11505,7 +11713,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=109
+                    // Event: START (TargetSOC, percentValueType (byte)); next=112
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11548,7 +11756,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 109;
+                                grammar_id = 112;
                             }
                             else
                             {
@@ -11570,7 +11778,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=110
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=113
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11613,7 +11821,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 110;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -11635,7 +11843,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=111
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=114
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11653,7 +11861,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMinimumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 111;
+                        grammar_id = 114;
                     }
                         // XML: close tag
                         {
@@ -11669,7 +11877,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11687,7 +11895,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -11703,7 +11911,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11721,7 +11929,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -11737,7 +11945,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 6:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11780,7 +11988,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -11802,7 +12010,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 7:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11817,7 +12025,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -11908,15 +12116,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 108:
-            // Grammar: ID=108; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 111:
+            // Grammar: ID=111; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=109
+                    // Event: START (TargetSOC, percentValueType (byte)); next=112
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11959,7 +12167,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 109;
+                                grammar_id = 112;
                             }
                             else
                             {
@@ -11981,7 +12189,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=110
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=113
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12024,7 +12232,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 110;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -12046,7 +12254,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=111
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=114
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12064,7 +12272,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMinimumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 111;
+                        grammar_id = 114;
                     }
                         // XML: close tag
                         {
@@ -12080,7 +12288,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12098,7 +12306,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -12114,7 +12322,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12132,7 +12340,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -12148,7 +12356,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 5:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12191,7 +12399,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -12213,7 +12421,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 6:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12228,7 +12436,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -12319,15 +12527,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 109:
-            // Grammar: ID=109; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 112:
+            // Grammar: ID=112; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=110
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=113
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12370,7 +12578,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 110;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -12392,7 +12600,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=111
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=114
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12410,7 +12618,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMinimumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 111;
+                        grammar_id = 114;
                     }
                         // XML: close tag
                         {
@@ -12426,7 +12634,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12444,7 +12652,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -12460,7 +12668,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12478,7 +12686,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -12494,7 +12702,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12537,7 +12745,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -12559,7 +12767,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 5:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12574,7 +12782,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -12665,15 +12873,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 110:
-            // Grammar: ID=110; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 113:
+            // Grammar: ID=113; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=111
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=114
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12691,7 +12899,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMinimumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 111;
+                        grammar_id = 114;
                     }
                         // XML: close tag
                         {
@@ -12707,7 +12915,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12725,7 +12933,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -12741,7 +12949,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12759,7 +12967,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -12775,7 +12983,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12818,7 +13026,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -12840,7 +13048,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12855,7 +13063,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -12946,15 +13154,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 111:
-            // Grammar: ID=111; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 114:
+            // Grammar: ID=114; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=112
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=115
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -12972,7 +13180,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToTargetSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 112;
+                        grammar_id = 115;
                     }
                         // XML: close tag
                         {
@@ -12988,7 +13196,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13006,7 +13214,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -13022,7 +13230,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13065,7 +13273,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -13087,7 +13295,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13102,7 +13310,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -13193,15 +13401,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 115:
+            // Grammar: ID=115; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=113
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=116
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13219,7 +13427,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DisplayParametersType->RemainingTimeToMaximumSOC); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 113;
+                        grammar_id = 116;
                     }
                         // XML: close tag
                         {
@@ -13235,7 +13443,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13278,7 +13486,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -13300,7 +13508,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13315,7 +13523,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -13406,15 +13614,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 113:
-            // Grammar: ID=113; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 116:
+            // Grammar: ID=116; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=114
+                    // Event: START (ChargingComplete, boolean (boolean)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13457,7 +13665,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 117;
                             }
                             else
                             {
@@ -13479,7 +13687,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13494,7 +13702,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -13585,15 +13793,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 117:
+            // Grammar: ID=117; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13608,7 +13816,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 115;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -13699,8 +13907,8 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 115:
-            // Grammar: ID=115; read/write bits=2; START (InletHot), END Element
+        case 118:
+            // Grammar: ID=118; read/write bits=2; START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -13817,7 +14025,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (1, 8);
 static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckMethodListType* WPT_AlignmentCheckMethodListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 116;
+    int grammar_id = 119;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -13828,15 +14036,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
     {
         switch (grammar_id)
         {
-        case 116:
-            // Grammar: ID=116; read/write bits=1; START (WPT_AlignmentCheckMethod)
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (WPT_AlignmentCheckMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=117
+                    // Event: START (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=120
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13890,7 +14098,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 117;
+                                grammar_id = 120;
                             }
                             else
                             {
@@ -13917,15 +14125,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                 }
             }
             break;
-        case 117:
-            // Grammar: ID=117; read/write bits=2; LOOP (WPT_AlignmentCheckMethod), END Element
+        case 120:
+            // Grammar: ID=120; read/write bits=2; LOOP (WPT_AlignmentCheckMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=117
+                    // Event: LOOP (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=120
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13979,7 +14187,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 117;
+                                grammar_id = 120;
                             }
                             else
                             {
@@ -14046,7 +14254,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
 //          abstract=False; final=False;
 // Particle: WPT_FinePositioningMethod, WPT_FinePositioningMethodType (1, 8);
 static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningMethodListType* WPT_FinePositioningMethodListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 118;
+    int grammar_id = 121;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14057,15 +14265,15 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
     {
         switch (grammar_id)
         {
-        case 118:
-            // Grammar: ID=118; read/write bits=1; START (WPT_FinePositioningMethod)
+        case 121:
+            // Grammar: ID=121; read/write bits=1; START (WPT_FinePositioningMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=119
+                    // Event: START (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=122
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14121,7 +14329,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 122;
                             }
                             else
                             {
@@ -14148,15 +14356,15 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                 }
             }
             break;
-        case 119:
-            // Grammar: ID=119; read/write bits=2; LOOP (WPT_FinePositioningMethod), END Element
+        case 122:
+            // Grammar: ID=122; read/write bits=2; LOOP (WPT_FinePositioningMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=119
+                    // Event: LOOP (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=122
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14212,7 +14420,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 122;
                             }
                             else
                             {
@@ -14279,7 +14487,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
 //          abstract=False; final=False;
 // Particle: WPT_PairingMethod, WPT_PairingMethodType (1, 8);
 static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingMethodListType* WPT_PairingMethodListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 120;
+    int grammar_id = 123;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14290,15 +14498,15 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
     {
         switch (grammar_id)
         {
-        case 120:
-            // Grammar: ID=120; read/write bits=1; START (WPT_PairingMethod)
+        case 123:
+            // Grammar: ID=123; read/write bits=1; START (WPT_PairingMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_PairingMethod, WPT_PairingMethodType (string)); next=121
+                    // Event: START (WPT_PairingMethod, WPT_PairingMethodType (string)); next=124
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14355,7 +14563,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 121;
+                                grammar_id = 124;
                             }
                             else
                             {
@@ -14382,15 +14590,15 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 121:
-            // Grammar: ID=121; read/write bits=2; LOOP (WPT_PairingMethod), END Element
+        case 124:
+            // Grammar: ID=124; read/write bits=2; LOOP (WPT_PairingMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_PairingMethod, WPT_PairingMethodType (string)); next=121
+                    // Event: LOOP (WPT_PairingMethod, WPT_PairingMethodType (string)); next=124
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14447,7 +14655,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 121;
+                                grammar_id = 124;
                             }
                             else
                             {
@@ -14514,7 +14722,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
 //          abstract=False; final=False;
 // Particle: EVPCCoilCurrentRequest, RationalNumberType (1, 1); EVPCCoilCurrentInformation, RationalNumberType (1, 1); EVPCCurrentOutputInformation, RationalNumberType (1, 1); EVPCVoltageOutputInformation, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* stream, struct iso20_wpt_WPT_EVPCPowerControlParameterType* WPT_EVPCPowerControlParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 122;
+    int grammar_id = 125;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14525,15 +14733,15 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
     {
         switch (grammar_id)
         {
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (EVPCCoilCurrentRequest)
+        case 125:
+            // Grammar: ID=125; read/write bits=1; START (EVPCCoilCurrentRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCoilCurrentRequest, RationalNumberType (RationalNumberType)); next=123
+                    // Event: START (EVPCCoilCurrentRequest, RationalNumberType (RationalNumberType)); next=126
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14547,7 +14755,7 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCoilCurrentRequest, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 123;
+                        grammar_id = 126;
                     }
                         // XML: close tag
                         {
@@ -14568,15 +14776,15 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (EVPCCoilCurrentInformation)
+        case 126:
+            // Grammar: ID=126; read/write bits=1; START (EVPCCoilCurrentInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCoilCurrentInformation, RationalNumberType (RationalNumberType)); next=124
+                    // Event: START (EVPCCoilCurrentInformation, RationalNumberType (RationalNumberType)); next=127
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14590,7 +14798,7 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCoilCurrentInformation, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        grammar_id = 127;
                     }
                         // XML: close tag
                         {
@@ -14611,15 +14819,15 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=1; START (EVPCCurrentOutputInformation)
+        case 127:
+            // Grammar: ID=127; read/write bits=1; START (EVPCCurrentOutputInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCurrentOutputInformation, RationalNumberType (RationalNumberType)); next=125
+                    // Event: START (EVPCCurrentOutputInformation, RationalNumberType (RationalNumberType)); next=128
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14633,7 +14841,7 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCurrentOutputInformation, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 125;
+                        grammar_id = 128;
                     }
                         // XML: close tag
                         {
@@ -14654,8 +14862,8 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (EVPCVoltageOutputInformation)
+        case 128:
+            // Grammar: ID=128; read/write bits=1; START (EVPCVoltageOutputInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -14732,7 +14940,7 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
 //          abstract=False; final=False;
 // Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, evseNotificationType (1, 1);
 static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20_wpt_EVSEStatusType* EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 126;
+    int grammar_id = 129;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14743,15 +14951,15 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
     {
         switch (grammar_id)
         {
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (NotificationMaxDelay)
+        case 129:
+            // Grammar: ID=129; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=127
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=130
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14768,7 +14976,7 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 127;
+                        grammar_id = 130;
                     }
                         // XML: close tag
                         {
@@ -14789,8 +14997,8 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=1; START (EVSENotification)
+        case 130:
+            // Grammar: ID=130; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -14909,7 +15117,7 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct iso20_wpt_MessageHeaderType* MessageHeaderType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 128;
+    int grammar_id = 131;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14920,15 +15128,15 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
     {
         switch (grammar_id)
         {
-        case 128:
-            // Grammar: ID=128; read/write bits=1; START (SessionID)
+        case 131:
+            // Grammar: ID=131; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=129
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=132
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14953,7 +15161,7 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
                             }
                         }
-                        grammar_id = 129;
+                        grammar_id = 132;
                     }
                         // XML: close tag
                         {
@@ -14974,15 +15182,15 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 129:
-            // Grammar: ID=129; read/write bits=1; START (TimeStamp)
+        case 132:
+            // Grammar: ID=132; read/write bits=1; START (TimeStamp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=130
+                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=133
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14999,7 +15207,7 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MessageHeaderType->TimeStamp); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 130;
+                        grammar_id = 133;
                     }
                         // XML: close tag
                         {
@@ -15020,8 +15228,8 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=2; START (Signature), END Element
+        case 133:
+            // Grammar: ID=133; read/write bits=2; START (Signature), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -15104,7 +15312,7 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: LF_TransmitterSetupData, WPT_LF_TransmitterDataType (0, 1); LF_ReceiverSetupData, WPT_LF_ReceiverDataType (0, 1);
 static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_SystemSetupDataType* WPT_LF_SystemSetupDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 131;
+    int grammar_id = 134;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -15115,8 +15323,8 @@ static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, 
     {
         switch (grammar_id)
         {
-        case 131:
-            // Grammar: ID=131; read/write bits=2; START (LF_TransmitterSetupData), START (LF_ReceiverSetupData)
+        case 134:
+            // Grammar: ID=134; read/write bits=2; START (LF_TransmitterSetupData), START (LF_ReceiverSetupData)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -15225,7 +15433,7 @@ static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); ChargedEnergyReadingWh, unsignedLong (1, 1); BPT_DischargedEnergyReadingWh, unsignedLong (0, 1); CapacitiveEnergyReadingVARh, unsignedLong (0, 1); BPT_InductiveEnergyReadingVARh, unsignedLong (0, 1); MeterSignature, meterSignatureType (0, 1); MeterStatus, short (0, 1); MeterTimestamp, unsignedLong (0, 1);
 static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_wpt_MeterInfoType* MeterInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 132;
+    int grammar_id = 135;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -15236,15 +15444,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
     {
         switch (grammar_id)
         {
-        case 132:
-            // Grammar: ID=132; read/write bits=1; START (MeterID)
+        case 135:
+            // Grammar: ID=135; read/write bits=1; START (MeterID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterID, meterIDType (string)); next=133
+                    // Event: START (MeterID, meterIDType (string)); next=136
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15298,7 +15506,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 133;
+                                grammar_id = 136;
                             }
                             else
                             {
@@ -15325,15 +15533,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 133:
-            // Grammar: ID=133; read/write bits=1; START (ChargedEnergyReadingWh)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (ChargedEnergyReadingWh)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=134
+                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=137
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15350,7 +15558,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->ChargedEnergyReadingWh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 134;
+                        grammar_id = 137;
                     }
                         // XML: close tag
                         {
@@ -15371,15 +15579,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 134:
-            // Grammar: ID=134; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 137:
+            // Grammar: ID=137; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=135
+                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=138
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15397,7 +15605,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->BPT_DischargedEnergyReadingWh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 135;
+                        grammar_id = 138;
                     }
                         // XML: close tag
                         {
@@ -15413,7 +15621,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 1:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=136
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=139
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15431,7 +15639,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->CapacitiveEnergyReadingVARh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 136;
+                        grammar_id = 139;
                     }
                         // XML: close tag
                         {
@@ -15447,7 +15655,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=137
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15465,7 +15673,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->BPT_InductiveEnergyReadingVARh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 137;
+                        grammar_id = 140;
                     }
                         // XML: close tag
                         {
@@ -15481,7 +15689,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 3:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=138
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15529,7 +15737,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 138;
+                        grammar_id = 141;
                     }
                         // XML: close tag
                         {
@@ -15545,7 +15753,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 4:
-                    // Event: START (MeterStatus, short (int)); next=139
+                    // Event: START (MeterStatus, short (int)); next=142
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15563,7 +15771,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 142;
                     }
                         // XML: close tag
                         {
@@ -15623,15 +15831,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 138:
+            // Grammar: ID=138; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=136
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=139
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15649,7 +15857,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->CapacitiveEnergyReadingVARh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 136;
+                        grammar_id = 139;
                     }
                         // XML: close tag
                         {
@@ -15665,7 +15873,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=137
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15683,7 +15891,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->BPT_InductiveEnergyReadingVARh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 137;
+                        grammar_id = 140;
                     }
                         // XML: close tag
                         {
@@ -15699,7 +15907,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 2:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=138
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15747,7 +15955,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 138;
+                        grammar_id = 141;
                     }
                         // XML: close tag
                         {
@@ -15763,7 +15971,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 3:
-                    // Event: START (MeterStatus, short (int)); next=139
+                    // Event: START (MeterStatus, short (int)); next=142
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15781,7 +15989,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 142;
                     }
                         // XML: close tag
                         {
@@ -15841,15 +16049,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 136:
-            // Grammar: ID=136; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 139:
+            // Grammar: ID=139; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=137
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15867,7 +16075,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->BPT_InductiveEnergyReadingVARh); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 137;
+                        grammar_id = 140;
                     }
                         // XML: close tag
                         {
@@ -15883,7 +16091,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 1:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=138
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15931,7 +16139,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 138;
+                        grammar_id = 141;
                     }
                         // XML: close tag
                         {
@@ -15947,7 +16155,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 2:
-                    // Event: START (MeterStatus, short (int)); next=139
+                    // Event: START (MeterStatus, short (int)); next=142
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15965,7 +16173,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 142;
                     }
                         // XML: close tag
                         {
@@ -16025,15 +16233,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 137:
-            // Grammar: ID=137; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 140:
+            // Grammar: ID=140; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=138
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16081,7 +16289,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 138;
+                        grammar_id = 141;
                     }
                         // XML: close tag
                         {
@@ -16097,7 +16305,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     break;
                 case 1:
-                    // Event: START (MeterStatus, short (int)); next=139
+                    // Event: START (MeterStatus, short (int)); next=142
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16115,7 +16323,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 142;
                     }
                         // XML: close tag
                         {
@@ -16175,15 +16383,15 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 138:
-            // Grammar: ID=138; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
+        case 141:
+            // Grammar: ID=141; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterStatus, short (int)); next=139
+                    // Event: START (MeterStatus, short (int)); next=142
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16201,7 +16409,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 142;
                     }
                         // XML: close tag
                         {
@@ -16261,8 +16469,8 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 139:
-            // Grammar: ID=139; read/write bits=2; START (MeterTimestamp), END Element
+        case 142:
+            // Grammar: ID=142; read/write bits=2; START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -16348,7 +16556,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
 static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wpt_ReceiptType* ReceiptType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 140;
+    int grammar_id = 143;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -16359,15 +16567,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
     {
         switch (grammar_id)
         {
-        case 140:
-            // Grammar: ID=140; read/write bits=1; START (TimeAnchor)
+        case 143:
+            // Grammar: ID=143; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=141
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=144
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16384,7 +16592,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, ReceiptType->TimeAnchor); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 141;
+                        grammar_id = 144;
                     }
                         // XML: close tag
                         {
@@ -16405,15 +16613,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 144:
+            // Grammar: ID=144; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=143
+                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=146
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16428,7 +16636,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->EnergyCosts_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 146;
                     }
                         // XML: close tag
                         {
@@ -16444,7 +16652,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 1:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=145
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=148
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16459,7 +16667,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 145;
+                        grammar_id = 148;
                     }
                         // XML: close tag
                         {
@@ -16475,7 +16683,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 2:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16490,7 +16698,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 147;
+                        grammar_id = 150;
                     }
                         // XML: close tag
                         {
@@ -16506,7 +16714,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 3:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16521,7 +16729,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 149;
+                        grammar_id = 152;
                     }
                         // XML: close tag
                         {
@@ -16537,7 +16745,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 4:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=142
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=145
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16557,7 +16765,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                         // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 142;
+                    grammar_id = 145;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -16582,15 +16790,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 142:
-            // Grammar: ID=142; read/write bits=2; LOOP (TaxCosts), END Element
+        case 145:
+            // Grammar: ID=145; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=142
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=145
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16613,11 +16821,11 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        grammar_id = 142;
+                        grammar_id = 145;
                     }
                     else
                     {
-                        grammar_id = 143;
+                        grammar_id = 146;
                     }
                         // XML: close tag
                         {
@@ -16643,15 +16851,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 146:
+            // Grammar: ID=146; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=145
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=148
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16666,7 +16874,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 145;
+                        grammar_id = 148;
                     }
                         // XML: close tag
                         {
@@ -16682,7 +16890,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 1:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16697,7 +16905,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 147;
+                        grammar_id = 150;
                     }
                         // XML: close tag
                         {
@@ -16713,7 +16921,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 2:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16728,7 +16936,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 149;
+                        grammar_id = 152;
                     }
                         // XML: close tag
                         {
@@ -16744,7 +16952,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 3:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=144
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16764,7 +16972,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                         // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 144;
+                    grammar_id = 147;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -16789,15 +16997,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 144:
-            // Grammar: ID=144; read/write bits=2; LOOP (TaxCosts), END Element
+        case 147:
+            // Grammar: ID=147; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=144
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16820,11 +17028,11 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        grammar_id = 144;
+                        grammar_id = 147;
                     }
                     else
                     {
-                        grammar_id = 145;
+                        grammar_id = 148;
                     }
                         // XML: close tag
                         {
@@ -16850,15 +17058,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 145:
-            // Grammar: ID=145; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 148:
+            // Grammar: ID=148; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16873,7 +17081,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 147;
+                        grammar_id = 150;
                     }
                         // XML: close tag
                         {
@@ -16889,7 +17097,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 1:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16904,7 +17112,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 149;
+                        grammar_id = 152;
                     }
                         // XML: close tag
                         {
@@ -16920,7 +17128,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     break;
                 case 2:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=149
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16940,7 +17148,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                         // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 146;
+                    grammar_id = 149;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -16965,221 +17173,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 146:
-            // Grammar: ID=146; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (ReceiptType->TaxCosts.arrayLen < 10)
-                    {
-                        grammar_id = 146;
-                    }
-                    else
-                    {
-                        grammar_id = 147;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 147:
-            // Grammar: ID=147; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 149;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
-                    }
-                    break;
-                case 1:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=148
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 148;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 148:
-            // Grammar: ID=148; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=148
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (ReceiptType->TaxCosts.arrayLen < 10)
-                    {
-                        grammar_id = 148;
-                    }
-                    else
-                    {
-                        grammar_id = 149;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
         case 149:
-            // Grammar: ID=149; read/write bits=2; START (TaxCosts), END Element
+            // Grammar: ID=149; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=150
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=149
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17199,7 +17201,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                         // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 150;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 149;
+                    }
+                    else
+                    {
+                        grammar_id = 150;
+                    }
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -17225,14 +17235,98 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
             }
             break;
         case 150:
-            // Grammar: ID=150; read/write bits=2; LOOP (TaxCosts), END Element
+            // Grammar: ID=150; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=150
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 152;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
+                    }
+                    break;
+                case 1:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=151
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 151;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 151:
+            // Grammar: ID=151; read/write bits=2; LOOP (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=151
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17255,7 +17349,121 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        grammar_id = 150;
+                        grammar_id = 151;
+                    }
+                    else
+                    {
+                        grammar_id = 152;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 152:
+            // Grammar: ID=152; read/write bits=2; START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 153;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 153:
+            // Grammar: ID=153; read/write bits=2; LOOP (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 153;
                     }
                     else
                     {
@@ -17320,7 +17528,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
 //          abstract=False; final=False;
 // Particle: SPCPrimaryDeviceCoilCurrentInformation, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* stream, struct iso20_wpt_WPT_SPCPowerControlParameterType* WPT_SPCPowerControlParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 151;
+    int grammar_id = 154;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17331,8 +17539,8 @@ static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* st
     {
         switch (grammar_id)
         {
-        case 151:
-            // Grammar: ID=151; read/write bits=1; START (SPCPrimaryDeviceCoilCurrentInformation)
+        case 154:
+            // Grammar: ID=154; read/write bits=1; START (SPCPrimaryDeviceCoilCurrentInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -17409,7 +17617,7 @@ static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* st
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struct iso20_wpt_SignaturePropertyType* SignaturePropertyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 152;
+    int grammar_id = 155;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17420,15 +17628,15 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 152:
-            // Grammar: ID=152; read/write bits=2; START (Id), START (Target)
+        case 155:
+            // Grammar: ID=155; read/write bits=2; START (Id), START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=153
+                    // Event: START (Id, ID (NCName)); next=156
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -17453,11 +17661,11 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                         }
                     }
                     SignaturePropertyType->Id_isUsed = 1u;
-                    grammar_id = 153;
+                    grammar_id = 156;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (Target, anyURI (anyURI)); next=154
+                    // Event: START (Target, anyURI (anyURI)); next=157
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Target=\"", 13);
                     // decode: string (len, characters) (Attribute)
@@ -17481,7 +17689,7 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 154;
+                    grammar_id = 157;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 default:
@@ -17490,15 +17698,15 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 153:
-            // Grammar: ID=153; read/write bits=1; START (Target)
+        case 156:
+            // Grammar: ID=156; read/write bits=1; START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Target, anyURI (anyURI)); next=154
+                    // Event: START (Target, anyURI (anyURI)); next=157
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Target=\"", 13);
                     // decode: string (len, characters) (Attribute)
@@ -17522,7 +17730,7 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 154;
+                    grammar_id = 157;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 default:
@@ -17531,8 +17739,8 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 154:
-            // Grammar: ID=154; read/write bits=1; START (ANY)
+        case 157:
+            // Grammar: ID=157; read/write bits=1; START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -17643,7 +17851,7 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: NumPackages, unsignedByte (1, 1); WPT_LF_DataPackage, WPT_LF_DataPackageType (1, 1);
 static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_DataPackageListType* WPT_LF_DataPackageListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 155;
+    int grammar_id = 158;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17654,15 +17862,15 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
     {
         switch (grammar_id)
         {
-        case 155:
-            // Grammar: ID=155; read/write bits=1; START (NumPackages)
+        case 158:
+            // Grammar: ID=158; read/write bits=1; START (NumPackages)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumPackages, unsignedByte (unsignedShort)); next=156
+                    // Event: START (NumPackages, unsignedByte (unsignedShort)); next=159
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17704,7 +17912,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 156;
+                                grammar_id = 159;
                             }
                             else
                             {
@@ -17731,8 +17939,8 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 156:
-            // Grammar: ID=156; read/write bits=1; START (WPT_LF_DataPackage)
+        case 159:
+            // Grammar: ID=159; read/write bits=1; START (WPT_LF_DataPackage)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -17847,7 +18055,7 @@ static int decode_iso20_wpt_CLResControlModeType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_wpt_ManifestType* ManifestType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 157;
+    int grammar_id = 160;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17858,15 +18066,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
     {
         switch (grammar_id)
         {
-        case 157:
-            // Grammar: ID=157; read/write bits=2; START (Id), START (Reference)
+        case 160:
+            // Grammar: ID=160; read/write bits=2; START (Id), START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=159
+                    // Event: START (Id, ID (NCName)); next=162
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -17891,11 +18099,11 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         }
                     }
                     ManifestType->Id_isUsed = 1u;
-                    grammar_id = 159;
+                    grammar_id = 162;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=158
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=161
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17915,7 +18123,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 158;
+                    grammar_id = 161;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -17935,15 +18143,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 158:
-            // Grammar: ID=158; read/write bits=2; LOOP (Reference), END Element
+        case 161:
+            // Grammar: ID=161; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=158
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=161
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17963,7 +18171,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 158;
+                    grammar_id = 161;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -17988,15 +18196,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 159:
-            // Grammar: ID=159; read/write bits=1; START (Reference)
+        case 162:
+            // Grammar: ID=162; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=160
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=163
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18016,7 +18224,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 160;
+                    grammar_id = 163;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -18036,15 +18244,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 160:
-            // Grammar: ID=160; read/write bits=2; LOOP (Reference), END Element
+        case 163:
+            // Grammar: ID=163; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=160
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=163
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18064,7 +18272,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 160;
+                    grammar_id = 163;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -18124,7 +18332,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
 static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, struct iso20_wpt_SignaturePropertiesType* SignaturePropertiesType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 161;
+    int grammar_id = 164;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -18135,15 +18343,15 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
     {
         switch (grammar_id)
         {
-        case 161:
-            // Grammar: ID=161; read/write bits=2; START (Id), START (SignatureProperty)
+        case 164:
+            // Grammar: ID=164; read/write bits=2; START (Id), START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=163
+                    // Event: START (Id, ID (NCName)); next=166
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -18168,11 +18376,11 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                         }
                     }
                     SignaturePropertiesType->Id_isUsed = 1u;
-                    grammar_id = 163;
+                    grammar_id = 166;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=162
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=165
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18186,7 +18394,7 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                     error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 162;
+                        grammar_id = 165;
                     }
                         // XML: close tag
                         {
@@ -18207,8 +18415,8 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 162:
-            // Grammar: ID=162; read/write bits=2; START (SignatureProperty), END Element
+        case 165:
+            // Grammar: ID=165; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -18252,15 +18460,15 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 163:
-            // Grammar: ID=163; read/write bits=1; START (SignatureProperty)
+        case 166:
+            // Grammar: ID=166; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=164
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=167
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18274,7 +18482,7 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                     error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 164;
+                        grammar_id = 167;
                     }
                         // XML: close tag
                         {
@@ -18295,8 +18503,8 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 164:
-            // Grammar: ID=164; read/write bits=2; START (SignatureProperty), END Element
+        case 167:
+            // Grammar: ID=167; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -18375,7 +18583,7 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); TargetCoilCurrent, RationalNumberType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckReqType* WPT_AlignmentCheckReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 165;
+    int grammar_id = 168;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -18386,15 +18594,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
     {
         switch (grammar_id)
         {
-        case 165:
-            // Grammar: ID=165; read/write bits=1; START (Header)
+        case 168:
+            // Grammar: ID=168; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=166
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=169
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18408,7 +18616,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_AlignmentCheckReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 166;
+                        grammar_id = 169;
                     }
                         // XML: close tag
                         {
@@ -18429,15 +18637,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 166:
-            // Grammar: ID=166; read/write bits=1; START (EVProcessing)
+        case 169:
+            // Grammar: ID=169; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=167
+                    // Event: START (EVProcessing, processingType (string)); next=170
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18484,7 +18692,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 167;
+                                grammar_id = 170;
                             }
                             else
                             {
@@ -18511,15 +18719,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 167:
-            // Grammar: ID=167; read/write bits=2; START (TargetCoilCurrent), START (EVResultCode)
+        case 170:
+            // Grammar: ID=170; read/write bits=2; START (TargetCoilCurrent), START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetCoilCurrent, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (TargetCoilCurrent, RationalNumberType (RationalNumberType)); next=171
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18534,7 +18742,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                     if (error == 0)
                     {
                         WPT_AlignmentCheckReqType->TargetCoilCurrent_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 171;
                     }
                         // XML: close tag
                         {
@@ -18550,7 +18758,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                     }
                     break;
                 case 1:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=169
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=172
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18597,7 +18805,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 169;
+                                grammar_id = 172;
                             }
                             else
                             {
@@ -18624,15 +18832,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=1; START (EVResultCode)
+        case 171:
+            // Grammar: ID=171; read/write bits=1; START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=169
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=172
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18679,7 +18887,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 169;
+                                grammar_id = 172;
                             }
                             else
                             {
@@ -18706,15 +18914,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 169:
-            // Grammar: ID=169; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 172:
+            // Grammar: ID=172; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=170
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=173
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18765,7 +18973,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 170;
+                            grammar_id = 173;
                         }
                     }
                     else
@@ -18796,15 +19004,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 170:
-            // Grammar: ID=170; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+        case 173:
+            // Grammar: ID=173; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=170
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=173
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18855,7 +19063,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 170;
+                            grammar_id = 173;
                         }
                     }
                     else
@@ -18921,7 +19129,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); PowerTransmitted, RationalNumberType (0, 1); SupplyDeviceCurrent, RationalNumberType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckResType* WPT_AlignmentCheckResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 171;
+    int grammar_id = 174;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -18932,15 +19140,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
     {
         switch (grammar_id)
         {
-        case 171:
-            // Grammar: ID=171; read/write bits=1; START (Header)
+        case 174:
+            // Grammar: ID=174; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=172
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=175
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -18954,7 +19162,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_AlignmentCheckResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 172;
+                        grammar_id = 175;
                     }
                         // XML: close tag
                         {
@@ -18975,15 +19183,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 172:
-            // Grammar: ID=172; read/write bits=1; START (ResponseCode)
+        case 175:
+            // Grammar: ID=175; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=173
+                    // Event: START (ResponseCode, responseCodeType (string)); next=176
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19067,7 +19275,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 173;
+                                grammar_id = 176;
                             }
                             else
                             {
@@ -19094,15 +19302,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=1; START (EVSEProcessing)
+        case 176:
+            // Grammar: ID=176; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=174
+                    // Event: START (EVSEProcessing, processingType (string)); next=177
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19149,7 +19357,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 174;
+                                grammar_id = 177;
                             }
                             else
                             {
@@ -19176,15 +19384,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 174:
-            // Grammar: ID=174; read/write bits=3; START (PowerTransmitted), START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
+        case 177:
+            // Grammar: ID=177; read/write bits=3; START (PowerTransmitted), START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PowerTransmitted, RationalNumberType (RationalNumberType)); next=176
+                    // Event: START (PowerTransmitted, RationalNumberType (RationalNumberType)); next=179
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19199,7 +19407,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                     if (error == 0)
                     {
                         WPT_AlignmentCheckResType->PowerTransmitted_isUsed = 1u;
-                        grammar_id = 176;
+                        grammar_id = 179;
                     }
                         // XML: close tag
                         {
@@ -19215,7 +19423,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                     }
                     break;
                 case 1:
-                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=178
+                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=181
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19230,7 +19438,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                     if (error == 0)
                     {
                         WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
-                        grammar_id = 178;
+                        grammar_id = 181;
                     }
                         // XML: close tag
                         {
@@ -19246,7 +19454,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                     }
                     break;
                 case 2:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=175
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=178
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19297,7 +19505,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 175;
+                            grammar_id = 178;
                         }
                     }
                     else
@@ -19328,316 +19536,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 175:
-            // Grammar: ID=175; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=175
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 175;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 176:
-            // Grammar: ID=176; read/write bits=2; START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=178
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SupplyDeviceCurrent", 24);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
-                        grammar_id = 178;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SupplyDeviceCurrent>", 26);
-                    }
-                    break;
-                case 1:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=177
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 177;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 177:
-            // Grammar: ID=177; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=177
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 177;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
         case 178:
-            // Grammar: ID=178; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            // Grammar: ID=178; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=179
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=178
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19688,7 +19595,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 179;
+                            grammar_id = 178;
                         }
                     }
                     else
@@ -19720,14 +19627,45 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 179:
-            // Grammar: ID=179; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            // Grammar: ID=179; read/write bits=2; START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=179
+                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=181
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SupplyDeviceCurrent", 24);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
+                        grammar_id = 181;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SupplyDeviceCurrent>", 26);
+                    }
+                    break;
+                case 1:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=180
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19778,7 +19716,277 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 179;
+                            grammar_id = 180;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 180:
+            // Grammar: ID=180; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=180
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 180;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 181:
+            // Grammar: ID=181; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=182
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 182;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 182:
+            // Grammar: ID=182; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=182
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 182;
                         }
                     }
                     else
@@ -19844,7 +20052,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); DisplayParameters, DisplayParametersType (0, 1); MeterInfoRequested, boolean (1, 1); EVPCPowerRequest, RationalNumberType (1, 1); EVPCPowerOutput, RationalNumberType (1, 1); EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (1, 1); EVPCOperatingFrequency, RationalNumberType (0, 1); EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopReqType* WPT_ChargeLoopReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 180;
+    int grammar_id = 183;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -19855,15 +20063,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 180:
-            // Grammar: ID=180; read/write bits=1; START (Header)
+        case 183:
+            // Grammar: ID=183; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=181
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=184
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19877,7 +20085,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 181;
+                        grammar_id = 184;
                     }
                         // XML: close tag
                         {
@@ -19898,15 +20106,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 181:
-            // Grammar: ID=181; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
+        case 184:
+            // Grammar: ID=184; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=182
+                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=185
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19921,7 +20129,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopReqType->DisplayParameters_isUsed = 1u;
-                        grammar_id = 182;
+                        grammar_id = 185;
                     }
                         // XML: close tag
                         {
@@ -19937,7 +20145,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=183
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=186
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -19979,7 +20187,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 183;
+                                grammar_id = 186;
                             }
                             else
                             {
@@ -20006,15 +20214,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 182:
-            // Grammar: ID=182; read/write bits=1; START (MeterInfoRequested)
+        case 185:
+            // Grammar: ID=185; read/write bits=1; START (MeterInfoRequested)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=183
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=186
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20056,7 +20264,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 183;
+                                grammar_id = 186;
                             }
                             else
                             {
@@ -20083,15 +20291,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 183:
-            // Grammar: ID=183; read/write bits=1; START (EVPCPowerRequest)
+        case 186:
+            // Grammar: ID=186; read/write bits=1; START (EVPCPowerRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=184
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=187
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20105,7 +20313,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 184;
+                        grammar_id = 187;
                     }
                         // XML: close tag
                         {
@@ -20126,15 +20334,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 184:
-            // Grammar: ID=184; read/write bits=1; START (EVPCPowerOutput)
+        case 187:
+            // Grammar: ID=187; read/write bits=1; START (EVPCPowerOutput)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCPowerOutput, RationalNumberType (RationalNumberType)); next=185
+                    // Event: START (EVPCPowerOutput, RationalNumberType (RationalNumberType)); next=188
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20148,7 +20356,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerOutput, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 185;
+                        grammar_id = 188;
                     }
                         // XML: close tag
                         {
@@ -20169,15 +20377,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 185:
-            // Grammar: ID=185; read/write bits=1; START (EVPCChargeDiagnostics)
+        case 188:
+            // Grammar: ID=188; read/write bits=1; START (EVPCChargeDiagnostics)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (string)); next=186
+                    // Event: START (EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (string)); next=189
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20225,7 +20433,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 186;
+                                grammar_id = 189;
                             }
                             else
                             {
@@ -20252,15 +20460,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 186:
-            // Grammar: ID=186; read/write bits=3; START (EVPCOperatingFrequency), START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
+        case 189:
+            // Grammar: ID=189; read/write bits=3; START (EVPCOperatingFrequency), START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=188
+                    // Event: START (EVPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=191
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20275,7 +20483,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopReqType->EVPCOperatingFrequency_isUsed = 1u;
-                        grammar_id = 188;
+                        grammar_id = 191;
                     }
                         // XML: close tag
                         {
@@ -20291,7 +20499,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=190
+                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=193
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20306,7 +20514,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 190;
+                        grammar_id = 193;
                     }
                         // XML: close tag
                         {
@@ -20322,7 +20530,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=187
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=190
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20373,7 +20581,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 187;
+                            grammar_id = 190;
                         }
                     }
                     else
@@ -20404,316 +20612,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 187:
-            // Grammar: ID=187; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=187
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 187;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 188:
-            // Grammar: ID=188; read/write bits=2; START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=190
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerControlParameter", 30);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 190;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerControlParameter>", 32);
-                    }
-                    break;
-                case 1:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=189
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 189;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 189:
-            // Grammar: ID=189; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=189
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 189;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
         case 190:
-            // Grammar: ID=190; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+            // Grammar: ID=190; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=191
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=190
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20764,7 +20671,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 191;
+                            grammar_id = 190;
                         }
                     }
                     else
@@ -20796,14 +20703,45 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
             }
             break;
         case 191:
-            // Grammar: ID=191; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            // Grammar: ID=191; read/write bits=2; START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=191
+                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=193
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerControlParameter", 30);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
+                        grammar_id = 193;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerControlParameter>", 32);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=192
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20854,7 +20792,277 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 191;
+                            grammar_id = 192;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 192:
+            // Grammar: ID=192; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=192
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 192;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 193:
+            // Grammar: ID=193; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=194
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 194;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 194:
+            // Grammar: ID=194; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=194
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 194;
                         }
                     }
                     else
@@ -20920,7 +21128,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1); MeterInfo, MeterInfoType (0, 1); Receipt, ReceiptType (0, 1); EVPCPowerRequest, RationalNumberType (1, 1); SDPowerInput, RationalNumberType (0, 1); SPCMaxOutputPowerLimit, RationalNumberType (1, 1); SPCMinOutputPowerLimit, RationalNumberType (1, 1); SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (1, 1); SPCOperatingFrequency, RationalNumberType (0, 1); SPCPowerControlParameter, WPT_SPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopResType* WPT_ChargeLoopResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 192;
+    int grammar_id = 195;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -20931,15 +21139,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 192:
-            // Grammar: ID=192; read/write bits=1; START (Header)
+        case 195:
+            // Grammar: ID=195; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=193
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=196
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -20953,7 +21161,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 193;
+                        grammar_id = 196;
                     }
                         // XML: close tag
                         {
@@ -20974,15 +21182,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 193:
-            // Grammar: ID=193; read/write bits=1; START (ResponseCode)
+        case 196:
+            // Grammar: ID=196; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=194
+                    // Event: START (ResponseCode, responseCodeType (string)); next=197
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21066,7 +21274,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 194;
+                                grammar_id = 197;
                             }
                             else
                             {
@@ -21093,15 +21301,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 194:
-            // Grammar: ID=194; read/write bits=3; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
+        case 197:
+            // Grammar: ID=197; read/write bits=3; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=195
+                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=198
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21116,7 +21324,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->EVSEStatus_isUsed = 1u;
-                        grammar_id = 195;
+                        grammar_id = 198;
                     }
                         // XML: close tag
                         {
@@ -21132,7 +21340,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=196
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=199
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21147,7 +21355,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 196;
+                        grammar_id = 199;
                     }
                         // XML: close tag
                         {
@@ -21163,7 +21371,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=197
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=200
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21178,7 +21386,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 197;
+                        grammar_id = 200;
                     }
                         // XML: close tag
                         {
@@ -21194,7 +21402,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=198
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=201
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21208,229 +21416,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 198;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 195:
-            // Grammar: ID=195; read/write bits=2; START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=196
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterInfo", 14);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 196;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterInfo>", 16);
-                    }
-                    break;
-                case 1:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=197
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Receipt", 12);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 197;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Receipt>", 14);
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=198
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 198;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 196:
-            // Grammar: ID=196; read/write bits=2; START (Receipt), START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=197
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Receipt", 12);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 197;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Receipt>", 14);
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=198
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 198;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 197:
-            // Grammar: ID=197; read/write bits=1; START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=198
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 198;
+                        grammar_id = 201;
                     }
                         // XML: close tag
                         {
@@ -21452,14 +21438,236 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
             }
             break;
         case 198:
-            // Grammar: ID=198; read/write bits=2; START (SDPowerInput), START (SPCMaxOutputPowerLimit)
+            // Grammar: ID=198; read/write bits=2; START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDPowerInput, RationalNumberType (RationalNumberType)); next=199
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=199
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterInfo", 14);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
+                        grammar_id = 199;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterInfo>", 16);
+                    }
+                    break;
+                case 1:
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=200
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Receipt", 12);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
+                        grammar_id = 200;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Receipt>", 14);
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=201
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 201;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 199:
+            // Grammar: ID=199; read/write bits=2; START (Receipt), START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=200
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Receipt", 12);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
+                        grammar_id = 200;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Receipt>", 14);
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=201
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 201;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 200:
+            // Grammar: ID=200; read/write bits=1; START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=201
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVPCPowerRequest", 21);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 201;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVPCPowerRequest>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 201:
+            // Grammar: ID=201; read/write bits=2; START (SDPowerInput), START (SPCMaxOutputPowerLimit)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SDPowerInput, RationalNumberType (RationalNumberType)); next=202
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21474,7 +21682,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SDPowerInput_isUsed = 1u;
-                        grammar_id = 199;
+                        grammar_id = 202;
                     }
                         // XML: close tag
                         {
@@ -21490,7 +21698,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=200
+                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=203
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21504,7 +21712,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 200;
+                        grammar_id = 203;
                     }
                         // XML: close tag
                         {
@@ -21525,15 +21733,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 199:
-            // Grammar: ID=199; read/write bits=1; START (SPCMaxOutputPowerLimit)
+        case 202:
+            // Grammar: ID=202; read/write bits=1; START (SPCMaxOutputPowerLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=200
+                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=203
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21547,7 +21755,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 200;
+                        grammar_id = 203;
                     }
                         // XML: close tag
                         {
@@ -21568,15 +21776,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 200:
-            // Grammar: ID=200; read/write bits=1; START (SPCMinOutputPowerLimit)
+        case 203:
+            // Grammar: ID=203; read/write bits=1; START (SPCMinOutputPowerLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPCMinOutputPowerLimit, RationalNumberType (RationalNumberType)); next=201
+                    // Event: START (SPCMinOutputPowerLimit, RationalNumberType (RationalNumberType)); next=204
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21590,7 +21798,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMinOutputPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 201;
+                        grammar_id = 204;
                     }
                         // XML: close tag
                         {
@@ -21611,15 +21819,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 201:
-            // Grammar: ID=201; read/write bits=1; START (SPCChargeDiagnostics)
+        case 204:
+            // Grammar: ID=204; read/write bits=1; START (SPCChargeDiagnostics)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (string)); next=202
+                    // Event: START (SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (string)); next=205
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21669,7 +21877,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 202;
+                                grammar_id = 205;
                             }
                             else
                             {
@@ -21696,15 +21904,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 202:
-            // Grammar: ID=202; read/write bits=3; START (SPCOperatingFrequency), START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
+        case 205:
+            // Grammar: ID=205; read/write bits=3; START (SPCOperatingFrequency), START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=204
+                    // Event: START (SPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=207
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21719,7 +21927,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SPCOperatingFrequency_isUsed = 1u;
-                        grammar_id = 204;
+                        grammar_id = 207;
                     }
                         // XML: close tag
                         {
@@ -21735,7 +21943,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=206
+                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=209
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21750,7 +21958,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 206;
+                        grammar_id = 209;
                     }
                         // XML: close tag
                         {
@@ -21766,7 +21974,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=203
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=206
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -21817,7 +22025,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 203;
+                            grammar_id = 206;
                         }
                     }
                     else
@@ -21848,316 +22056,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 203:
-            // Grammar: ID=203; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=203
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 203;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 204:
-            // Grammar: ID=204; read/write bits=2; START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=206
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SPCPowerControlParameter", 29);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_SPCPowerControlParameterType(stream, &WPT_ChargeLoopResType->SPCPowerControlParameter, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->SPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 206;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SPCPowerControlParameter>", 31);
-                    }
-                    break;
-                case 1:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=205
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 205;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 205:
-            // Grammar: ID=205; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=205
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 205;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
         case 206:
-            // Grammar: ID=206; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+            // Grammar: ID=206; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=207
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=206
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22208,7 +22115,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 207;
+                            grammar_id = 206;
                         }
                     }
                     else
@@ -22240,14 +22147,45 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
             }
             break;
         case 207:
-            // Grammar: ID=207; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            // Grammar: ID=207; read/write bits=2; START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=207
+                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=209
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SPCPowerControlParameter", 29);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_SPCPowerControlParameterType(stream, &WPT_ChargeLoopResType->SPCPowerControlParameter, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopResType->SPCPowerControlParameter_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SPCPowerControlParameter>", 31);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=208
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22298,7 +22236,277 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 207;
+                            grammar_id = 208;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 208:
+            // Grammar: ID=208; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=208
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 208;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 209:
+            // Grammar: ID=209; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=210
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 210;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ManufacturerSpecificDataContainer>", 40);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 210:
+            // Grammar: ID=210; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=210
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ManufacturerSpecificDataContainer", 38);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen ? WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 210;
                         }
                     }
                     else
@@ -22364,7 +22572,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVPCMaxReceivablePower, RationalNumberType (1, 1); SDMaxGroundClearence, unsignedShort (1, 1); SDMinGroundClearence, unsignedShort (1, 1); EVPCNaturalFrequency, RationalNumberType (1, 1); EVPCDeviceLocalControl, boolean (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType* WPT_ChargeParameterDiscoveryReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 208;
+    int grammar_id = 211;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -22375,15 +22583,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
     {
         switch (grammar_id)
         {
-        case 208:
-            // Grammar: ID=208; read/write bits=1; START (Header)
+        case 211:
+            // Grammar: ID=211; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=209
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=212
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22397,7 +22605,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeParameterDiscoveryReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 209;
+                        grammar_id = 212;
                     }
                         // XML: close tag
                         {
@@ -22418,15 +22626,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 209:
-            // Grammar: ID=209; read/write bits=1; START (EVPCMaxReceivablePower)
+        case 212:
+            // Grammar: ID=212; read/write bits=1; START (EVPCMaxReceivablePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCMaxReceivablePower, RationalNumberType (RationalNumberType)); next=210
+                    // Event: START (EVPCMaxReceivablePower, RationalNumberType (RationalNumberType)); next=213
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22440,7 +22648,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryReqType->EVPCMaxReceivablePower, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 210;
+                        grammar_id = 213;
                     }
                         // XML: close tag
                         {
@@ -22461,15 +22669,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 210:
-            // Grammar: ID=210; read/write bits=1; START (SDMaxGroundClearence)
+        case 213:
+            // Grammar: ID=213; read/write bits=1; START (SDMaxGroundClearence)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxGroundClearence, unsignedShort (unsignedInt)); next=211
+                    // Event: START (SDMaxGroundClearence, unsignedShort (unsignedInt)); next=214
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22486,7 +22694,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_ChargeParameterDiscoveryReqType->SDMaxGroundClearence); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 211;
+                        grammar_id = 214;
                     }
                         // XML: close tag
                         {
@@ -22507,15 +22715,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 211:
-            // Grammar: ID=211; read/write bits=1; START (SDMinGroundClearence)
+        case 214:
+            // Grammar: ID=214; read/write bits=1; START (SDMinGroundClearence)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinGroundClearence, unsignedShort (unsignedInt)); next=212
+                    // Event: START (SDMinGroundClearence, unsignedShort (unsignedInt)); next=215
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22532,7 +22740,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_ChargeParameterDiscoveryReqType->SDMinGroundClearence); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 212;
+                        grammar_id = 215;
                     }
                         // XML: close tag
                         {
@@ -22553,15 +22761,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 212:
-            // Grammar: ID=212; read/write bits=1; START (EVPCNaturalFrequency)
+        case 215:
+            // Grammar: ID=215; read/write bits=1; START (EVPCNaturalFrequency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCNaturalFrequency, RationalNumberType (RationalNumberType)); next=213
+                    // Event: START (EVPCNaturalFrequency, RationalNumberType (RationalNumberType)); next=216
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22575,7 +22783,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryReqType->EVPCNaturalFrequency, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 213;
+                        grammar_id = 216;
                     }
                         // XML: close tag
                         {
@@ -22596,15 +22804,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 213:
-            // Grammar: ID=213; read/write bits=1; START (EVPCDeviceLocalControl)
+        case 216:
+            // Grammar: ID=216; read/write bits=1; START (EVPCDeviceLocalControl)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCDeviceLocalControl, boolean (boolean)); next=214
+                    // Event: START (EVPCDeviceLocalControl, boolean (boolean)); next=217
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22646,7 +22854,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 214;
+                                grammar_id = 217;
                             }
                             else
                             {
@@ -22673,15 +22881,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 214:
-            // Grammar: ID=214; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 217:
+            // Grammar: ID=217; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=215
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=218
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22732,7 +22940,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 215;
+                            grammar_id = 218;
                         }
                     }
                     else
@@ -22763,15 +22971,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 215:
-            // Grammar: ID=215; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+        case 218:
+            // Grammar: ID=218; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=215
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=218
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22822,7 +23030,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 215;
+                            grammar_id = 218;
                         }
                     }
                     else
@@ -22888,7 +23096,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PDInputPowerClass, WPT_PowerClassType (1, 1); SDMinOutputPower, RationalNumberType (1, 1); SDMaxOutputPower, RationalNumberType (1, 1); SDMaxGroundClearanceSupport, unsignedShort (1, 1); SDMinGroundClearanceSupport, unsignedShort (1, 1); PDMinCoilCurrent, RationalNumberType (1, 1); PDMaxCoilCurrent, RationalNumberType (1, 1); SDManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeParameterDiscoveryResType* WPT_ChargeParameterDiscoveryResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 216;
+    int grammar_id = 219;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -22899,15 +23107,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
     {
         switch (grammar_id)
         {
-        case 216:
-            // Grammar: ID=216; read/write bits=1; START (Header)
+        case 219:
+            // Grammar: ID=219; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=217
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=220
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -22921,7 +23129,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeParameterDiscoveryResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 217;
+                        grammar_id = 220;
                     }
                         // XML: close tag
                         {
@@ -22942,15 +23150,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 217:
-            // Grammar: ID=217; read/write bits=1; START (ResponseCode)
+        case 220:
+            // Grammar: ID=220; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=218
+                    // Event: START (ResponseCode, responseCodeType (string)); next=221
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23034,7 +23242,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 218;
+                                grammar_id = 221;
                             }
                             else
                             {
@@ -23061,15 +23269,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 218:
-            // Grammar: ID=218; read/write bits=1; START (PDInputPowerClass)
+        case 221:
+            // Grammar: ID=221; read/write bits=1; START (PDInputPowerClass)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDInputPowerClass, WPT_PowerClassType (string)); next=219
+                    // Event: START (PDInputPowerClass, WPT_PowerClassType (string)); next=222
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23117,7 +23325,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 219;
+                                grammar_id = 222;
                             }
                             else
                             {
@@ -23144,15 +23352,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 219:
-            // Grammar: ID=219; read/write bits=1; START (SDMinOutputPower)
+        case 222:
+            // Grammar: ID=222; read/write bits=1; START (SDMinOutputPower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinOutputPower, RationalNumberType (RationalNumberType)); next=220
+                    // Event: START (SDMinOutputPower, RationalNumberType (RationalNumberType)); next=223
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23166,7 +23374,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->SDMinOutputPower, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 220;
+                        grammar_id = 223;
                     }
                         // XML: close tag
                         {
@@ -23187,15 +23395,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 220:
-            // Grammar: ID=220; read/write bits=1; START (SDMaxOutputPower)
+        case 223:
+            // Grammar: ID=223; read/write bits=1; START (SDMaxOutputPower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxOutputPower, RationalNumberType (RationalNumberType)); next=221
+                    // Event: START (SDMaxOutputPower, RationalNumberType (RationalNumberType)); next=224
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23209,7 +23417,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->SDMaxOutputPower, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 221;
+                        grammar_id = 224;
                     }
                         // XML: close tag
                         {
@@ -23230,15 +23438,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 221:
-            // Grammar: ID=221; read/write bits=1; START (SDMaxGroundClearanceSupport)
+        case 224:
+            // Grammar: ID=224; read/write bits=1; START (SDMaxGroundClearanceSupport)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxGroundClearanceSupport, unsignedShort (unsignedInt)); next=222
+                    // Event: START (SDMaxGroundClearanceSupport, unsignedShort (unsignedInt)); next=225
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23255,7 +23463,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_ChargeParameterDiscoveryResType->SDMaxGroundClearanceSupport); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 222;
+                        grammar_id = 225;
                     }
                         // XML: close tag
                         {
@@ -23276,15 +23484,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 222:
-            // Grammar: ID=222; read/write bits=1; START (SDMinGroundClearanceSupport)
+        case 225:
+            // Grammar: ID=225; read/write bits=1; START (SDMinGroundClearanceSupport)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinGroundClearanceSupport, unsignedShort (unsignedInt)); next=223
+                    // Event: START (SDMinGroundClearanceSupport, unsignedShort (unsignedInt)); next=226
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23301,7 +23509,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_ChargeParameterDiscoveryResType->SDMinGroundClearanceSupport); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 223;
+                        grammar_id = 226;
                     }
                         // XML: close tag
                         {
@@ -23322,15 +23530,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 223:
-            // Grammar: ID=223; read/write bits=1; START (PDMinCoilCurrent)
+        case 226:
+            // Grammar: ID=226; read/write bits=1; START (PDMinCoilCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDMinCoilCurrent, RationalNumberType (RationalNumberType)); next=224
+                    // Event: START (PDMinCoilCurrent, RationalNumberType (RationalNumberType)); next=227
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23344,7 +23552,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->PDMinCoilCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 224;
+                        grammar_id = 227;
                     }
                         // XML: close tag
                         {
@@ -23365,15 +23573,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 224:
-            // Grammar: ID=224; read/write bits=1; START (PDMaxCoilCurrent)
+        case 227:
+            // Grammar: ID=227; read/write bits=1; START (PDMaxCoilCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDMaxCoilCurrent, RationalNumberType (RationalNumberType)); next=225
+                    // Event: START (PDMaxCoilCurrent, RationalNumberType (RationalNumberType)); next=228
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23387,7 +23595,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->PDMaxCoilCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 225;
+                        grammar_id = 228;
                     }
                         // XML: close tag
                         {
@@ -23408,15 +23616,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 225:
-            // Grammar: ID=225; read/write bits=2; START (SDManufacturerSpecificDataContainer), END Element
+        case 228:
+            // Grammar: ID=228; read/write bits=2; START (SDManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=226
+                    // Event: START (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=229
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23467,7 +23675,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 226;
+                            grammar_id = 229;
                         }
                     }
                     else
@@ -23498,15 +23706,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 226:
-            // Grammar: ID=226; read/write bits=2; LOOP (SDManufacturerSpecificDataContainer), END Element
+        case 229:
+            // Grammar: ID=229; read/write bits=2; LOOP (SDManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=226
+                    // Event: LOOP (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=229
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23557,7 +23765,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 226;
+                            grammar_id = 229;
                         }
                     }
                     else
@@ -23623,7 +23831,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningReqType* WPT_FinePositioningReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 227;
+    int grammar_id = 230;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -23634,15 +23842,15 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
     {
         switch (grammar_id)
         {
-        case 227:
-            // Grammar: ID=227; read/write bits=1; START (Header)
+        case 230:
+            // Grammar: ID=230; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=228
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=231
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23656,7 +23864,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 228;
+                        grammar_id = 231;
                     }
                         // XML: close tag
                         {
@@ -23677,15 +23885,15 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 228:
-            // Grammar: ID=228; read/write bits=1; START (EVProcessing)
+        case 231:
+            // Grammar: ID=231; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=229
+                    // Event: START (EVProcessing, processingType (string)); next=232
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23732,7 +23940,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 229;
+                                grammar_id = 232;
                             }
                             else
                             {
@@ -23759,15 +23967,15 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 229:
-            // Grammar: ID=229; read/write bits=1; START (EVResultCode)
+        case 232:
+            // Grammar: ID=232; read/write bits=1; START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=230
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=233
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23814,7 +24022,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 230;
+                                grammar_id = 233;
                             }
                             else
                             {
@@ -23841,15 +24049,15 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 230:
-            // Grammar: ID=230; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 233:
+            // Grammar: ID=233; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=231
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=234
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23900,7 +24108,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 231;
+                            grammar_id = 234;
                         }
                     }
                     else
@@ -23931,15 +24139,15 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 231:
-            // Grammar: ID=231; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+        case 234:
+            // Grammar: ID=234; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=232
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=235
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -23990,7 +24198,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 232;
+                            grammar_id = 235;
                         }
                     }
                     else
@@ -24052,8 +24260,8 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 232:
-            // Grammar: ID=232; read/write bits=2; START (WPT_LF_DataPackageList), END Element
+        case 235:
+            // Grammar: ID=235; read/write bits=2; START (WPT_LF_DataPackageList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -24136,7 +24344,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningResType* WPT_FinePositioningResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 233;
+    int grammar_id = 236;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -24147,15 +24355,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
     {
         switch (grammar_id)
         {
-        case 233:
-            // Grammar: ID=233; read/write bits=1; START (Header)
+        case 236:
+            // Grammar: ID=236; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=234
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=237
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24169,7 +24377,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 234;
+                        grammar_id = 237;
                     }
                         // XML: close tag
                         {
@@ -24190,15 +24398,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 234:
-            // Grammar: ID=234; read/write bits=1; START (ResponseCode)
+        case 237:
+            // Grammar: ID=237; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=235
+                    // Event: START (ResponseCode, responseCodeType (string)); next=238
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24282,7 +24490,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 235;
+                                grammar_id = 238;
                             }
                             else
                             {
@@ -24309,15 +24517,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 235:
-            // Grammar: ID=235; read/write bits=1; START (EVSEProcessing)
+        case 238:
+            // Grammar: ID=238; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=236
+                    // Event: START (EVSEProcessing, processingType (string)); next=239
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24364,7 +24572,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 236;
+                                grammar_id = 239;
                             }
                             else
                             {
@@ -24391,15 +24599,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 236:
-            // Grammar: ID=236; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 239:
+            // Grammar: ID=239; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=237
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=240
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24450,7 +24658,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 237;
+                            grammar_id = 240;
                         }
                     }
                     else
@@ -24481,15 +24689,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 237:
-            // Grammar: ID=237; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+        case 240:
+            // Grammar: ID=240; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=238
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=241
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24540,7 +24748,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 238;
+                            grammar_id = 241;
                         }
                     }
                     else
@@ -24602,8 +24810,8 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 238:
-            // Grammar: ID=238; read/write bits=2; START (WPT_LF_DataPackageList), END Element
+        case 241:
+            // Grammar: ID=241; read/write bits=2; START (WPT_LF_DataPackageList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -24686,7 +24894,7 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); EVDevicePairingMethodList, WPT_PairingMethodListType (1, 1); EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningSetupReqType* WPT_FinePositioningSetupReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 239;
+    int grammar_id = 242;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -24697,15 +24905,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
     {
         switch (grammar_id)
         {
-        case 239:
-            // Grammar: ID=239; read/write bits=1; START (Header)
+        case 242:
+            // Grammar: ID=242; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=240
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=243
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24719,7 +24927,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningSetupReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 240;
+                        grammar_id = 243;
                     }
                         // XML: close tag
                         {
@@ -24740,15 +24948,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 240:
-            // Grammar: ID=240; read/write bits=1; START (EVProcessing)
+        case 243:
+            // Grammar: ID=243; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=241
+                    // Event: START (EVProcessing, processingType (string)); next=244
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24795,7 +25003,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 241;
+                                grammar_id = 244;
                             }
                             else
                             {
@@ -24822,15 +25030,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 241:
-            // Grammar: ID=241; read/write bits=1; START (EVDeviceFinePositioningMethodList)
+        case 244:
+            // Grammar: ID=244; read/write bits=1; START (EVDeviceFinePositioningMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=242
+                    // Event: START (EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=245
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24844,7 +25052,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_FinePositioningMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDeviceFinePositioningMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 242;
+                        grammar_id = 245;
                     }
                         // XML: close tag
                         {
@@ -24865,15 +25073,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 242:
-            // Grammar: ID=242; read/write bits=1; START (EVDevicePairingMethodList)
+        case 245:
+            // Grammar: ID=245; read/write bits=1; START (EVDevicePairingMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=243
+                    // Event: START (EVDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=246
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24887,7 +25095,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_PairingMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDevicePairingMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 243;
+                        grammar_id = 246;
                     }
                         // XML: close tag
                         {
@@ -24908,15 +25116,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 243:
-            // Grammar: ID=243; read/write bits=1; START (EVDeviceAlignmentCheckMethodList)
+        case 246:
+            // Grammar: ID=246; read/write bits=1; START (EVDeviceAlignmentCheckMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=244
+                    // Event: START (EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=247
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24930,7 +25138,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_AlignmentCheckMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDeviceAlignmentCheckMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 244;
+                        grammar_id = 247;
                     }
                         // XML: close tag
                         {
@@ -24951,15 +25159,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 244:
-            // Grammar: ID=244; read/write bits=1; START (NaturalOffset)
+        case 247:
+            // Grammar: ID=247; read/write bits=1; START (NaturalOffset)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=245
+                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=248
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -24976,7 +25184,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_FinePositioningSetupReqType->NaturalOffset); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 245;
+                        grammar_id = 248;
                     }
                         // XML: close tag
                         {
@@ -24997,15 +25205,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 245:
-            // Grammar: ID=245; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 248:
+            // Grammar: ID=248; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=246
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=249
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25056,7 +25264,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 246;
+                            grammar_id = 249;
                         }
                     }
                     else
@@ -25087,15 +25295,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 246:
-            // Grammar: ID=246; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
+        case 249:
+            // Grammar: ID=249; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=247
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=250
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25146,7 +25354,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 247;
+                            grammar_id = 250;
                         }
                     }
                     else
@@ -25208,8 +25416,8 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 247:
-            // Grammar: ID=247; read/write bits=2; START (LF_SystemSetupData), END Element
+        case 250:
+            // Grammar: ID=250; read/write bits=2; START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -25292,7 +25500,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); PrimaryDevicePairingMethodList, WPT_PairingMethodListType (1, 1); PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningSetupResType* WPT_FinePositioningSetupResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 248;
+    int grammar_id = 251;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -25303,15 +25511,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
     {
         switch (grammar_id)
         {
-        case 248:
-            // Grammar: ID=248; read/write bits=1; START (Header)
+        case 251:
+            // Grammar: ID=251; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=249
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=252
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25325,7 +25533,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningSetupResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 249;
+                        grammar_id = 252;
                     }
                         // XML: close tag
                         {
@@ -25346,15 +25554,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 249:
-            // Grammar: ID=249; read/write bits=1; START (ResponseCode)
+        case 252:
+            // Grammar: ID=252; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=250
+                    // Event: START (ResponseCode, responseCodeType (string)); next=253
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25438,7 +25646,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 250;
+                                grammar_id = 253;
                             }
                             else
                             {
@@ -25465,15 +25673,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 250:
-            // Grammar: ID=250; read/write bits=1; START (PrimaryDeviceFinePositioningMethodList)
+        case 253:
+            // Grammar: ID=253; read/write bits=1; START (PrimaryDeviceFinePositioningMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=251
+                    // Event: START (PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=254
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25487,7 +25695,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_FinePositioningMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDeviceFinePositioningMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 251;
+                        grammar_id = 254;
                     }
                         // XML: close tag
                         {
@@ -25508,15 +25716,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 251:
-            // Grammar: ID=251; read/write bits=1; START (PrimaryDevicePairingMethodList)
+        case 254:
+            // Grammar: ID=254; read/write bits=1; START (PrimaryDevicePairingMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=252
+                    // Event: START (PrimaryDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=255
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25530,7 +25738,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_PairingMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDevicePairingMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 252;
+                        grammar_id = 255;
                     }
                         // XML: close tag
                         {
@@ -25551,15 +25759,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 252:
-            // Grammar: ID=252; read/write bits=1; START (PrimaryDeviceAlignmentCheckMethodList)
+        case 255:
+            // Grammar: ID=255; read/write bits=1; START (PrimaryDeviceAlignmentCheckMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=253
+                    // Event: START (PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=256
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25573,7 +25781,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                     error = decode_iso20_wpt_WPT_AlignmentCheckMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDeviceAlignmentCheckMethodList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 253;
+                        grammar_id = 256;
                     }
                         // XML: close tag
                         {
@@ -25594,15 +25802,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 253:
-            // Grammar: ID=253; read/write bits=1; START (NaturalOffset)
+        case 256:
+            // Grammar: ID=256; read/write bits=1; START (NaturalOffset)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=254
+                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=257
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25619,7 +25827,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_FinePositioningSetupResType->NaturalOffset); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 254;
+                        grammar_id = 257;
                     }
                         // XML: close tag
                         {
@@ -25640,15 +25848,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 254:
-            // Grammar: ID=254; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 257:
+            // Grammar: ID=257; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=255
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=258
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25699,7 +25907,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 255;
+                            grammar_id = 258;
                         }
                     }
                     else
@@ -25730,15 +25938,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 255:
-            // Grammar: ID=255; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
+        case 258:
+            // Grammar: ID=258; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=256
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=259
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25789,7 +25997,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 256;
+                            grammar_id = 259;
                         }
                     }
                     else
@@ -25851,8 +26059,8 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 256:
-            // Grammar: ID=256; read/write bits=2; START (LF_SystemSetupData), END Element
+        case 259:
+            // Grammar: ID=259; read/write bits=2; START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -25935,7 +26143,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingReqType* WPT_PairingReqType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 257;
+    int grammar_id = 260;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -25946,15 +26154,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
     {
         switch (grammar_id)
         {
-        case 257:
-            // Grammar: ID=257; read/write bits=1; START (Header)
+        case 260:
+            // Grammar: ID=260; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=258
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=261
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -25968,7 +26176,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 258;
+                        grammar_id = 261;
                     }
                         // XML: close tag
                         {
@@ -25989,15 +26197,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 258:
-            // Grammar: ID=258; read/write bits=1; START (EVProcessing)
+        case 261:
+            // Grammar: ID=261; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=259
+                    // Event: START (EVProcessing, processingType (string)); next=262
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26044,7 +26252,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 259;
+                                grammar_id = 262;
                             }
                             else
                             {
@@ -26071,15 +26279,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 259:
-            // Grammar: ID=259; read/write bits=2; START (ObservedIDCode), START (EVResultCode)
+        case 262:
+            // Grammar: ID=262; read/write bits=2; START (ObservedIDCode), START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=260
+                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=263
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26097,7 +26305,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_PairingReqType->ObservedIDCode); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 260;
+                        grammar_id = 263;
                     }
                         // XML: close tag
                         {
@@ -26113,7 +26321,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                     }
                     break;
                 case 1:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=261
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=264
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26160,7 +26368,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 261;
+                                grammar_id = 264;
                             }
                             else
                             {
@@ -26187,15 +26395,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 260:
-            // Grammar: ID=260; read/write bits=1; START (EVResultCode)
+        case 263:
+            // Grammar: ID=263; read/write bits=1; START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=261
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=264
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26242,7 +26450,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 261;
+                                grammar_id = 264;
                             }
                             else
                             {
@@ -26269,15 +26477,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 261:
-            // Grammar: ID=261; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 264:
+            // Grammar: ID=264; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=262
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=265
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26328,7 +26536,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 262;
+                            grammar_id = 265;
                         }
                     }
                     else
@@ -26359,15 +26567,15 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 262:
-            // Grammar: ID=262; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+        case 265:
+            // Grammar: ID=265; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=262
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=265
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26418,7 +26626,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 262;
+                            grammar_id = 265;
                         }
                     }
                     else
@@ -26484,7 +26692,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); AlternativeSECCList, AlternativeSECCListType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingResType* WPT_PairingResType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 263;
+    int grammar_id = 266;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -26495,15 +26703,15 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
     {
         switch (grammar_id)
         {
-        case 263:
-            // Grammar: ID=263; read/write bits=1; START (Header)
+        case 266:
+            // Grammar: ID=266; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=264
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=267
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26517,7 +26725,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 264;
+                        grammar_id = 267;
                     }
                         // XML: close tag
                         {
@@ -26538,15 +26746,15 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 264:
-            // Grammar: ID=264; read/write bits=1; START (ResponseCode)
+        case 267:
+            // Grammar: ID=267; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=265
+                    // Event: START (ResponseCode, responseCodeType (string)); next=268
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26630,7 +26838,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 265;
+                                grammar_id = 268;
                             }
                             else
                             {
@@ -26657,15 +26865,15 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 265:
-            // Grammar: ID=265; read/write bits=1; START (EVSEProcessing)
+        case 268:
+            // Grammar: ID=268; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=266
+                    // Event: START (EVSEProcessing, processingType (string)); next=269
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26712,7 +26920,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 266;
+                                grammar_id = 269;
                             }
                             else
                             {
@@ -26739,15 +26947,15 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 266:
-            // Grammar: ID=266; read/write bits=3; START (ObservedIDCode), START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
+        case 269:
+            // Grammar: ID=269; read/write bits=3; START (ObservedIDCode), START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=268
+                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=271
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26765,7 +26973,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", WPT_PairingResType->ObservedIDCode); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 268;
+                        grammar_id = 271;
                     }
                         // XML: close tag
                         {
@@ -26781,7 +26989,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                     }
                     break;
                 case 1:
-                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=270
+                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=273
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26796,7 +27004,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                     if (error == 0)
                     {
                         WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
-                        grammar_id = 270;
+                        grammar_id = 273;
                     }
                         // XML: close tag
                         {
@@ -26812,7 +27020,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                     }
                     break;
                 case 2:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=267
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=270
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -26863,7 +27071,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 267;
+                            grammar_id = 270;
                         }
                     }
                     else
@@ -26894,316 +27102,15 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 267:
-            // Grammar: ID=267; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=267
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 267;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 268:
-            // Grammar: ID=268; read/write bits=2; START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=270
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:AlternativeSECCList", 24);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
-                        grammar_id = 270;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AlternativeSECCList>", 26);
-                    }
-                    break;
-                case 1:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=269
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 269;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 269:
-            // Grammar: ID=269; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=269
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 269;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
         case 270:
-            // Grammar: ID=270; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            // Grammar: ID=270; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=271
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=270
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -27254,7 +27161,7 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 271;
+                            grammar_id = 270;
                         }
                     }
                     else
@@ -27286,14 +27193,45 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
             }
             break;
         case 271:
-            // Grammar: ID=271; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            // Grammar: ID=271; read/write bits=2; START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=271
+                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=273
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:AlternativeSECCList", 24);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
+                        grammar_id = 273;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AlternativeSECCList>", 26);
+                    }
+                    break;
+                case 1:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=272
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -27344,7 +27282,277 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
-                            grammar_id = 271;
+                            grammar_id = 272;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 272:
+            // Grammar: ID=272; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=272
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 272;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 273:
+            // Grammar: ID=273; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=274
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 274;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:VendorSpecificDataContainer>", 34);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 274:
+            // Grammar: ID=274; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=274
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:VendorSpecificDataContainer", 32);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen ? WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 274;
                         }
                     }
                     else

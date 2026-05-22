@@ -169,21 +169,6 @@ typedef enum {
     din_costKindType_CarbonDioxideEmission = 2
 } din_costKindType;
 
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}Unit; type={urn:din:70121:2012:MsgDataTypes}unitSymbolType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_unitSymbolType_h = 0,
-    din_unitSymbolType_m = 1,
-    din_unitSymbolType_s = 2,
-    din_unitSymbolType_A = 3,
-    din_unitSymbolType_Ah = 4,
-    din_unitSymbolType_V = 5,
-    din_unitSymbolType_VA = 6,
-    din_unitSymbolType_W = 7,
-    din_unitSymbolType_W_s = 8,
-    din_unitSymbolType_Wh = 9
-} din_unitSymbolType;
-
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVErrorCode; type={urn:din:70121:2012:MsgDataTypes}DC_EVErrorCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
@@ -201,14 +186,20 @@ typedef enum {
     din_DC_EVErrorCodeType_NoData = 11
 } din_DC_EVErrorCodeType;
 
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}ServiceCategory; type={urn:din:70121:2012:MsgDataTypes}serviceCategoryType; base type=string; content type=simple;
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}Unit; type={urn:din:70121:2012:MsgDataTypes}unitSymbolType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
-    din_serviceCategoryType_EVCharging = 0,
-    din_serviceCategoryType_Internet = 1,
-    din_serviceCategoryType_ContractCertificate = 2,
-    din_serviceCategoryType_OtherCustom = 3
-} din_serviceCategoryType;
+    din_unitSymbolType_h = 0,
+    din_unitSymbolType_m = 1,
+    din_unitSymbolType_s = 2,
+    din_unitSymbolType_A = 3,
+    din_unitSymbolType_Ah = 4,
+    din_unitSymbolType_V = 5,
+    din_unitSymbolType_VA = 6,
+    din_unitSymbolType_W = 7,
+    din_unitSymbolType_W_s = 8,
+    din_unitSymbolType_Wh = 9
+} din_unitSymbolType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSEIsolationStatus; type={urn:din:70121:2012:MsgDataTypes}isolationLevelType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -258,13 +249,6 @@ typedef enum {
     din_EVSESupportedEnergyTransferType_AC_single_phase_three_phase_core_DC_extended = 8,
     din_EVSESupportedEnergyTransferType_AC_core3p_DC_extended = 9
 } din_EVSESupportedEnergyTransferType;
-
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}PaymentOption; type={urn:din:70121:2012:MsgDataTypes}paymentOptionType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_paymentOptionType_Contract = 0,
-    din_paymentOptionType_ExternalPayment = 1
-} din_paymentOptionType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVRequestedEnergyTransferType; type={urn:din:70121:2012:MsgDataTypes}EVRequestedEnergyTransferType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -319,6 +303,22 @@ typedef enum {
     din_responseCodeType_FAILED_MeteringSignatureNotValid = 21,
     din_responseCodeType_FAILED_WrongEnergyTransferType = 22
 } din_responseCodeType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}SelectedPaymentOption; type={urn:din:70121:2012:MsgDataTypes}paymentOptionType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_paymentOptionType_Contract = 0,
+    din_paymentOptionType_ExternalPayment = 1
+} din_paymentOptionType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}ServiceCategory; type={urn:din:70121:2012:MsgDataTypes}serviceCategoryType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_serviceCategoryType_EVCharging = 0,
+    din_serviceCategoryType_Internet = 1,
+    din_serviceCategoryType_ContractCertificate = 2,
+    din_serviceCategoryType_OtherCustom = 3
+} din_serviceCategoryType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}ValueType; type={urn:din:70121:2012:MsgDataTypes}valueType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -434,20 +434,6 @@ struct din_TransformType {
 
 };
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}physicalValue; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (0, 1); Value, short (1, 1);
-struct din_PhysicalValueType {
-    // Multiplier, unitMultiplierType (base: byte)
-    int8_t Multiplier;
-    // Unit, unitSymbolType (base: string)
-    din_unitSymbolType Unit;
-    unsigned int Unit_isUsed:1;
-    // Value, short (base: int)
-    int16_t Value;
-
-};
-
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
@@ -533,41 +519,6 @@ struct din_PMaxScheduleType {
         struct din_PMaxScheduleEntryType array[din_PMaxScheduleEntryType_5_ARRAY_SIZE];
         uint16_t arrayLen;
     } PMaxScheduleEntry;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}Parameter; type={urn:din:70121:2012:MsgDataTypes}ParameterType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; choice=True;
-// Particle: Name, string (1, 1); ValueType, valueType (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); physicalValue, PhysicalValueType (0, 1); stringValue, string (0, 1);
-struct din_ParameterType {
-    // Attribute: Name, string
-    struct {
-        char characters[din_Name_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Name;
-    // Attribute: ValueType, valueType (base: string)
-    din_valueType ValueType;
-    // boolValue, boolean
-    int boolValue;
-    unsigned int boolValue_isUsed:1;
-    // byteValue, byte (base: short)
-    int8_t byteValue;
-    unsigned int byteValue_isUsed:1;
-    // shortValue, short (base: int)
-    int16_t shortValue;
-    unsigned int shortValue_isUsed:1;
-    // intValue, int (base: long)
-    int32_t intValue;
-    unsigned int intValue_isUsed:1;
-    // physicalValue, PhysicalValueType
-    struct din_PhysicalValueType physicalValue;
-    unsigned int physicalValue_isUsed:1;
-    // stringValue, string
-    struct {
-        char characters[din_stringValue_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } stringValue;
-    unsigned int stringValue_isUsed:1;
-
 };
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}RSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}RSAKeyValueType; base type=; content type=ELEMENT-ONLY;
@@ -693,6 +644,55 @@ struct din_KeyValueType {
     } ANY;
     unsigned int ANY_isUsed:1;
 
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}MeterReading; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (0, 1); Value, short (1, 1);
+struct din_PhysicalValueType {
+    // Multiplier, unitMultiplierType (base: byte)
+    int8_t Multiplier;
+    // Unit, unitSymbolType (base: string)
+    din_unitSymbolType Unit;
+    unsigned int Unit_isUsed:1;
+    // Value, short (base: int)
+    int16_t Value;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}Parameter; type={urn:din:70121:2012:MsgDataTypes}ParameterType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; choice=True;
+// Particle: Name, string (1, 1); ValueType, valueType (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); physicalValue, PhysicalValueType (0, 1); stringValue, string (0, 1);
+struct din_ParameterType {
+    // Attribute: Name, string
+    struct {
+        char characters[din_Name_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Name;
+    // Attribute: ValueType, valueType (base: string)
+    din_valueType ValueType;
+    // boolValue, boolean
+    int boolValue;
+    unsigned int boolValue_isUsed:1;
+    // byteValue, byte (base: short)
+    int8_t byteValue;
+    unsigned int byteValue_isUsed:1;
+    // shortValue, short (base: int)
+    int16_t shortValue;
+    unsigned int shortValue_isUsed:1;
+    // intValue, int (base: long)
+    int32_t intValue;
+    unsigned int intValue_isUsed:1;
+    // physicalValue, PhysicalValueType
+    struct din_PhysicalValueType physicalValue;
+    unsigned int physicalValue_isUsed:1;
+    // stringValue, string
+    struct {
+        char characters[din_stringValue_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } stringValue;
+    unsigned int stringValue_isUsed:1;
 
 };
 

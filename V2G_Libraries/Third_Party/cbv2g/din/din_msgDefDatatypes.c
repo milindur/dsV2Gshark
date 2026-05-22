@@ -58,10 +58,6 @@ void init_din_TransformType(struct din_TransformType* TransformType) {
     TransformType->XPath_isUsed = 0u;
 }
 
-void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
-    PhysicalValueType->Unit_isUsed = 0u;
-}
-
 void init_din_DSAKeyValueType(struct din_DSAKeyValueType* DSAKeyValueType) {
     DSAKeyValueType->P_isUsed = 0u;
     DSAKeyValueType->Q_isUsed = 0u;
@@ -118,6 +114,10 @@ void init_din_KeyValueType(struct din_KeyValueType* KeyValueType) {
     KeyValueType->DSAKeyValue_isUsed = 0u;
     KeyValueType->RSAKeyValue_isUsed = 0u;
     KeyValueType->ANY_isUsed = 0u;
+}
+
+void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
+    PhysicalValueType->Unit_isUsed = 0u;
 }
 
 void init_din_PGPDataType(struct din_PGPDataType* PGPDataType) {

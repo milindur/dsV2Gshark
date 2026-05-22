@@ -52,53 +52,53 @@ static int decode_iso2_RelativeTimeIntervalType(exi_bitstream_t* stream, struct 
 static int decode_iso2_TransformsType(exi_bitstream_t* stream, struct iso2_TransformsType* TransformsType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_X509IssuerSerialType(exi_bitstream_t* stream, struct iso2_X509IssuerSerialType* X509IssuerSerialType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_CanonicalizationMethodType(exi_bitstream_t* stream, struct iso2_CanonicalizationMethodType* CanonicalizationMethodType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_PhysicalValueType(exi_bitstream_t* stream, struct iso2_PhysicalValueType* PhysicalValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_ConsumptionCostType(exi_bitstream_t* stream, struct iso2_ConsumptionCostType* ConsumptionCostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_PMaxScheduleEntryType(exi_bitstream_t* stream, struct iso2_PMaxScheduleEntryType* PMaxScheduleEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_SalesTariffEntryType(exi_bitstream_t* stream, struct iso2_SalesTariffEntryType* SalesTariffEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_KeyValueType(exi_bitstream_t* stream, struct iso2_KeyValueType* KeyValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataType* PGPDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_PMaxScheduleType(exi_bitstream_t* stream, struct iso2_PMaxScheduleType* PMaxScheduleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_ParameterType(exi_bitstream_t* stream, struct iso2_ParameterType* ParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_ReferenceType* ReferenceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_RetrievalMethodType* RetrievalMethodType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDataType* SPKIDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_SalesTariffType* SalesTariffType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_SignatureMethodType* SignatureMethodType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_X509DataType(exi_bitstream_t* stream, struct iso2_X509DataType* X509DataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_EVStatusType* DC_EVStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoType* KeyInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectType* ObjectType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_ParameterSetType* ParameterSetType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_ProfileEntryType* ProfileEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_SAScheduleTupleType* SAScheduleTupleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SelectedServiceType(exi_bitstream_t* stream, struct iso2_SelectedServiceType* SelectedServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ServiceType(exi_bitstream_t* stream, struct iso2_ServiceType* ServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SignatureValueType(exi_bitstream_t* stream, struct iso2_SignatureValueType* SignatureValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SignedInfoType(exi_bitstream_t* stream, struct iso2_SignedInfoType* SignedInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SubCertificatesType(exi_bitstream_t* stream, struct iso2_SubCertificatesType* SubCertificatesType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SupportedEnergyTransferModeType(exi_bitstream_t* stream, struct iso2_SupportedEnergyTransferModeType* SupportedEnergyTransferModeType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVChargeParameterType* AC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_AC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_AC_EVSEStatusType* AC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_BodyBaseType(exi_bitstream_t* stream, struct iso2_BodyBaseType* BodyBaseType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_ChargeServiceType* ChargeServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_ChargingProfileType* ChargingProfileType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_CertificateChainType(exi_bitstream_t* stream, struct iso2_CertificateChainType* CertificateChainType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ContractSignatureEncryptedPrivateKeyType(exi_bitstream_t* stream, struct iso2_ContractSignatureEncryptedPrivateKeyType* ContractSignatureEncryptedPrivateKeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVChargeParameterType* DC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_DC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_DC_EVSEStatusType* DC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_DiffieHellmanPublickeyType(exi_bitstream_t* stream, struct iso2_DiffieHellmanPublickeyType* DiffieHellmanPublickeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
+static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_EVChargeParameterType* EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_EVPowerDeliveryParameterType* EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_EVSEChargeParameterType* EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_PhysicalValueType(exi_bitstream_t* stream, struct iso2_PhysicalValueType* PhysicalValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_ConsumptionCostType(exi_bitstream_t* stream, struct iso2_ConsumptionCostType* ConsumptionCostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_PMaxScheduleEntryType(exi_bitstream_t* stream, struct iso2_PMaxScheduleEntryType* PMaxScheduleEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_SalesTariffEntryType(exi_bitstream_t* stream, struct iso2_SalesTariffEntryType* SalesTariffEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_PMaxScheduleType(exi_bitstream_t* stream, struct iso2_PMaxScheduleType* PMaxScheduleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_ParameterType(exi_bitstream_t* stream, struct iso2_ParameterType* ParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_SalesTariffType* SalesTariffType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_ParameterSetType* ParameterSetType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_ProfileEntryType* ProfileEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_SAScheduleTupleType* SAScheduleTupleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVChargeParameterType* AC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_ChargingProfileType* ChargingProfileType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVChargeParameterType* DC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_EVChargeParameterType* EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSEStatusType* EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, struct iso2_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterInfoType* MeterInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_NotificationType* NotificationType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso2_PaymentOptionListType* PaymentOptionListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
-static int decode_iso2_CertificateChainType(exi_bitstream_t* stream, struct iso2_CertificateChainType* CertificateChainType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SAScheduleListType(exi_bitstream_t* stream, struct iso2_SAScheduleListType* SAScheduleListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SASchedulesType(exi_bitstream_t* stream, struct iso2_SASchedulesType* SASchedulesType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso2_SelectedServiceListType(exi_bitstream_t* stream, struct iso2_SelectedServiceListType* SelectedServiceListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
@@ -2598,11 +2598,1043 @@ static int decode_iso2_CanonicalizationMethodType(exi_bitstream_t* stream, struc
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ChargingProfileEntryMaxPower; type={urn:iso:15118:2:2013:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (1, 1); Value, short (1, 1);
+static int decode_iso2_PhysicalValueType(exi_bitstream_t* stream, struct iso2_PhysicalValueType* PhysicalValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 26;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_PhysicalValueType(PhysicalValueType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 26:
+            // Grammar: ID=26; read/write bits=1; START (Multiplier)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Multiplier, unitMultiplierType (byte)); next=27
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Multiplier", 15);
+                        (void)xml_tag_start;
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
+                            if (error == 0)
+                            {
+                                // type has min_value = -3
+                                PhysicalValueType->Multiplier = (int8_t)(value + -3);
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)PhysicalValueType->Multiplier); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 27;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Multiplier>", 17);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 27:
+            // Grammar: ID=27; read/write bits=1; START (Unit)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Unit, unitSymbolType (string)); next=28
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Unit", 9);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
+                            if (error == 0)
+                            {
+                                PhysicalValueType->Unit = (iso2_unitSymbolType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "h", 1); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "m", 1); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "s", 1); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "A", 1); break;
+                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "V", 1); break;
+                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "W", 1); break;
+                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Wh", 2); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 28;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Unit>", 11);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 28:
+            // Grammar: ID=28; read/write bits=1; START (Value)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Value, short (int)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Value", 10);
+                        (void)xml_tag_start;
+                    // decode: short
+                    error = decode_exi_type_integer16(stream, &PhysicalValueType->Value);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", PhysicalValueType->Value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Value>", 12);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCost; type={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCostType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: startValue, PhysicalValueType (1, 1); Cost, CostType (1, 3);
+static int decode_iso2_ConsumptionCostType(exi_bitstream_t* stream, struct iso2_ConsumptionCostType* ConsumptionCostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 29;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_ConsumptionCostType(ConsumptionCostType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 29:
+            // Grammar: ID=29; read/write bits=1; START (startValue)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (startValue, PhysicalValueType (PhysicalValueType)); next=30
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:startValue", 15);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_PhysicalValueType(stream, &ConsumptionCostType->startValue, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 30;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:startValue>", 17);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 30:
+            // Grammar: ID=30; read/write bits=1; START (Cost)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Cost, CostType (CostType)); next=31
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Cost", 9);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (ConsumptionCostType->Cost.arrayLen < iso2_CostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_CostType(stream, &ConsumptionCostType->Cost.array[ConsumptionCostType->Cost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_CostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 31;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Cost>", 11);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 31:
+            // Grammar: ID=31; read/write bits=2; LOOP (Cost), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (Cost, CostType (CostType)); next=31
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Cost", 9);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (ConsumptionCostType->Cost.arrayLen < iso2_CostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_CostType(stream, &ConsumptionCostType->Cost.array[ConsumptionCostType->Cost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_CostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ConsumptionCostType->Cost.arrayLen < 3)
+                    {
+                        grammar_id = 31;
+                    }
+                    else
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Cost>", 11);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleEntry; type={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleEntryType; base type=EntryType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); PMax, PhysicalValueType (1, 1);
+static int decode_iso2_PMaxScheduleEntryType(exi_bitstream_t* stream, struct iso2_PMaxScheduleEntryType* PMaxScheduleEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 32;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_PMaxScheduleEntryType(PMaxScheduleEntryType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 32:
+            // Grammar: ID=32; read/write bits=2; START (RelativeTimeInterval), START (TimeInterval)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (RelativeTimeInterval, RelativeTimeIntervalType (IntervalType)); next=33
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RelativeTimeInterval", 25);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_RelativeTimeIntervalType(stream, &PMaxScheduleEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        PMaxScheduleEntryType->RelativeTimeInterval_isUsed = 1u;
+                        grammar_id = 33;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RelativeTimeInterval>", 27);
+                    }
+                    break;
+                case 1:
+                    // Abstract element or type: TimeInterval, IntervalType (IntervalType)
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeInterval", 17);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_IntervalType(stream, &PMaxScheduleEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        PMaxScheduleEntryType->TimeInterval_isUsed = 1u;
+                        grammar_id = 33;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeInterval>", 19);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 33:
+            // Grammar: ID=33; read/write bits=1; START (PMax)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (PMax, PhysicalValueType (PhysicalValueType)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMax", 9);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_PhysicalValueType(stream, &PMaxScheduleEntryType->PMax, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMax>", 11);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffEntry; type={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffEntryType; base type=EntryType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); EPriceLevel, unsignedByte (0, 1); ConsumptionCost, ConsumptionCostType (0, 3);
+static int decode_iso2_SalesTariffEntryType(exi_bitstream_t* stream, struct iso2_SalesTariffEntryType* SalesTariffEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 34;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SalesTariffEntryType(SalesTariffEntryType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 34:
+            // Grammar: ID=34; read/write bits=2; START (RelativeTimeInterval), START (TimeInterval)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (RelativeTimeInterval, RelativeTimeIntervalType (IntervalType)); next=35
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RelativeTimeInterval", 25);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_RelativeTimeIntervalType(stream, &SalesTariffEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        SalesTariffEntryType->RelativeTimeInterval_isUsed = 1u;
+                        grammar_id = 35;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RelativeTimeInterval>", 27);
+                    }
+                    break;
+                case 1:
+                    // Abstract element or type: TimeInterval, IntervalType (IntervalType)
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeInterval", 17);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_IntervalType(stream, &SalesTariffEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        SalesTariffEntryType->TimeInterval_isUsed = 1u;
+                        grammar_id = 35;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeInterval>", 19);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 35:
+            // Grammar: ID=35; read/write bits=2; START (EPriceLevel), START (ConsumptionCost), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EPriceLevel, unsignedByte (unsignedShort)); next=37
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EPriceLevel", 16);
+                        (void)xml_tag_start;
+                    // decode: unsigned byte (restricted integer)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                SalesTariffEntryType->EPriceLevel = (uint8_t)value;
+                                SalesTariffEntryType->EPriceLevel_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffEntryType->EPriceLevel); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 37;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EPriceLevel>", 18);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=36
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 36;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 36:
+            // Grammar: ID=36; read/write bits=2; LOOP (ConsumptionCost), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=36
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < 3)
+                    {
+                        grammar_id = 36;
+                    }
+                    else
+                    {
+                        grammar_id = 37;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 37:
+            // Grammar: ID=37; read/write bits=2; START (ConsumptionCost), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=38
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 38;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 38:
+            // Grammar: ID=38; read/write bits=2; LOOP (ConsumptionCost), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=38
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < 3)
+                    {
+                        grammar_id = 38;
+                    }
+                    else
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyValue; type={http://www.w3.org/2000/09/xmldsig#}KeyValueType; base type=; content type=mixed;
 //          abstract=False; final=False; choice=True;
 // Particle: DSAKeyValue, DSAKeyValueType (0, 1); RSAKeyValue, RSAKeyValueType (0, 1); ANY, anyType (0, 1);
 static int decode_iso2_KeyValueType(exi_bitstream_t* stream, struct iso2_KeyValueType* KeyValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 26;
+    int grammar_id = 39;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -2613,8 +3645,8 @@ static int decode_iso2_KeyValueType(exi_bitstream_t* stream, struct iso2_KeyValu
     {
         switch (grammar_id)
         {
-        case 26:
-            // Grammar: ID=26; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
+        case 39:
+            // Grammar: ID=39; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -2787,7 +3819,7 @@ static int decode_iso2_KeyValueType(exi_bitstream_t* stream, struct iso2_KeyValu
 //          abstract=False; final=False; choice=True; sequence=True (2;
 // Particle: PGPKeyID, base64Binary (1, 1); PGPKeyPacket, base64Binary (0, 1); ANY, anyType (0, 1); PGPKeyPacket, base64Binary (1, 1); ANY, anyType (0, 1);
 static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataType* PGPDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 27;
+    int grammar_id = 40;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -2798,15 +3830,15 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
     {
         switch (grammar_id)
         {
-        case 27:
-            // Grammar: ID=27; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
+        case 40:
+            // Grammar: ID=40; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PGPKeyID, base64Binary (base64Binary)); next=28
+                    // Event: START (PGPKeyID, base64Binary (base64Binary)); next=41
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -2853,7 +3885,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 28;
+                        grammar_id = 41;
                     }
                         // XML: close tag
                         {
@@ -2869,7 +3901,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                     }
                     break;
                 case 1:
-                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=29
+                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=42
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -2917,7 +3949,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 29;
+                        grammar_id = 42;
                     }
                         // XML: close tag
                         {
@@ -2938,15 +3970,15 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                 }
             }
             break;
-        case 28:
-            // Grammar: ID=28; read/write bits=3; START (PGPKeyPacket), START (ANY), END Element, START (ANY)
+        case 41:
+            // Grammar: ID=41; read/write bits=3; START (PGPKeyPacket), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=29
+                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=42
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -2994,7 +4026,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 29;
+                        grammar_id = 42;
                     }
                         // XML: close tag
                         {
@@ -3010,7 +4042,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                     }
                     break;
                 case 1:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3041,7 +4073,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                     grammar_id = 4;
                     break;
                 case 3:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3089,7 +4121,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 30;
+                        grammar_id = 43;
                     }
                         // XML: close tag
                         {
@@ -3110,15 +4142,15 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                 }
             }
             break;
-        case 29:
-            // Grammar: ID=29; read/write bits=3; START (ANY), END Element, END Element, START (ANY)
+        case 42:
+            // Grammar: ID=42; read/write bits=3; START (ANY), END Element, END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3154,7 +4186,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                     grammar_id = 4;
                     break;
                 case 3:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3202,7 +4234,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 30;
+                        grammar_id = 43;
                     }
                         // XML: close tag
                         {
@@ -3223,15 +4255,15 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                 }
             }
             break;
-        case 30:
-            // Grammar: ID=30; read/write bits=1; START (PGPKeyPacket)
+        case 43:
+            // Grammar: ID=43; read/write bits=1; START (PGPKeyPacket)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=31
+                    // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=44
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3278,7 +4310,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 31;
+                        grammar_id = 44;
                     }
                         // XML: close tag
                         {
@@ -3299,15 +4331,15 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                 }
             }
             break;
-        case 31:
-            // Grammar: ID=31; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 44:
+            // Grammar: ID=44; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3338,7 +4370,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                     grammar_id = 4;
                     break;
                 case 2:
-                    // Event: START (ANY, anyType (base64Binary)); next=30
+                    // Event: START (ANY, anyType (base64Binary)); next=43
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3386,7 +4418,7 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 30;
+                        grammar_id = 43;
                     }
                         // XML: close tag
                         {
@@ -3438,11 +4470,573 @@ static int decode_iso2_PGPDataType(exi_bitstream_t* stream, struct iso2_PGPDataT
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}PMaxSchedule; type={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: PMaxScheduleEntry, PMaxScheduleEntryType (1, 12) (original max 1024);
+static int decode_iso2_PMaxScheduleType(exi_bitstream_t* stream, struct iso2_PMaxScheduleType* PMaxScheduleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 45;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_PMaxScheduleType(PMaxScheduleType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 45:
+            // Grammar: ID=45; read/write bits=1; START (PMaxScheduleEntry)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (PMaxScheduleEntry, PMaxScheduleEntryType (EntryType)); next=46
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMaxScheduleEntry", 22);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < iso2_PMaxScheduleEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_PMaxScheduleEntryType(stream, &PMaxScheduleType->PMaxScheduleEntry.array[PMaxScheduleType->PMaxScheduleEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_PMaxScheduleEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 46;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMaxScheduleEntry>", 24);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 46:
+            // Grammar: ID=46; read/write bits=2; LOOP (PMaxScheduleEntry), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (PMaxScheduleEntry, PMaxScheduleEntryType (EntryType)); next=46
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMaxScheduleEntry", 22);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < iso2_PMaxScheduleEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_PMaxScheduleEntryType(stream, &PMaxScheduleType->PMaxScheduleEntry.array[PMaxScheduleType->PMaxScheduleEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_PMaxScheduleEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 46;
+                    }
+                    else
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMaxScheduleEntry>", 24);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}Parameter; type={urn:iso:15118:2:2013:MsgDataTypes}ParameterType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; choice=True;
+// Particle: Name, string (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); physicalValue, PhysicalValueType (0, 1); stringValue, string (0, 1);
+static int decode_iso2_ParameterType(exi_bitstream_t* stream, struct iso2_ParameterType* ParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 47;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_ParameterType(ParameterType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 47:
+            // Grammar: ID=47; read/write bits=1; START (Name)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Name, string (string)); next=48
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Name=\"", 11);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &ParameterType->Name.charactersLen);
+                    if (error == 0)
+                    {
+                        if (ParameterType->Name.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            ParameterType->Name.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, ParameterType->Name.charactersLen, ParameterType->Name.characters, iso2_Name_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->Name.characters, ParameterType->Name.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    grammar_id = 48;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 48:
+            // Grammar: ID=48; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (physicalValue), START (stringValue)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (boolValue, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:boolValue", 14);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ParameterType->boolValue = value;
+                                ParameterType->boolValue_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:boolValue>", 16);
+                    }
+                    break;
+                case 1:
+                    // Event: START (byteValue, byte (short)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:byteValue", 14);
+                        (void)xml_tag_start;
+                    // decode: byte (restricted integer)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                // type has min_value = -128
+                                ParameterType->byteValue = (int8_t)(value + -128);
+                                ParameterType->byteValue_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)ParameterType->byteValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:byteValue>", 16);
+                    }
+                    break;
+                case 2:
+                    // Event: START (shortValue, short (int)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:shortValue", 15);
+                        (void)xml_tag_start;
+                    // decode: short
+                    error = decode_exi_type_integer16(stream, &ParameterType->shortValue);
+                    if (error == 0)
+                    {
+                        ParameterType->shortValue_isUsed = 1u;
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", ParameterType->shortValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:shortValue>", 17);
+                    }
+                    break;
+                case 3:
+                    // Event: START (intValue, int (long)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:intValue", 13);
+                        (void)xml_tag_start;
+                    // decode: int
+                    error = decode_exi_type_integer32(stream, &ParameterType->intValue);
+                    if (error == 0)
+                    {
+                        ParameterType->intValue_isUsed = 1u;
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", ParameterType->intValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:intValue>", 15);
+                    }
+                    break;
+                case 4:
+                    // Event: START (physicalValue, PhysicalValueType (PhysicalValueType)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:physicalValue", 18);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_PhysicalValueType(stream, &ParameterType->physicalValue, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        ParameterType->physicalValue_isUsed = 1u;
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:physicalValue>", 20);
+                    }
+                    break;
+                case 5:
+                    // Event: START (stringValue, string (string)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:stringValue", 16);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &ParameterType->stringValue.charactersLen);
+                            if (error == 0)
+                            {
+                                if (ParameterType->stringValue.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    ParameterType->stringValue.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, ParameterType->stringValue.charactersLen, ParameterType->stringValue.characters, iso2_stringValue_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->stringValue.characters, ParameterType->stringValue.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                ParameterType->stringValue_isUsed = 1u;
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:stringValue>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Reference; type={http://www.w3.org/2000/09/xmldsig#}ReferenceType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
 static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_ReferenceType* ReferenceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 32;
+    int grammar_id = 49;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3453,15 +5047,15 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
     {
         switch (grammar_id)
         {
-        case 32:
-            // Grammar: ID=32; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
+        case 49:
+            // Grammar: ID=49; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=33
+                    // Event: START (Id, ID (NCName)); next=50
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -3486,11 +5080,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->Id_isUsed = 1u;
-                    grammar_id = 33;
+                    grammar_id = 50;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (Type, anyURI (anyURI)); next=34
+                    // Event: START (Type, anyURI (anyURI)); next=51
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
                     // decode: string (len, characters) (Attribute)
@@ -3515,11 +5109,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->Type_isUsed = 1u;
-                    grammar_id = 34;
+                    grammar_id = 51;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 2:
-                    // Event: START (URI, anyURI (anyURI)); next=35
+                    // Event: START (URI, anyURI (anyURI)); next=52
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
                     // decode: string (len, characters) (Attribute)
@@ -3544,11 +5138,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->URI_isUsed = 1u;
-                    grammar_id = 35;
+                    grammar_id = 52;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 3:
-                    // Event: START (Transforms, TransformsType (TransformsType)); next=36
+                    // Event: START (Transforms, TransformsType (TransformsType)); next=53
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3563,7 +5157,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     if (error == 0)
                     {
                         ReferenceType->Transforms_isUsed = 1u;
-                        grammar_id = 36;
+                        grammar_id = 53;
                     }
                         // XML: close tag
                         {
@@ -3579,7 +5173,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     }
                     break;
                 case 4:
-                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=37
+                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=54
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3593,7 +5187,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     error = decode_iso2_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 37;
+                        grammar_id = 54;
                     }
                         // XML: close tag
                         {
@@ -3614,15 +5208,15 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                 }
             }
             break;
-        case 33:
-            // Grammar: ID=33; read/write bits=3; START (Type), START (URI), START (Transforms), START (DigestMethod)
+        case 50:
+            // Grammar: ID=50; read/write bits=3; START (Type), START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Type, anyURI (anyURI)); next=34
+                    // Event: START (Type, anyURI (anyURI)); next=51
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
                     // decode: string (len, characters) (Attribute)
@@ -3647,11 +5241,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->Type_isUsed = 1u;
-                    grammar_id = 34;
+                    grammar_id = 51;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (URI, anyURI (anyURI)); next=35
+                    // Event: START (URI, anyURI (anyURI)); next=52
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
                     // decode: string (len, characters) (Attribute)
@@ -3676,11 +5270,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->URI_isUsed = 1u;
-                    grammar_id = 35;
+                    grammar_id = 52;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 2:
-                    // Event: START (Transforms, TransformsType (TransformsType)); next=36
+                    // Event: START (Transforms, TransformsType (TransformsType)); next=53
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3695,7 +5289,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     if (error == 0)
                     {
                         ReferenceType->Transforms_isUsed = 1u;
-                        grammar_id = 36;
+                        grammar_id = 53;
                     }
                         // XML: close tag
                         {
@@ -3711,7 +5305,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     }
                     break;
                 case 3:
-                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=37
+                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=54
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3725,7 +5319,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     error = decode_iso2_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 37;
+                        grammar_id = 54;
                     }
                         // XML: close tag
                         {
@@ -3746,15 +5340,15 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                 }
             }
             break;
-        case 34:
-            // Grammar: ID=34; read/write bits=2; START (URI), START (Transforms), START (DigestMethod)
+        case 51:
+            // Grammar: ID=51; read/write bits=2; START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (URI, anyURI (anyURI)); next=35
+                    // Event: START (URI, anyURI (anyURI)); next=52
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
                     // decode: string (len, characters) (Attribute)
@@ -3779,11 +5373,11 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                         }
                     }
                     ReferenceType->URI_isUsed = 1u;
-                    grammar_id = 35;
+                    grammar_id = 52;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (Transforms, TransformsType (TransformsType)); next=36
+                    // Event: START (Transforms, TransformsType (TransformsType)); next=53
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3798,7 +5392,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     if (error == 0)
                     {
                         ReferenceType->Transforms_isUsed = 1u;
-                        grammar_id = 36;
+                        grammar_id = 53;
                     }
                         // XML: close tag
                         {
@@ -3814,7 +5408,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     }
                     break;
                 case 2:
-                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=37
+                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=54
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3828,7 +5422,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     error = decode_iso2_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 37;
+                        grammar_id = 54;
                     }
                         // XML: close tag
                         {
@@ -3849,15 +5443,15 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                 }
             }
             break;
-        case 35:
-            // Grammar: ID=35; read/write bits=2; START (Transforms), START (DigestMethod)
+        case 52:
+            // Grammar: ID=52; read/write bits=2; START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Transforms, TransformsType (TransformsType)); next=36
+                    // Event: START (Transforms, TransformsType (TransformsType)); next=53
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3872,7 +5466,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     if (error == 0)
                     {
                         ReferenceType->Transforms_isUsed = 1u;
-                        grammar_id = 36;
+                        grammar_id = 53;
                     }
                         // XML: close tag
                         {
@@ -3888,7 +5482,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     }
                     break;
                 case 1:
-                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=37
+                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=54
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3902,7 +5496,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     error = decode_iso2_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 37;
+                        grammar_id = 54;
                     }
                         // XML: close tag
                         {
@@ -3923,15 +5517,15 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                 }
             }
             break;
-        case 36:
-            // Grammar: ID=36; read/write bits=1; START (DigestMethod)
+        case 53:
+            // Grammar: ID=53; read/write bits=1; START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=37
+                    // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=54
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -3945,7 +5539,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                     error = decode_iso2_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 37;
+                        grammar_id = 54;
                     }
                         // XML: close tag
                         {
@@ -3966,8 +5560,8 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
                 }
             }
             break;
-        case 37:
-            // Grammar: ID=37; read/write bits=1; START (DigestValue)
+        case 54:
+            // Grammar: ID=54; read/write bits=1; START (DigestValue)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -4077,7 +5671,7 @@ static int decode_iso2_ReferenceType(exi_bitstream_t* stream, struct iso2_Refere
 //          abstract=False; final=False;
 // Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
 static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_RetrievalMethodType* RetrievalMethodType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 38;
+    int grammar_id = 55;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -4088,15 +5682,15 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
     {
         switch (grammar_id)
         {
-        case 38:
-            // Grammar: ID=38; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
+        case 55:
+            // Grammar: ID=55; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Type, anyURI (anyURI)); next=39
+                    // Event: START (Type, anyURI (anyURI)); next=56
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
                     // decode: string (len, characters) (Attribute)
@@ -4121,11 +5715,11 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
                         }
                     }
                     RetrievalMethodType->Type_isUsed = 1u;
-                    grammar_id = 39;
+                    grammar_id = 56;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (URI, anyURI (anyURI)); next=40
+                    // Event: START (URI, anyURI (anyURI)); next=57
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
                     // decode: string (len, characters) (Attribute)
@@ -4150,7 +5744,7 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
                         }
                     }
                     RetrievalMethodType->URI_isUsed = 1u;
-                    grammar_id = 40;
+                    grammar_id = 57;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 2:
@@ -4195,15 +5789,15 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 39:
-            // Grammar: ID=39; read/write bits=2; START (URI), START (Transforms), END Element
+        case 56:
+            // Grammar: ID=56; read/write bits=2; START (URI), START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (URI, anyURI (anyURI)); next=40
+                    // Event: START (URI, anyURI (anyURI)); next=57
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
                     // decode: string (len, characters) (Attribute)
@@ -4228,7 +5822,7 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
                         }
                     }
                     RetrievalMethodType->URI_isUsed = 1u;
-                    grammar_id = 40;
+                    grammar_id = 57;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
@@ -4273,8 +5867,8 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 40:
-            // Grammar: ID=40; read/write bits=2; START (Transforms), END Element
+        case 57:
+            // Grammar: ID=57; read/write bits=2; START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -4357,7 +5951,7 @@ static int decode_iso2_RetrievalMethodType(exi_bitstream_t* stream, struct iso2_
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
 static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDataType* SPKIDataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 41;
+    int grammar_id = 58;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -4368,15 +5962,15 @@ static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDat
     {
         switch (grammar_id)
         {
-        case 41:
-            // Grammar: ID=41; read/write bits=1; START (SPKISexp)
+        case 58:
+            // Grammar: ID=58; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPKISexp, base64Binary (base64Binary)); next=42
+                    // Event: START (SPKISexp, base64Binary (base64Binary)); next=59
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -4423,7 +6017,7 @@ static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDat
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 42;
+                        grammar_id = 59;
                     }
                         // XML: close tag
                         {
@@ -4444,8 +6038,8 @@ static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDat
                 }
             }
             break;
-        case 42:
-            // Grammar: ID=42; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 59:
+            // Grammar: ID=59; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -4583,11 +6177,776 @@ static int decode_iso2_SPKIDataType(exi_bitstream_t* stream, struct iso2_SPKIDat
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SalesTariff; type={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); SalesTariffID, SAIDType (1, 1); SalesTariffDescription, tariffDescriptionType (0, 1); NumEPriceLevels, unsignedByte (0, 1); SalesTariffEntry, SalesTariffEntryType (1, 12) (original max 1024);
+static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_SalesTariffType* SalesTariffType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 60;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SalesTariffType(SalesTariffType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 60:
+            // Grammar: ID=60; read/write bits=2; START (Id), START (SalesTariffID)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=61
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &SalesTariffType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (SalesTariffType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            SalesTariffType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, SalesTariffType->Id.charactersLen, SalesTariffType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SalesTariffType->Id.characters, SalesTariffType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    SalesTariffType->Id_isUsed = 1u;
+                    grammar_id = 61;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 1:
+                    // Event: START (SalesTariffID, SAIDType (unsignedByte)); next=62
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffID", 18);
+                        (void)xml_tag_start;
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                // type has min_value = 1
+                                SalesTariffType->SalesTariffID = (uint8_t)(value + 1);
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->SalesTariffID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 62;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffID>", 20);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 61:
+            // Grammar: ID=61; read/write bits=1; START (SalesTariffID)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SalesTariffID, SAIDType (unsignedByte)); next=62
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffID", 18);
+                        (void)xml_tag_start;
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                // type has min_value = 1
+                                SalesTariffType->SalesTariffID = (uint8_t)(value + 1);
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->SalesTariffID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 62;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffID>", 20);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 62:
+            // Grammar: ID=62; read/write bits=2; START (SalesTariffDescription), START (NumEPriceLevels), START (SalesTariffEntry)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SalesTariffDescription, tariffDescriptionType (string)); next=64
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffDescription", 27);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &SalesTariffType->SalesTariffDescription.charactersLen);
+                            if (error == 0)
+                            {
+                                if (SalesTariffType->SalesTariffDescription.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    SalesTariffType->SalesTariffDescription.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, SalesTariffType->SalesTariffDescription.charactersLen, SalesTariffType->SalesTariffDescription.characters, iso2_SalesTariffDescription_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SalesTariffType->SalesTariffDescription.characters, SalesTariffType->SalesTariffDescription.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                SalesTariffType->SalesTariffDescription_isUsed = 1u;
+                                grammar_id = 64;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffDescription>", 29);
+                    }
+                    break;
+                case 1:
+                    // Event: START (NumEPriceLevels, unsignedByte (unsignedShort)); next=66
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NumEPriceLevels", 20);
+                        (void)xml_tag_start;
+                    // decode: unsigned byte (restricted integer)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                SalesTariffType->NumEPriceLevels = (uint8_t)value;
+                                SalesTariffType->NumEPriceLevels_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->NumEPriceLevels); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 66;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NumEPriceLevels>", 22);
+                    }
+                    break;
+                case 2:
+                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=63
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 63;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 63:
+            // Grammar: ID=63; read/write bits=2; LOOP (SalesTariffEntry), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=63
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 63;
+                    }
+                    else
+                    {
+                        grammar_id = 64;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 64:
+            // Grammar: ID=64; read/write bits=2; START (NumEPriceLevels), START (SalesTariffEntry)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (NumEPriceLevels, unsignedByte (unsignedShort)); next=66
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NumEPriceLevels", 20);
+                        (void)xml_tag_start;
+                    // decode: unsigned byte (restricted integer)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
+                            if (error == 0)
+                            {
+                                SalesTariffType->NumEPriceLevels = (uint8_t)value;
+                                SalesTariffType->NumEPriceLevels_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->NumEPriceLevels); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 66;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NumEPriceLevels>", 22);
+                    }
+                    break;
+                case 1:
+                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=65
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 65;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 65:
+            // Grammar: ID=65; read/write bits=2; LOOP (SalesTariffEntry), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=65
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 65;
+                    }
+                    else
+                    {
+                        grammar_id = 66;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 66:
+            // Grammar: ID=66; read/write bits=1; START (SalesTariffEntry)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=67
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 67;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 67:
+            // Grammar: ID=67; read/write bits=2; LOOP (SalesTariffEntry), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=67
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 67;
+                    }
+                    else
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
 static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_SignatureMethodType* SignatureMethodType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 43;
+    int grammar_id = 68;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -4598,15 +6957,15 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
     {
         switch (grammar_id)
         {
-        case 43:
-            // Grammar: ID=43; read/write bits=1; START (Algorithm)
+        case 68:
+            // Grammar: ID=68; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Algorithm, anyURI (anyURI)); next=44
+                    // Event: START (Algorithm, anyURI (anyURI)); next=69
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Algorithm=\"", 16);
                     // decode: string (len, characters) (Attribute)
@@ -4630,7 +6989,7 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 44;
+                    grammar_id = 69;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 default:
@@ -4639,15 +6998,15 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 44:
-            // Grammar: ID=44; read/write bits=3; START (HMACOutputLength), START (ANY), END Element, START (ANY)
+        case 69:
+            // Grammar: ID=69; read/write bits=3; START (HMACOutputLength), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=45
+                    // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=70
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -4668,7 +7027,7 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
                             // XML: emit value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                             { int64_t _sv; exi_basetypes_convert_64_from_signed(&SignatureMethodType->HMACOutputLength, &_sv); char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRId64, _sv); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            grammar_id = 45;
+                            grammar_id = 70;
                         }
                         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     }
@@ -4786,8 +7145,8 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 45:
-            // Grammar: ID=45; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 70:
+            // Grammar: ID=70; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -4929,7 +7288,7 @@ static int decode_iso2_SignatureMethodType(exi_bitstream_t* stream, struct iso2_
 //          abstract=False; final=False;
 // Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
 static int decode_iso2_X509DataType(exi_bitstream_t* stream, struct iso2_X509DataType* X509DataType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 46;
+    int grammar_id = 71;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -4940,8 +7299,8 @@ static int decode_iso2_X509DataType(exi_bitstream_t* stream, struct iso2_X509Dat
     {
         switch (grammar_id)
         {
-        case 46:
-            // Grammar: ID=46; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
+        case 71:
+            // Grammar: ID=71; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
@@ -5352,7 +7711,7 @@ static int decode_iso2_X509DataType(exi_bitstream_t* stream, struct iso2_X509Dat
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVReady, boolean (1, 1); EVErrorCode, DC_EVErrorCodeType (1, 1); EVRESSSOC, percentValueType (1, 1);
 static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_EVStatusType* DC_EVStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 47;
+    int grammar_id = 72;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5363,15 +7722,15 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
     {
         switch (grammar_id)
         {
-        case 47:
-            // Grammar: ID=47; read/write bits=1; START (EVReady)
+        case 72:
+            // Grammar: ID=72; read/write bits=1; START (EVReady)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVReady, boolean (boolean)); next=48
+                    // Event: START (EVReady, boolean (boolean)); next=73
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -5413,7 +7772,7 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 48;
+                                grammar_id = 73;
                             }
                             else
                             {
@@ -5440,15 +7799,15 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
                 }
             }
             break;
-        case 48:
-            // Grammar: ID=48; read/write bits=1; START (EVErrorCode)
+        case 73:
+            // Grammar: ID=73; read/write bits=1; START (EVErrorCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVErrorCode, DC_EVErrorCodeType (string)); next=49
+                    // Event: START (EVErrorCode, DC_EVErrorCodeType (string)); next=74
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -5504,7 +7863,7 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 49;
+                                grammar_id = 74;
                             }
                             else
                             {
@@ -5531,8 +7890,8 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
                 }
             }
             break;
-        case 49:
-            // Grammar: ID=49; read/write bits=1; START (EVRESSSOC)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (EVRESSSOC)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -5643,7 +8002,7 @@ static int decode_iso2_DC_EVStatusType(exi_bitstream_t* stream, struct iso2_DC_E
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoType* KeyInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 50;
+    int grammar_id = 75;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5654,15 +8013,15 @@ static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoT
     {
         switch (grammar_id)
         {
-        case 50:
-            // Grammar: ID=50; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 75:
+            // Grammar: ID=75; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=51
+                    // Event: START (Id, ID (NCName)); next=76
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -5687,7 +8046,7 @@ static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoT
                         }
                     }
                     KeyInfoType->Id_isUsed = 1u;
-                    grammar_id = 51;
+                    grammar_id = 76;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
@@ -6069,8 +8428,8 @@ static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoT
                 }
             }
             break;
-        case 51:
-            // Grammar: ID=51; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 76:
+            // Grammar: ID=76; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
@@ -6490,7 +8849,7 @@ static int decode_iso2_KeyInfoType(exi_bitstream_t* stream, struct iso2_KeyInfoT
 //          abstract=False; final=False;
 // Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
 static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectType* ObjectType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 52;
+    int grammar_id = 77;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -6501,15 +8860,15 @@ static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectTyp
     {
         switch (grammar_id)
         {
-        case 52:
-            // Grammar: ID=52; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 77:
+            // Grammar: ID=77; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Encoding, anyURI (anyURI)); next=53
+                    // Event: START (Encoding, anyURI (anyURI)); next=78
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Encoding=\"", 15);
                     // decode: string (len, characters) (Attribute)
@@ -6534,11 +8893,11 @@ static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectTyp
                         }
                     }
                     ObjectType->Encoding_isUsed = 1u;
-                    grammar_id = 53;
+                    grammar_id = 78;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (Id, ID (NCName)); next=54
+                    // Event: START (Id, ID (NCName)); next=79
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
@@ -6563,11 +8922,11 @@ static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectTyp
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 54;
+                    grammar_id = 79;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 2:
-                    // Event: START (MimeType, string (string)); next=55
+                    // Event: START (MimeType, string (string)); next=80
                     // XML: attribute
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
                     // decode: string (len, characters) (Attribute)
@@ -6592,7 +8951,7 @@ static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectTyp
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
+                    grammar_id = 80;
                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 3:
@@ -6688,2483 +9047,6 @@ static int decode_iso2_ObjectType(exi_bitstream_t* stream, struct iso2_ObjectTyp
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 53:
-            // Grammar: ID=53; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=54
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (ObjectType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            ObjectType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, ObjectType->Id.charactersLen, ObjectType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    ObjectType->Id_isUsed = 1u;
-                    grammar_id = 54;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (MimeType, string (string)); next=55
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
-                    if (error == 0)
-                    {
-                        if (ObjectType->MimeType.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            ObjectType->MimeType.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso2_MimeType_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 2:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode: event not accepted
-                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                case 4:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary
-                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
-                    if (error == 0)
-                    {
-                        ObjectType->ANY_isUsed = 1u;
-                        // XML: emit base64 encoded value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 54:
-            // Grammar: ID=54; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (MimeType, string (string)); next=55
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
-                    if (error == 0)
-                    {
-                        if (ObjectType->MimeType.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            ObjectType->MimeType.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso2_MimeType_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode: event not accepted
-                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                case 3:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary
-                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
-                    if (error == 0)
-                    {
-                        ObjectType->ANY_isUsed = 1u;
-                        // XML: emit base64 encoded value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 55:
-            // Grammar: ID=55; read/write bits=2; START (ANY), END Element, START (ANY)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode: event not accepted
-                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                case 2:
-                    // Event: START (ANY, anyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary
-                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
-                    if (error == 0)
-                    {
-                        ObjectType->ANY_isUsed = 1u;
-                        // XML: emit base64 encoded value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SelectedService; type={urn:iso:15118:2:2013:MsgDataTypes}SelectedServiceType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: ServiceID, serviceIDType (1, 1); ParameterSetID, short (0, 1);
-static int decode_iso2_SelectedServiceType(exi_bitstream_t* stream, struct iso2_SelectedServiceType* SelectedServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 56;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SelectedServiceType(SelectedServiceType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 56:
-            // Grammar: ID=56; read/write bits=1; START (ServiceID)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=57
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
-                        (void)xml_tag_start;
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &SelectedServiceType->ServiceID);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", SelectedServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 57;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 57:
-            // Grammar: ID=57; read/write bits=2; START (ParameterSetID), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ParameterSetID, short (int)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ParameterSetID", 19);
-                        (void)xml_tag_start;
-                    // decode: short
-                    error = decode_exi_type_integer16(stream, &SelectedServiceType->ParameterSetID);
-                    if (error == 0)
-                    {
-                        SelectedServiceType->ParameterSetID_isUsed = 1u;
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", SelectedServiceType->ParameterSetID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ParameterSetID>", 21);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}Service; type={urn:iso:15118:2:2013:MsgDataTypes}ServiceType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: ServiceID, serviceIDType (1, 1); ServiceName, serviceNameType (0, 1); ServiceCategory, serviceCategoryType (1, 1); ServiceScope, serviceScopeType (0, 1); FreeService, boolean (1, 1);
-static int decode_iso2_ServiceType(exi_bitstream_t* stream, struct iso2_ServiceType* ServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 58;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_ServiceType(ServiceType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 58:
-            // Grammar: ID=58; read/write bits=1; START (ServiceID)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=59
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
-                        (void)xml_tag_start;
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &ServiceType->ServiceID);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 59;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 59:
-            // Grammar: ID=59; read/write bits=2; START (ServiceName), START (ServiceCategory)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceName, serviceNameType (string)); next=60
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceName", 16);
-                        (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            error = exi_basetypes_decoder_uint_16(stream, &ServiceType->ServiceName.charactersLen);
-                            if (error == 0)
-                            {
-                                if (ServiceType->ServiceName.charactersLen >= 2)
-                                {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    ServiceType->ServiceName.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, ServiceType->ServiceName.charactersLen, ServiceType->ServiceName.characters, iso2_ServiceName_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ServiceType->ServiceName.characters, ServiceType->ServiceName.charactersLen);
-                                    }
-                                }
-                                else
-                                {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                ServiceType->ServiceName_isUsed = 1u;
-                                grammar_id = 60;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceName>", 18);
-                    }
-                    break;
-                case 1:
-                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=61
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                ServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 61;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 60:
-            // Grammar: ID=60; read/write bits=1; START (ServiceCategory)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=61
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                ServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 61;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 61:
-            // Grammar: ID=61; read/write bits=2; START (ServiceScope), START (FreeService)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceScope, serviceScopeType (string)); next=62
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceScope", 17);
-                        (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            error = exi_basetypes_decoder_uint_16(stream, &ServiceType->ServiceScope.charactersLen);
-                            if (error == 0)
-                            {
-                                if (ServiceType->ServiceScope.charactersLen >= 2)
-                                {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    ServiceType->ServiceScope.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, ServiceType->ServiceScope.charactersLen, ServiceType->ServiceScope.characters, iso2_ServiceScope_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ServiceType->ServiceScope.characters, ServiceType->ServiceScope.charactersLen);
-                                    }
-                                }
-                                else
-                                {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                ServiceType->ServiceScope_isUsed = 1u;
-                                grammar_id = 62;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceScope>", 19);
-                    }
-                    break;
-                case 1:
-                    // Event: START (FreeService, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ServiceType->FreeService = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 62:
-            // Grammar: ID=62; read/write bits=1; START (FreeService)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (FreeService, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ServiceType->FreeService = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
-static int decode_iso2_SignatureValueType(exi_bitstream_t* stream, struct iso2_SignatureValueType* SignatureValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 63;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SignatureValueType(SignatureValueType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 63:
-            // Grammar: ID=63; read/write bits=2; START (Id), START (CONTENT)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=64
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (SignatureValueType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            SignatureValueType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, SignatureValueType->Id.charactersLen, SignatureValueType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->Id.characters, SignatureValueType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    SignatureValueType->Id_isUsed = 1u;
-                    grammar_id = 64;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (simple)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
-                    if (error == 0)
-                    {
-                        error = exi_basetypes_decoder_bytes(stream, SignatureValueType->CONTENT.bytesLen, &SignatureValueType->CONTENT.bytes[0], iso2_SignatureValueType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 3;
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 64:
-            // Grammar: ID=64; read/write bits=1; START (CONTENT)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (simple)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
-                    if (error == 0)
-                    {
-                        error = exi_basetypes_decoder_bytes(stream, SignatureValueType->CONTENT.bytesLen, &SignatureValueType->CONTENT.bytes[0], iso2_SignatureValueType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 3;
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
-static int decode_iso2_SignedInfoType(exi_bitstream_t* stream, struct iso2_SignedInfoType* SignedInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 65;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SignedInfoType(SignedInfoType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 65:
-            // Grammar: ID=65; read/write bits=2; START (Id), START (CanonicalizationMethod)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=66
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignedInfoType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (SignedInfoType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            SignedInfoType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, SignedInfoType->Id.charactersLen, SignedInfoType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedInfoType->Id.characters, SignedInfoType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    SignedInfoType->Id_isUsed = 1u;
-                    grammar_id = 66;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=67
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 67;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 66:
-            // Grammar: ID=66; read/write bits=1; START (CanonicalizationMethod)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=67
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 67;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 67:
-            // Grammar: ID=67; read/write bits=1; START (SignatureMethod)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=68
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignatureMethod", 20);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_SignatureMethodType(stream, &SignedInfoType->SignatureMethod, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 68;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignatureMethod>", 22);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 68:
-            // Grammar: ID=68; read/write bits=1; START (Reference)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=69
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso2_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ReferenceType_4_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 69;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 69:
-            // Grammar: ID=69; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=69
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso2_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ReferenceType_4_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 69;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SubCertificates; type={urn:iso:15118:2:2013:MsgDataTypes}SubCertificatesType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Certificate, certificateType (1, 4);
-static int decode_iso2_SubCertificatesType(exi_bitstream_t* stream, struct iso2_SubCertificatesType* SubCertificatesType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 70;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SubCertificatesType(SubCertificatesType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 70:
-            // Grammar: ID=70; read/write bits=1; START (Certificate)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=71
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (SubCertificatesType->Certificate.arrayLen < iso2_certificateType_4_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso2_certificateType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            SubCertificatesType->Certificate.arrayLen++;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 71;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 71:
-            // Grammar: ID=71; read/write bits=2; LOOP (Certificate), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Certificate, certificateType (base64Binary)); next=71
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (Array)
-                    if (SubCertificatesType->Certificate.arrayLen < iso2_certificateType_4_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso2_certificateType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            SubCertificatesType->Certificate.arrayLen++;
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen;)
-                                    {
-                                        uint32_t a = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t b = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t c = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 71;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SupportedEnergyTransferMode; type={urn:iso:15118:2:2013:MsgDataTypes}SupportedEnergyTransferModeType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: EnergyTransferMode, EnergyTransferModeType (1, 6);
-static int decode_iso2_SupportedEnergyTransferModeType(exi_bitstream_t* stream, struct iso2_SupportedEnergyTransferModeType* SupportedEnergyTransferModeType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 72;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SupportedEnergyTransferModeType(SupportedEnergyTransferModeType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 72:
-            // Grammar: ID=72; read/write bits=1; START (EnergyTransferMode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EnergyTransferMode, EnergyTransferModeType (string)); next=73
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EnergyTransferMode", 23);
-                        (void)xml_tag_start;
-                    // decode: enum array
-                    if (SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen < iso2_EnergyTransferModeType_6_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                uint32_t value;
-                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                                if (error == 0)
-                                {
-                                    SupportedEnergyTransferModeType->EnergyTransferMode.array[SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen] = (iso2_EnergyTransferModeType)value;
-                                    SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen++;
-                                    // XML: emit value
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                    switch (value) {
-                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_single_phase_core", 20); break;
-                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_three_phase_core", 19); break;
-                                    case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_core", 7); break;
-                                    case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_extended", 11); break;
-                                    case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_combo_core", 13); break;
-                                    case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_unique", 9); break;
-                                    default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 73;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EnergyTransferMode>", 25);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 73:
-            // Grammar: ID=73; read/write bits=2; LOOP (EnergyTransferMode), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (EnergyTransferMode, EnergyTransferModeType (string)); next=73
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EnergyTransferMode", 23);
-                        (void)xml_tag_start;
-                    // decode: enum array
-                    if (SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen < iso2_EnergyTransferModeType_6_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                uint32_t value;
-                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                                if (error == 0)
-                                {
-                                    SupportedEnergyTransferModeType->EnergyTransferMode.array[SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen] = (iso2_EnergyTransferModeType)value;
-                                    SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen++;
-                                    // XML: emit value
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                    switch (value) {
-                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_single_phase_core", 20); break;
-                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_three_phase_core", 19); break;
-                                    case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_core", 7); break;
-                                    case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_extended", 11); break;
-                                    case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_combo_core", 13); break;
-                                    case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_unique", 9); break;
-                                    default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 73;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EnergyTransferMode>", 25);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEStatus; type={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); RCD, boolean (1, 1);
-static int decode_iso2_AC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_AC_EVSEStatusType* AC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 74;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_AC_EVSEStatusType(AC_EVSEStatusType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 74:
-            // Grammar: ID=74; read/write bits=1; START (NotificationMaxDelay)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=75
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NotificationMaxDelay", 25);
-                        (void)xml_tag_start;
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &AC_EVSEStatusType->NotificationMaxDelay);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", AC_EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 75;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NotificationMaxDelay>", 27);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 75:
-            // Grammar: ID=75; read/write bits=1; START (EVSENotification)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVSENotification, EVSENotificationType (string)); next=76
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSENotification", 21);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                AC_EVSEStatusType->EVSENotification = (iso2_EVSENotificationType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "None", 4); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "StopCharging", 12); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ReNegotiation", 13); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 76;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSENotification>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 76:
-            // Grammar: ID=76; read/write bits=1; START (RCD)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (RCD, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RCD", 8);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                AC_EVSEStatusType->RCD = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RCD>", 10);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgBody}BodyElement; type={urn:iso:15118:2:2013:MsgBody}BodyBaseType; base type=; content type=empty;
-//          abstract=True; final=False;
-static int decode_iso2_BodyBaseType(exi_bitstream_t* stream, struct iso2_BodyBaseType* BodyBaseType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    // Element has no particles, so the function just decodes END Element
-    (void)BodyBaseType;
-    uint32_t eventCode;
-
-    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-    if (error == 0)
-    {
-        if (eventCode != 0)
-        {
-            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-        }
-    }
-
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ChargeService; type={urn:iso:15118:2:2013:MsgDataTypes}ChargeServiceType; base type=ServiceType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ServiceID, serviceIDType (1, 1); ServiceName, serviceNameType (0, 1); ServiceCategory, serviceCategoryType (1, 1); ServiceScope, serviceScopeType (0, 1); FreeService, boolean (1, 1); SupportedEnergyTransferMode, SupportedEnergyTransferModeType (1, 1);
-static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_ChargeServiceType* ChargeServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 77;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_ChargeServiceType(ChargeServiceType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 77:
-            // Grammar: ID=77; read/write bits=1; START (ServiceID)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=78
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
-                        (void)xml_tag_start;
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &ChargeServiceType->ServiceID);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ChargeServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 78;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -9174,91 +9056,72 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
             }
             break;
         case 78:
-            // Grammar: ID=78; read/write bits=2; START (ServiceName), START (ServiceCategory)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=78; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceName, serviceNameType (string)); next=79
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceName", 16);
-                        (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (Id, ID (NCName)); next=79
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
+                        if (ObjectType->Id.charactersLen >= 2)
                         {
-                            error = exi_basetypes_decoder_uint_16(stream, &ChargeServiceType->ServiceName.charactersLen);
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            ObjectType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, ObjectType->Id.charactersLen, ObjectType->Id.characters, iso2_Id_CHARACTER_SIZE);
                             if (error == 0)
                             {
-                                if (ChargeServiceType->ServiceName.charactersLen >= 2)
-                                {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    ChargeServiceType->ServiceName.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, ChargeServiceType->ServiceName.charactersLen, ChargeServiceType->ServiceName.characters, iso2_ServiceName_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ChargeServiceType->ServiceName.characters, ChargeServiceType->ServiceName.charactersLen);
-                                    }
-                                }
-                                else
-                                {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                }
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
                             }
                         }
                         else
                         {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                ChargeServiceType->ServiceName_isUsed = 1u;
-                                grammar_id = 79;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceName>", 18);
-                    }
+                    ObjectType->Id_isUsed = 1u;
+                    grammar_id = 79;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
                     break;
                 case 1:
-                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=80
+                    // Event: START (MimeType, string (string)); next=80
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
+                    if (error == 0)
+                    {
+                        if (ObjectType->MimeType.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            ObjectType->MimeType.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso2_MimeType_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    ObjectType->MimeType_isUsed = 1u;
+                    grammar_id = 80;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 2:
+                    // Event: START (ANY, anyType (base64Binary)); next=3
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9266,53 +9129,78 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
                         (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
+                    // decode: event not accepted
+                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
+                        // XML: close tag
                         {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
                             {
-                                ChargeServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
                             }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    break;
+                case 3:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                case 4:
+                    // Event: START (ANY, anyType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary
+                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
+                        ObjectType->ANY_isUsed = 1u;
+                        // XML: emit base64 encoded value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         {
-                            if (eventCode == 0)
+                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                            static const int mod_table[] = {0, 2, 1};
+                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
+                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                            if (encoded_data != NULL)
                             {
-                                grammar_id = 80;
+                                size_t i, j;
+                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
+                                {
+                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t triple = (a << 16) + (b << 8) + c;
+                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                    encoded_data[j++] = encoding_table[triple & 0x3F];
+                                }
+                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
+                                {
+                                    encoded_data[output_length - 1 - i] = '=';
+                                }
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                free(encoded_data);
                             }
                             else
                             {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
+                        grammar_id = 3;
                     }
                         // XML: close tag
                         {
@@ -9324,7 +9212,7 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -9334,14 +9222,43 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
             }
             break;
         case 79:
-            // Grammar: ID=79; read/write bits=1; START (ServiceCategory)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=79; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=80
+                    // Event: START (MimeType, string (string)); next=80
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
+                    if (error == 0)
+                    {
+                        if (ObjectType->MimeType.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            ObjectType->MimeType.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso2_MimeType_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    ObjectType->MimeType_isUsed = 1u;
+                    grammar_id = 80;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 1:
+                    // Event: START (ANY, anyType (base64Binary)); next=3
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9349,53 +9266,78 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
                         (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
+                    // decode: event not accepted
+                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
+                        // XML: close tag
                         {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
                             {
-                                ChargeServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
                             }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    break;
+                case 2:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                case 3:
+                    // Event: START (ANY, anyType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary
+                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
+                        ObjectType->ANY_isUsed = 1u;
+                        // XML: emit base64 encoded value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         {
-                            if (eventCode == 0)
+                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                            static const int mod_table[] = {0, 2, 1};
+                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
+                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                            if (encoded_data != NULL)
                             {
-                                grammar_id = 80;
+                                size_t i, j;
+                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
+                                {
+                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t triple = (a << 16) + (b << 8) + c;
+                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                    encoded_data[j++] = encoding_table[triple & 0x3F];
+                                }
+                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
+                                {
+                                    encoded_data[output_length - 1 - i] = '=';
+                                }
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                free(encoded_data);
                             }
                             else
                             {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
+                        grammar_id = 3;
                     }
                         // XML: close tag
                         {
@@ -9407,7 +9349,7 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -9417,14 +9359,14 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
             }
             break;
         case 80:
-            // Grammar: ID=80; read/write bits=2; START (ServiceScope), START (FreeService)
+            // Grammar: ID=80; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceScope, serviceScopeType (string)); next=81
+                    // Event: START (ANY, anyType (base64Binary)); next=3
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -9432,61 +9374,10 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceScope", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
                         (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            error = exi_basetypes_decoder_uint_16(stream, &ChargeServiceType->ServiceScope.charactersLen);
-                            if (error == 0)
-                            {
-                                if (ChargeServiceType->ServiceScope.charactersLen >= 2)
-                                {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    ChargeServiceType->ServiceScope.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, ChargeServiceType->ServiceScope.charactersLen, ChargeServiceType->ServiceScope.characters, iso2_ServiceScope_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ChargeServiceType->ServiceScope.characters, ChargeServiceType->ServiceScope.charactersLen);
-                                    }
-                                }
-                                else
-                                {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                ChargeServiceType->ServiceScope_isUsed = 1u;
-                                grammar_id = 81;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
+                    // decode: event not accepted
+                    error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -9497,2173 +9388,16 @@ static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_Ch
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceScope>", 19);
-                    }
-                    break;
-                case 1:
-                    // Event: START (FreeService, boolean (boolean)); next=82
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ChargeServiceType->FreeService = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 82;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 81:
-            // Grammar: ID=81; read/write bits=1; START (FreeService)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (FreeService, boolean (boolean)); next=82
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ChargeServiceType->FreeService = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 82;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 82:
-            // Grammar: ID=82; read/write bits=1; START (SupportedEnergyTransferMode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SupportedEnergyTransferMode, SupportedEnergyTransferModeType (SupportedEnergyTransferModeType)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SupportedEnergyTransferMode", 32);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_SupportedEnergyTransferModeType(stream, &ChargeServiceType->SupportedEnergyTransferMode, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SupportedEnergyTransferMode>", 34);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ContractSignatureEncryptedPrivateKey; type={urn:iso:15118:2:2013:MsgDataTypes}ContractSignatureEncryptedPrivateKeyType; base type=privateKeyType; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (1, 1); CONTENT, ContractSignatureEncryptedPrivateKeyType (1, 1);
-static int decode_iso2_ContractSignatureEncryptedPrivateKeyType(exi_bitstream_t* stream, struct iso2_ContractSignatureEncryptedPrivateKeyType* ContractSignatureEncryptedPrivateKeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 83;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_ContractSignatureEncryptedPrivateKeyType(ContractSignatureEncryptedPrivateKeyType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 83:
-            // Grammar: ID=83; read/write bits=1; START (Id)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=84
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &ContractSignatureEncryptedPrivateKeyType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (ContractSignatureEncryptedPrivateKeyType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            ContractSignatureEncryptedPrivateKeyType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, ContractSignatureEncryptedPrivateKeyType->Id.charactersLen, ContractSignatureEncryptedPrivateKeyType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ContractSignatureEncryptedPrivateKeyType->Id.characters, ContractSignatureEncryptedPrivateKeyType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    grammar_id = 84;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 84:
-            // Grammar: ID=84; read/write bits=1; START (CONTENT)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (CONTENT, ContractSignatureEncryptedPrivateKeyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (simple)
-                    error = exi_basetypes_decoder_uint_16(stream, &ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen);
-                    if (error == 0)
-                    {
-                        error = exi_basetypes_decoder_bytes(stream, ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen, &ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[0], iso2_ContractSignatureEncryptedPrivateKeyType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 3;
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVPowerDeliveryParameter; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVPowerDeliveryParameterType; base type=EVPowerDeliveryParameterType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DC_EVStatus, DC_EVStatusType (1, 1); BulkChargingComplete, boolean (0, 1); ChargingComplete, boolean (1, 1);
-static int decode_iso2_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 85;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_DC_EVPowerDeliveryParameterType(DC_EVPowerDeliveryParameterType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 85:
-            // Grammar: ID=85; read/write bits=1; START (DC_EVStatus)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=86
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:DC_EVStatus", 16);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_DC_EVStatusType(stream, &DC_EVPowerDeliveryParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 86;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:DC_EVStatus>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 86:
-            // Grammar: ID=86; read/write bits=2; START (BulkChargingComplete), START (ChargingComplete)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (BulkChargingComplete, boolean (boolean)); next=87
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                DC_EVPowerDeliveryParameterType->BulkChargingComplete = value;
-                                DC_EVPowerDeliveryParameterType->BulkChargingComplete_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 87;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BulkChargingComplete>", 27);
-                    }
-                    break;
-                case 1:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ChargingComplete", 21);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                DC_EVPowerDeliveryParameterType->ChargingComplete = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ChargingComplete>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; START (ChargingComplete)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ChargingComplete", 21);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                DC_EVPowerDeliveryParameterType->ChargingComplete = value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ChargingComplete>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEStatus; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1);
-static int decode_iso2_DC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_DC_EVSEStatusType* DC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 88;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_DC_EVSEStatusType(DC_EVSEStatusType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 88:
-            // Grammar: ID=88; read/write bits=1; START (NotificationMaxDelay)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=89
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NotificationMaxDelay", 25);
-                        (void)xml_tag_start;
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &DC_EVSEStatusType->NotificationMaxDelay);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DC_EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 89;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NotificationMaxDelay>", 27);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 89:
-            // Grammar: ID=89; read/write bits=1; START (EVSENotification)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVSENotification, EVSENotificationType (string)); next=90
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSENotification", 21);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                DC_EVSEStatusType->EVSENotification = (iso2_EVSENotificationType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "None", 4); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "StopCharging", 12); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ReNegotiation", 13); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 90;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSENotification>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 90:
-            // Grammar: ID=90; read/write bits=2; START (EVSEIsolationStatus), START (EVSEStatusCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEIsolationStatus, isolationLevelType (string)); next=91
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEIsolationStatus", 24);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                            if (error == 0)
-                            {
-                                DC_EVSEStatusType->EVSEIsolationStatus = (iso2_isolationLevelType)value;
-                                DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Invalid", 7); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Valid", 5); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Warning", 7); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Fault", 5); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "No_IMD", 6); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 91;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEIsolationStatus>", 26);
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEStatusCode, DC_EVSEStatusCodeType (string)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEStatusCode", 19);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 4, &value);
-                            if (error == 0)
-                            {
-                                DC_EVSEStatusType->EVSEStatusCode = (iso2_DC_EVSEStatusCodeType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_NotReady", 13); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Ready", 10); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Shutdown", 13); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_UtilityInterruptEvent", 26); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_IsolationMonitoringActive", 30); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_EmergencyShutdown", 22); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Malfunction", 16); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_8", 10); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_9", 10); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_A", 10); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_B", 10); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_C", 10); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEStatusCode>", 21);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 91:
-            // Grammar: ID=91; read/write bits=1; START (EVSEStatusCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEStatusCode, DC_EVSEStatusCodeType (string)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEStatusCode", 19);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 4, &value);
-                            if (error == 0)
-                            {
-                                DC_EVSEStatusType->EVSEStatusCode = (iso2_DC_EVSEStatusCodeType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_NotReady", 13); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Ready", 10); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Shutdown", 13); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_UtilityInterruptEvent", 26); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_IsolationMonitoringActive", 30); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_EmergencyShutdown", 22); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Malfunction", 16); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_8", 10); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_9", 10); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_A", 10); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_B", 10); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_C", 10); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEStatusCode>", 21);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DHpublickey; type={urn:iso:15118:2:2013:MsgDataTypes}DiffieHellmanPublickeyType; base type=dHpublickeyType; content type=simple;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, ID (1, 1); CONTENT, DiffieHellmanPublickeyType (1, 1);
-static int decode_iso2_DiffieHellmanPublickeyType(exi_bitstream_t* stream, struct iso2_DiffieHellmanPublickeyType* DiffieHellmanPublickeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 92;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_DiffieHellmanPublickeyType(DiffieHellmanPublickeyType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 92:
-            // Grammar: ID=92; read/write bits=1; START (Id)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=93
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &DiffieHellmanPublickeyType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (DiffieHellmanPublickeyType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            DiffieHellmanPublickeyType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, DiffieHellmanPublickeyType->Id.charactersLen, DiffieHellmanPublickeyType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, DiffieHellmanPublickeyType->Id.characters, DiffieHellmanPublickeyType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    grammar_id = 93;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 93:
-            // Grammar: ID=93; read/write bits=1; START (CONTENT)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (CONTENT, DiffieHellmanPublickeyType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary (simple)
-                    error = exi_basetypes_decoder_uint_16(stream, &DiffieHellmanPublickeyType->CONTENT.bytesLen);
-                    if (error == 0)
-                    {
-                        error = exi_basetypes_decoder_bytes(stream, DiffieHellmanPublickeyType->CONTENT.bytesLen, &DiffieHellmanPublickeyType->CONTENT.bytes[0], iso2_DiffieHellmanPublickeyType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            // XML: emit base64 encoded value
-                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((DiffieHellmanPublickeyType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < DiffieHellmanPublickeyType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[DiffieHellmanPublickeyType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
-                            grammar_id = 3;
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVPowerDeliveryParameter; type={urn:iso:15118:2:2013:MsgDataTypes}EVPowerDeliveryParameterType; base type=; content type=empty;
-//          abstract=True; final=False;
-static int decode_iso2_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_EVPowerDeliveryParameterType* EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    // Element has no particles, so the function just decodes END Element
-    (void)EVPowerDeliveryParameterType;
-    uint32_t eventCode;
-
-    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-    if (error == 0)
-    {
-        if (eventCode != 0)
-        {
-            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-        }
-    }
-
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVSEChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}EVSEChargeParameterType; base type=; content type=empty;
-//          abstract=True; final=False;
-static int decode_iso2_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_EVSEChargeParameterType* EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    // Element has no particles, so the function just decodes END Element
-    (void)EVSEChargeParameterType;
-    uint32_t eventCode;
-
-    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-    if (error == 0)
-    {
-        if (eventCode != 0)
-        {
-            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-        }
-    }
-
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVSEMaxCurrent; type={urn:iso:15118:2:2013:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (1, 1); Value, short (1, 1);
-static int decode_iso2_PhysicalValueType(exi_bitstream_t* stream, struct iso2_PhysicalValueType* PhysicalValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 94;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_PhysicalValueType(PhysicalValueType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (Multiplier)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Multiplier, unitMultiplierType (byte)); next=95
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Multiplier", 15);
-                        (void)xml_tag_start;
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                            if (error == 0)
-                            {
-                                // type has min_value = -3
-                                PhysicalValueType->Multiplier = (int8_t)(value + -3);
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)PhysicalValueType->Multiplier); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 95;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Multiplier>", 17);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (Unit)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Unit, unitSymbolType (string)); next=96
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Unit", 9);
-                        (void)xml_tag_start;
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                            if (error == 0)
-                            {
-                                PhysicalValueType->Unit = (iso2_unitSymbolType)value;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "h", 1); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "m", 1); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "s", 1); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "A", 1); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "V", 1); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "W", 1); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Wh", 2); break;
-                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 96;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Unit>", 11);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 96:
-            // Grammar: ID=96; read/write bits=1; START (Value)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Value, short (int)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Value", 10);
-                        (void)xml_tag_start;
-                    // decode: short
-                    error = decode_exi_type_integer16(stream, &PhysicalValueType->Value);
-                    if (error == 0)
-                    {
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", PhysicalValueType->Value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Value>", 12);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCost; type={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCostType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: startValue, PhysicalValueType (1, 1); Cost, CostType (1, 3);
-static int decode_iso2_ConsumptionCostType(exi_bitstream_t* stream, struct iso2_ConsumptionCostType* ConsumptionCostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 97;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_ConsumptionCostType(ConsumptionCostType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 97:
-            // Grammar: ID=97; read/write bits=1; START (startValue)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (startValue, PhysicalValueType (PhysicalValueType)); next=98
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:startValue", 15);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_PhysicalValueType(stream, &ConsumptionCostType->startValue, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 98;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:startValue>", 17);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 98:
-            // Grammar: ID=98; read/write bits=1; START (Cost)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Cost, CostType (CostType)); next=99
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Cost", 9);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (ConsumptionCostType->Cost.arrayLen < iso2_CostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_CostType(stream, &ConsumptionCostType->Cost.array[ConsumptionCostType->Cost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_CostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 99;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Cost>", 11);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 99:
-            // Grammar: ID=99; read/write bits=2; LOOP (Cost), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Cost, CostType (CostType)); next=99
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Cost", 9);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (ConsumptionCostType->Cost.arrayLen < iso2_CostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_CostType(stream, &ConsumptionCostType->Cost.array[ConsumptionCostType->Cost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_CostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (ConsumptionCostType->Cost.arrayLen < 3)
-                    {
-                        grammar_id = 99;
-                    }
-                    else
-                    {
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Cost>", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
                     break;
                 case 1:
                     // Event: END Element; next=4
                     done = 1;
                     grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleEntry; type={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleEntryType; base type=EntryType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); PMax, PhysicalValueType (1, 1);
-static int decode_iso2_PMaxScheduleEntryType(exi_bitstream_t* stream, struct iso2_PMaxScheduleEntryType* PMaxScheduleEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 100;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_PMaxScheduleEntryType(PMaxScheduleEntryType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 100:
-            // Grammar: ID=100; read/write bits=2; START (RelativeTimeInterval), START (TimeInterval)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (RelativeTimeInterval, RelativeTimeIntervalType (IntervalType)); next=101
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RelativeTimeInterval", 25);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_RelativeTimeIntervalType(stream, &PMaxScheduleEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        PMaxScheduleEntryType->RelativeTimeInterval_isUsed = 1u;
-                        grammar_id = 101;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RelativeTimeInterval>", 27);
-                    }
-                    break;
-                case 1:
-                    // Abstract element or type: TimeInterval, IntervalType (IntervalType)
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeInterval", 17);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_IntervalType(stream, &PMaxScheduleEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        PMaxScheduleEntryType->TimeInterval_isUsed = 1u;
-                        grammar_id = 101;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeInterval>", 19);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 101:
-            // Grammar: ID=101; read/write bits=1; START (PMax)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (PMax, PhysicalValueType (PhysicalValueType)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMax", 9);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_PhysicalValueType(stream, &PMaxScheduleEntryType->PMax, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMax>", 11);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffEntry; type={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffEntryType; base type=EntryType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); EPriceLevel, unsignedByte (0, 1); ConsumptionCost, ConsumptionCostType (0, 3);
-static int decode_iso2_SalesTariffEntryType(exi_bitstream_t* stream, struct iso2_SalesTariffEntryType* SalesTariffEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 102;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SalesTariffEntryType(SalesTariffEntryType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 102:
-            // Grammar: ID=102; read/write bits=2; START (RelativeTimeInterval), START (TimeInterval)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (RelativeTimeInterval, RelativeTimeIntervalType (IntervalType)); next=103
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RelativeTimeInterval", 25);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_RelativeTimeIntervalType(stream, &SalesTariffEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        SalesTariffEntryType->RelativeTimeInterval_isUsed = 1u;
-                        grammar_id = 103;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RelativeTimeInterval>", 27);
-                    }
-                    break;
-                case 1:
-                    // Abstract element or type: TimeInterval, IntervalType (IntervalType)
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeInterval", 17);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_IntervalType(stream, &SalesTariffEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        SalesTariffEntryType->TimeInterval_isUsed = 1u;
-                        grammar_id = 103;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeInterval>", 19);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 103:
-            // Grammar: ID=103; read/write bits=2; START (EPriceLevel), START (ConsumptionCost), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EPriceLevel, unsignedByte (unsignedShort)); next=105
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EPriceLevel", 16);
-                        (void)xml_tag_start;
-                    // decode: unsigned byte (restricted integer)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                SalesTariffEntryType->EPriceLevel = (uint8_t)value;
-                                SalesTariffEntryType->EPriceLevel_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffEntryType->EPriceLevel); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 105;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EPriceLevel>", 18);
-                    }
-                    break;
-                case 1:
-                    // Event: START (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=104
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 104;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
-                    }
                     break;
                 case 2:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 104:
-            // Grammar: ID=104; read/write bits=2; LOOP (ConsumptionCost), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=104
+                    // Event: START (ANY, anyType (base64Binary)); next=3
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -11671,1466 +9405,46 @@ static int decode_iso2_SalesTariffEntryType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
                         (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < 3)
-                    {
-                        grammar_id = 104;
-                    }
-                    else
-                    {
-                        grammar_id = 105;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 105:
-            // Grammar: ID=105; read/write bits=2; START (ConsumptionCost), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=106
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 106;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 106:
-            // Grammar: ID=106; read/write bits=2; LOOP (ConsumptionCost), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ConsumptionCost, ConsumptionCostType (ConsumptionCostType)); next=106
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ConsumptionCost", 20);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < iso2_ConsumptionCostType_3_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost.array[SalesTariffEntryType->ConsumptionCost.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_ConsumptionCostType_3_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (SalesTariffEntryType->ConsumptionCost.arrayLen < 3)
-                    {
-                        grammar_id = 106;
-                    }
-                    else
-                    {
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ConsumptionCost>", 22);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}PMaxSchedule; type={urn:iso:15118:2:2013:MsgDataTypes}PMaxScheduleType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: PMaxScheduleEntry, PMaxScheduleEntryType (1, 12) (original max 1024);
-static int decode_iso2_PMaxScheduleType(exi_bitstream_t* stream, struct iso2_PMaxScheduleType* PMaxScheduleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 107;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_PMaxScheduleType(PMaxScheduleType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 107:
-            // Grammar: ID=107; read/write bits=1; START (PMaxScheduleEntry)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (PMaxScheduleEntry, PMaxScheduleEntryType (EntryType)); next=108
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMaxScheduleEntry", 22);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < iso2_PMaxScheduleEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_PMaxScheduleEntryType(stream, &PMaxScheduleType->PMaxScheduleEntry.array[PMaxScheduleType->PMaxScheduleEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_PMaxScheduleEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 108;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMaxScheduleEntry>", 24);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 108:
-            // Grammar: ID=108; read/write bits=2; LOOP (PMaxScheduleEntry), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (PMaxScheduleEntry, PMaxScheduleEntryType (EntryType)); next=108
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:PMaxScheduleEntry", 22);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < iso2_PMaxScheduleEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_PMaxScheduleEntryType(stream, &PMaxScheduleType->PMaxScheduleEntry.array[PMaxScheduleType->PMaxScheduleEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_PMaxScheduleEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < 1024)
-                    {
-                        grammar_id = 108;
-                    }
-                    else
-                    {
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PMaxScheduleEntry>", 24);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}Parameter; type={urn:iso:15118:2:2013:MsgDataTypes}ParameterType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; choice=True;
-// Particle: Name, string (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); physicalValue, PhysicalValueType (0, 1); stringValue, string (0, 1);
-static int decode_iso2_ParameterType(exi_bitstream_t* stream, struct iso2_ParameterType* ParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 109;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_ParameterType(ParameterType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 109:
-            // Grammar: ID=109; read/write bits=1; START (Name)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Name, string (string)); next=110
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Name=\"", 11);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &ParameterType->Name.charactersLen);
+                    // decode exi type: base64Binary
+                    error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], iso2_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        if (ParameterType->Name.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            ParameterType->Name.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, ParameterType->Name.charactersLen, ParameterType->Name.characters, iso2_Name_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->Name.characters, ParameterType->Name.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    grammar_id = 110;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 110:
-            // Grammar: ID=110; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (physicalValue), START (stringValue)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (boolValue, boolean (boolean)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
+                        ObjectType->ANY_isUsed = 1u;
+                        // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:boolValue", 14);
-                        (void)xml_tag_start;
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
                         {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
+                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                            static const int mod_table[] = {0, 2, 1};
+                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
+                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                            if (encoded_data != NULL)
                             {
-                                ParameterType->boolValue = value;
-                                ParameterType->boolValue_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:boolValue>", 16);
-                    }
-                    break;
-                case 1:
-                    // Event: START (byteValue, byte (short)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:byteValue", 14);
-                        (void)xml_tag_start;
-                    // decode: byte (restricted integer)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                // type has min_value = -128
-                                ParameterType->byteValue = (int8_t)(value + -128);
-                                ParameterType->byteValue_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)ParameterType->byteValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 3;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:byteValue>", 16);
-                    }
-                    break;
-                case 2:
-                    // Event: START (shortValue, short (int)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:shortValue", 15);
-                        (void)xml_tag_start;
-                    // decode: short
-                    error = decode_exi_type_integer16(stream, &ParameterType->shortValue);
-                    if (error == 0)
-                    {
-                        ParameterType->shortValue_isUsed = 1u;
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", ParameterType->shortValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:shortValue>", 17);
-                    }
-                    break;
-                case 3:
-                    // Event: START (intValue, int (long)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:intValue", 13);
-                        (void)xml_tag_start;
-                    // decode: int
-                    error = decode_exi_type_integer32(stream, &ParameterType->intValue);
-                    if (error == 0)
-                    {
-                        ParameterType->intValue_isUsed = 1u;
-                        // XML: emit value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", ParameterType->intValue); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:intValue>", 15);
-                    }
-                    break;
-                case 4:
-                    // Event: START (physicalValue, PhysicalValueType (PhysicalValueType)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:physicalValue", 18);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_PhysicalValueType(stream, &ParameterType->physicalValue, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        ParameterType->physicalValue_isUsed = 1u;
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:physicalValue>", 20);
-                    }
-                    break;
-                case 5:
-                    // Event: START (stringValue, string (string)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:stringValue", 16);
-                        (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            error = exi_basetypes_decoder_uint_16(stream, &ParameterType->stringValue.charactersLen);
-                            if (error == 0)
-                            {
-                                if (ParameterType->stringValue.charactersLen >= 2)
+                                size_t i, j;
+                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
                                 {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    ParameterType->stringValue.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, ParameterType->stringValue.charactersLen, ParameterType->stringValue.characters, iso2_stringValue_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->stringValue.characters, ParameterType->stringValue.charactersLen);
-                                    }
+                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
+                                    uint32_t triple = (a << 16) + (b << 8) + c;
+                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                    encoded_data[j++] = encoding_table[triple & 0x3F];
                                 }
-                                else
+                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
                                 {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                    encoded_data[output_length - 1 - i] = '=';
                                 }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                ParameterType->stringValue_isUsed = 1u;
-                                grammar_id = 3;
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                free(encoded_data);
                             }
                             else
                             {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:stringValue>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SalesTariff; type={urn:iso:15118:2:2013:MsgDataTypes}SalesTariffType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SalesTariffID, SAIDType (1, 1); SalesTariffDescription, tariffDescriptionType (0, 1); NumEPriceLevels, unsignedByte (0, 1); SalesTariffEntry, SalesTariffEntryType (1, 12) (original max 1024);
-static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_SalesTariffType* SalesTariffType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 111;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_SalesTariffType(SalesTariffType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 111:
-            // Grammar: ID=111; read/write bits=2; START (Id), START (SalesTariffID)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=112
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &SalesTariffType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (SalesTariffType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            SalesTariffType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, SalesTariffType->Id.charactersLen, SalesTariffType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SalesTariffType->Id.characters, SalesTariffType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    SalesTariffType->Id_isUsed = 1u;
-                    grammar_id = 112;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (SalesTariffID, SAIDType (unsignedByte)); next=113
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffID", 18);
-                        (void)xml_tag_start;
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                // type has min_value = 1
-                                SalesTariffType->SalesTariffID = (uint8_t)(value + 1);
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->SalesTariffID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 113;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffID>", 20);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 112:
-            // Grammar: ID=112; read/write bits=1; START (SalesTariffID)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SalesTariffID, SAIDType (unsignedByte)); next=113
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffID", 18);
-                        (void)xml_tag_start;
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                // type has min_value = 1
-                                SalesTariffType->SalesTariffID = (uint8_t)(value + 1);
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->SalesTariffID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 113;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffID>", 20);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 113:
-            // Grammar: ID=113; read/write bits=2; START (SalesTariffDescription), START (NumEPriceLevels), START (SalesTariffEntry)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SalesTariffDescription, tariffDescriptionType (string)); next=115
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffDescription", 27);
-                        (void)xml_tag_start;
-                    // decode: string (len, characters)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            error = exi_basetypes_decoder_uint_16(stream, &SalesTariffType->SalesTariffDescription.charactersLen);
-                            if (error == 0)
-                            {
-                                if (SalesTariffType->SalesTariffDescription.charactersLen >= 2)
-                                {
-                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                    SalesTariffType->SalesTariffDescription.charactersLen -= 2;
-                                    error = exi_basetypes_decoder_characters(stream, SalesTariffType->SalesTariffDescription.charactersLen, SalesTariffType->SalesTariffDescription.characters, iso2_SalesTariffDescription_CHARACTER_SIZE);
-                                    if (error == 0)
-                                    {
-                                        // XML: emit string value
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SalesTariffType->SalesTariffDescription.characters, SalesTariffType->SalesTariffDescription.charactersLen);
-                                    }
-                                }
-                                else
-                                {
-                                    // the string seems to be in the table, but this is not supported
-                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                SalesTariffType->SalesTariffDescription_isUsed = 1u;
-                                grammar_id = 115;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffDescription>", 29);
-                    }
-                    break;
-                case 1:
-                    // Event: START (NumEPriceLevels, unsignedByte (unsignedShort)); next=117
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NumEPriceLevels", 20);
-                        (void)xml_tag_start;
-                    // decode: unsigned byte (restricted integer)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                SalesTariffType->NumEPriceLevels = (uint8_t)value;
-                                SalesTariffType->NumEPriceLevels_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->NumEPriceLevels); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 117;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NumEPriceLevels>", 22);
-                    }
-                    break;
-                case 2:
-                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=114
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 114;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 114:
-            // Grammar: ID=114; read/write bits=2; LOOP (SalesTariffEntry), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=114
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
-                    {
-                        grammar_id = 114;
-                    }
-                    else
-                    {
-                        grammar_id = 115;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 115:
-            // Grammar: ID=115; read/write bits=2; START (NumEPriceLevels), START (SalesTariffEntry)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (NumEPriceLevels, unsignedByte (unsignedShort)); next=117
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NumEPriceLevels", 20);
-                        (void)xml_tag_start;
-                    // decode: unsigned byte (restricted integer)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 8, &value);
-                            if (error == 0)
-                            {
-                                SalesTariffType->NumEPriceLevels = (uint8_t)value;
-                                SalesTariffType->NumEPriceLevels_isUsed = 1u;
-                                // XML: emit value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", (int)SalesTariffType->NumEPriceLevels); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 117;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NumEPriceLevels>", 22);
-                    }
-                    break;
-                case 1:
-                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=116
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 116;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 116:
-            // Grammar: ID=116; read/write bits=2; LOOP (SalesTariffEntry), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=116
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
-                    {
-                        grammar_id = 116;
-                    }
-                    else
-                    {
-                        grammar_id = 117;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 117:
-            // Grammar: ID=117; read/write bits=1; START (SalesTariffEntry)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=118
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 118;
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 118:
-            // Grammar: ID=118; read/write bits=2; LOOP (SalesTariffEntry), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: LOOP (SalesTariffEntry, SalesTariffEntryType (EntryType)); next=118
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
-                    // decode: element array
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < iso2_SalesTariffEntryType_12_ARRAY_SIZE)
-                    {
-                        error = decode_iso2_SalesTariffEntryType(stream, &SalesTariffType->SalesTariffEntry.array[SalesTariffType->SalesTariffEntry.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
-                    }
-                    else
-                    {
-                        // static array not large enough, only iso2_SalesTariffEntryType_12_ARRAY_SIZE elements
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
-                    if (SalesTariffType->SalesTariffEntry.arrayLen < 1024)
-                    {
-                        grammar_id = 118;
-                    }
-                    else
-                    {
                         grammar_id = 3;
                     }
                         // XML: close tag
@@ -13143,13 +9457,8 @@ static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_Sale
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SalesTariffEntry>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
                     }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13192,7 +9501,7 @@ static int decode_iso2_SalesTariffType(exi_bitstream_t* stream, struct iso2_Sale
 //          abstract=False; final=False;
 // Particle: ParameterSetID, short (1, 1); Parameter, ParameterType (1, 16);
 static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_ParameterSetType* ParameterSetType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 119;
+    int grammar_id = 81;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -13203,15 +9512,15 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
     {
         switch (grammar_id)
         {
-        case 119:
-            // Grammar: ID=119; read/write bits=1; START (ParameterSetID)
+        case 81:
+            // Grammar: ID=81; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParameterSetID, short (int)); next=120
+                    // Event: START (ParameterSetID, short (int)); next=82
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13228,7 +9537,7 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", ParameterSetType->ParameterSetID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 120;
+                        grammar_id = 82;
                     }
                         // XML: close tag
                         {
@@ -13249,15 +9558,15 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=1; START (Parameter)
+        case 82:
+            // Grammar: ID=82; read/write bits=1; START (Parameter)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Parameter, ParameterType (ParameterType)); next=121
+                    // Event: START (Parameter, ParameterType (ParameterType)); next=83
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13277,7 +9586,7 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
                         // static array not large enough, only iso2_ParameterType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 121;
+                    grammar_id = 83;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -13297,15 +9606,15 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
                 }
             }
             break;
-        case 121:
-            // Grammar: ID=121; read/write bits=2; LOOP (Parameter), END Element
+        case 83:
+            // Grammar: ID=83; read/write bits=2; LOOP (Parameter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Parameter, ParameterType (ParameterType)); next=121
+                    // Event: LOOP (Parameter, ParameterType (ParameterType)); next=83
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13328,7 +9637,7 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ParameterSetType->Parameter.arrayLen < 16)
                     {
-                        grammar_id = 121;
+                        grammar_id = 83;
                     }
                     else
                     {
@@ -13393,7 +9702,7 @@ static int decode_iso2_ParameterSetType(exi_bitstream_t* stream, struct iso2_Par
 //          abstract=False; final=False;
 // Particle: ChargingProfileEntryStart, unsignedInt (1, 1); ChargingProfileEntryMaxPower, PhysicalValueType (1, 1); ChargingProfileEntryMaxNumberOfPhasesInUse, maxNumPhasesType (0, 1);
 static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_ProfileEntryType* ProfileEntryType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 122;
+    int grammar_id = 84;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -13404,15 +9713,15 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
     {
         switch (grammar_id)
         {
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (ChargingProfileEntryStart)
+        case 84:
+            // Grammar: ID=84; read/write bits=1; START (ChargingProfileEntryStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingProfileEntryStart, unsignedInt (unsignedLong)); next=123
+                    // Event: START (ChargingProfileEntryStart, unsignedInt (unsignedLong)); next=85
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13429,7 +9738,7 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ProfileEntryType->ChargingProfileEntryStart); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 123;
+                        grammar_id = 85;
                     }
                         // XML: close tag
                         {
@@ -13450,15 +9759,15 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
                 }
             }
             break;
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (ChargingProfileEntryMaxPower)
+        case 85:
+            // Grammar: ID=85; read/write bits=1; START (ChargingProfileEntryMaxPower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingProfileEntryMaxPower, PhysicalValueType (PhysicalValueType)); next=124
+                    // Event: START (ChargingProfileEntryMaxPower, PhysicalValueType (PhysicalValueType)); next=86
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13472,7 +9781,7 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
                     error = decode_iso2_PhysicalValueType(stream, &ProfileEntryType->ChargingProfileEntryMaxPower, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        grammar_id = 86;
                     }
                         // XML: close tag
                         {
@@ -13493,8 +9802,8 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=2; START (ChargingProfileEntryMaxNumberOfPhasesInUse), END Element
+        case 86:
+            // Grammar: ID=86; read/write bits=2; START (ChargingProfileEntryMaxNumberOfPhasesInUse), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -13612,7 +9921,7 @@ static int decode_iso2_ProfileEntryType(exi_bitstream_t* stream, struct iso2_Pro
 //          abstract=False; final=False;
 // Particle: SAScheduleTupleID, SAIDType (1, 1); PMaxSchedule, PMaxScheduleType (1, 1); SalesTariff, SalesTariffType (0, 1);
 static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_SAScheduleTupleType* SAScheduleTupleType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 125;
+    int grammar_id = 87;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -13623,15 +9932,15 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
     {
         switch (grammar_id)
         {
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (SAScheduleTupleID)
+        case 87:
+            // Grammar: ID=87; read/write bits=1; START (SAScheduleTupleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SAScheduleTupleID, SAIDType (unsignedByte)); next=126
+                    // Event: START (SAScheduleTupleID, SAIDType (unsignedByte)); next=88
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13674,7 +9983,7 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 126;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -13701,15 +10010,15 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (PMaxSchedule)
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (PMaxSchedule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PMaxSchedule, PMaxScheduleType (PMaxScheduleType)); next=127
+                    // Event: START (PMaxSchedule, PMaxScheduleType (PMaxScheduleType)); next=89
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13723,7 +10032,7 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
                     error = decode_iso2_PMaxScheduleType(stream, &SAScheduleTupleType->PMaxSchedule, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 127;
+                        grammar_id = 89;
                     }
                         // XML: close tag
                         {
@@ -13744,8 +10053,8 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=2; START (SalesTariff), END Element
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (SalesTariff), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -13824,11 +10133,1715 @@ static int decode_iso2_SAScheduleTupleType(exi_bitstream_t* stream, struct iso2_
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SelectedService; type={urn:iso:15118:2:2013:MsgDataTypes}SelectedServiceType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: ServiceID, serviceIDType (1, 1); ParameterSetID, short (0, 1);
+static int decode_iso2_SelectedServiceType(exi_bitstream_t* stream, struct iso2_SelectedServiceType* SelectedServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 90;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SelectedServiceType(SelectedServiceType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 90:
+            // Grammar: ID=90; read/write bits=1; START (ServiceID)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=91
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &SelectedServiceType->ServiceID);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", SelectedServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 91;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 91:
+            // Grammar: ID=91; read/write bits=2; START (ParameterSetID), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ParameterSetID, short (int)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ParameterSetID", 19);
+                        (void)xml_tag_start;
+                    // decode: short
+                    error = decode_exi_type_integer16(stream, &SelectedServiceType->ParameterSetID);
+                    if (error == 0)
+                    {
+                        SelectedServiceType->ParameterSetID_isUsed = 1u;
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", SelectedServiceType->ParameterSetID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ParameterSetID>", 21);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}Service; type={urn:iso:15118:2:2013:MsgDataTypes}ServiceType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: ServiceID, serviceIDType (1, 1); ServiceName, serviceNameType (0, 1); ServiceCategory, serviceCategoryType (1, 1); ServiceScope, serviceScopeType (0, 1); FreeService, boolean (1, 1);
+static int decode_iso2_ServiceType(exi_bitstream_t* stream, struct iso2_ServiceType* ServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 92;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_ServiceType(ServiceType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 92:
+            // Grammar: ID=92; read/write bits=1; START (ServiceID)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=93
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &ServiceType->ServiceID);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 93;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 93:
+            // Grammar: ID=93; read/write bits=2; START (ServiceName), START (ServiceCategory)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceName, serviceNameType (string)); next=94
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceName", 16);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &ServiceType->ServiceName.charactersLen);
+                            if (error == 0)
+                            {
+                                if (ServiceType->ServiceName.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    ServiceType->ServiceName.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, ServiceType->ServiceName.charactersLen, ServiceType->ServiceName.characters, iso2_ServiceName_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ServiceType->ServiceName.characters, ServiceType->ServiceName.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                ServiceType->ServiceName_isUsed = 1u;
+                                grammar_id = 94;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceName>", 18);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=95
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 95;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 94:
+            // Grammar: ID=94; read/write bits=1; START (ServiceCategory)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=95
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 95;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 95:
+            // Grammar: ID=95; read/write bits=2; START (ServiceScope), START (FreeService)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceScope, serviceScopeType (string)); next=96
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceScope", 17);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &ServiceType->ServiceScope.charactersLen);
+                            if (error == 0)
+                            {
+                                if (ServiceType->ServiceScope.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    ServiceType->ServiceScope.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, ServiceType->ServiceScope.charactersLen, ServiceType->ServiceScope.characters, iso2_ServiceScope_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ServiceType->ServiceScope.characters, ServiceType->ServiceScope.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                ServiceType->ServiceScope_isUsed = 1u;
+                                grammar_id = 96;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceScope>", 19);
+                    }
+                    break;
+                case 1:
+                    // Event: START (FreeService, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ServiceType->FreeService = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 96:
+            // Grammar: ID=96; read/write bits=1; START (FreeService)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (FreeService, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ServiceType->FreeService = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureValue; type={http://www.w3.org/2000/09/xmldsig#}SignatureValueType; base type=base64Binary; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
+static int decode_iso2_SignatureValueType(exi_bitstream_t* stream, struct iso2_SignatureValueType* SignatureValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 97;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SignatureValueType(SignatureValueType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 97:
+            // Grammar: ID=97; read/write bits=2; START (Id), START (CONTENT)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=98
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (SignatureValueType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            SignatureValueType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, SignatureValueType->Id.charactersLen, SignatureValueType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->Id.characters, SignatureValueType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    SignatureValueType->Id_isUsed = 1u;
+                    grammar_id = 98;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 1:
+                    // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (simple)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
+                    if (error == 0)
+                    {
+                        error = exi_basetypes_decoder_bytes(stream, SignatureValueType->CONTENT.bytesLen, &SignatureValueType->CONTENT.bytes[0], iso2_SignatureValueType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
+                                    {
+                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 3;
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (CONTENT)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (simple)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
+                    if (error == 0)
+                    {
+                        error = exi_basetypes_decoder_bytes(stream, SignatureValueType->CONTENT.bytesLen, &SignatureValueType->CONTENT.bytes[0], iso2_SignatureValueType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
+                                    {
+                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 3;
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
+static int decode_iso2_SignedInfoType(exi_bitstream_t* stream, struct iso2_SignedInfoType* SignedInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 99;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SignedInfoType(SignedInfoType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 99:
+            // Grammar: ID=99; read/write bits=2; START (Id), START (CanonicalizationMethod)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=100
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignedInfoType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (SignedInfoType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            SignedInfoType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, SignedInfoType->Id.charactersLen, SignedInfoType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedInfoType->Id.characters, SignedInfoType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    SignedInfoType->Id_isUsed = 1u;
+                    grammar_id = 100;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 1:
+                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=101
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 101;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 100:
+            // Grammar: ID=100; read/write bits=1; START (CanonicalizationMethod)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=101
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 101;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 101:
+            // Grammar: ID=101; read/write bits=1; START (SignatureMethod)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=102
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignatureMethod", 20);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_SignatureMethodType(stream, &SignedInfoType->SignatureMethod, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 102;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignatureMethod>", 22);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 102:
+            // Grammar: ID=102; read/write bits=1; START (Reference)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=103
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SignedInfoType->Reference.arrayLen < iso2_ReferenceType_4_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ReferenceType_4_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 103;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 103:
+            // Grammar: ID=103; read/write bits=2; LOOP (Reference), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=103
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
+                        (void)xml_tag_start;
+                    // decode: element array
+                    if (SignedInfoType->Reference.arrayLen < iso2_ReferenceType_4_ARRAY_SIZE)
+                    {
+                        error = decode_iso2_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++], xmlOut, xmlOut_size, xmlOut_pos);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso2_ReferenceType_4_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 103;
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SubCertificates; type={urn:iso:15118:2:2013:MsgDataTypes}SubCertificatesType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Certificate, certificateType (1, 4);
+static int decode_iso2_SubCertificatesType(exi_bitstream_t* stream, struct iso2_SubCertificatesType* SubCertificatesType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 104;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SubCertificatesType(SubCertificatesType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 104:
+            // Grammar: ID=104; read/write bits=1; START (Certificate)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Certificate, certificateType (base64Binary)); next=105
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (SubCertificatesType->Certificate.arrayLen < iso2_certificateType_4_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso2_certificateType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            SubCertificatesType->Certificate.arrayLen++;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 105;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 105:
+            // Grammar: ID=105; read/write bits=2; LOOP (Certificate), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (Certificate, certificateType (base64Binary)); next=105
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (Array)
+                    if (SubCertificatesType->Certificate.arrayLen < iso2_certificateType_4_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso2_certificateType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            SubCertificatesType->Certificate.arrayLen++;
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen;)
+                                    {
+                                        uint32_t a = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t b = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t c = i < SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen ? SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 105;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SupportedEnergyTransferMode; type={urn:iso:15118:2:2013:MsgDataTypes}SupportedEnergyTransferModeType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: EnergyTransferMode, EnergyTransferModeType (1, 6);
+static int decode_iso2_SupportedEnergyTransferModeType(exi_bitstream_t* stream, struct iso2_SupportedEnergyTransferModeType* SupportedEnergyTransferModeType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 106;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_SupportedEnergyTransferModeType(SupportedEnergyTransferModeType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 106:
+            // Grammar: ID=106; read/write bits=1; START (EnergyTransferMode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EnergyTransferMode, EnergyTransferModeType (string)); next=107
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EnergyTransferMode", 23);
+                        (void)xml_tag_start;
+                    // decode: enum array
+                    if (SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen < iso2_EnergyTransferModeType_6_ARRAY_SIZE)
+                    {
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                uint32_t value;
+                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
+                                if (error == 0)
+                                {
+                                    SupportedEnergyTransferModeType->EnergyTransferMode.array[SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen] = (iso2_EnergyTransferModeType)value;
+                                    SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen++;
+                                    // XML: emit value
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                    switch (value) {
+                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_single_phase_core", 20); break;
+                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_three_phase_core", 19); break;
+                                    case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_core", 7); break;
+                                    case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_extended", 11); break;
+                                    case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_combo_core", 13); break;
+                                    case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_unique", 9); break;
+                                    default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // second level event is not supported
+                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 107;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EnergyTransferMode>", 25);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 107:
+            // Grammar: ID=107; read/write bits=2; LOOP (EnergyTransferMode), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (EnergyTransferMode, EnergyTransferModeType (string)); next=107
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EnergyTransferMode", 23);
+                        (void)xml_tag_start;
+                    // decode: enum array
+                    if (SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen < iso2_EnergyTransferModeType_6_ARRAY_SIZE)
+                    {
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                uint32_t value;
+                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
+                                if (error == 0)
+                                {
+                                    SupportedEnergyTransferModeType->EnergyTransferMode.array[SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen] = (iso2_EnergyTransferModeType)value;
+                                    SupportedEnergyTransferModeType->EnergyTransferMode.arrayLen++;
+                                    // XML: emit value
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                    switch (value) {
+                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_single_phase_core", 20); break;
+                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AC_three_phase_core", 19); break;
+                                    case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_core", 7); break;
+                                    case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_extended", 11); break;
+                                    case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_combo_core", 13); break;
+                                    case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "DC_unique", 9); break;
+                                    default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // second level event is not supported
+                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 107;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EnergyTransferMode>", 25);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}AC_EVChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}AC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); EAmount, PhysicalValueType (1, 1); EVMaxVoltage, PhysicalValueType (1, 1); EVMaxCurrent, PhysicalValueType (1, 1); EVMinCurrent, PhysicalValueType (1, 1);
 static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVChargeParameterType* AC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 128;
+    int grammar_id = 108;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -13839,15 +11852,15 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
     {
         switch (grammar_id)
         {
-        case 128:
-            // Grammar: ID=128; read/write bits=2; START (DepartureTime), START (EAmount)
+        case 108:
+            // Grammar: ID=108; read/write bits=2; START (DepartureTime), START (EAmount)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=129
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=109
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13865,7 +11878,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", AC_EVChargeParameterType->DepartureTime); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 129;
+                        grammar_id = 109;
                     }
                         // XML: close tag
                         {
@@ -13881,7 +11894,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (EAmount, PhysicalValueType (PhysicalValueType)); next=130
+                    // Event: START (EAmount, PhysicalValueType (PhysicalValueType)); next=110
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13895,7 +11908,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &AC_EVChargeParameterType->EAmount, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 130;
+                        grammar_id = 110;
                     }
                         // XML: close tag
                         {
@@ -13916,15 +11929,15 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 129:
-            // Grammar: ID=129; read/write bits=1; START (EAmount)
+        case 109:
+            // Grammar: ID=109; read/write bits=1; START (EAmount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EAmount, PhysicalValueType (PhysicalValueType)); next=130
+                    // Event: START (EAmount, PhysicalValueType (PhysicalValueType)); next=110
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13938,7 +11951,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &AC_EVChargeParameterType->EAmount, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 130;
+                        grammar_id = 110;
                     }
                         // XML: close tag
                         {
@@ -13959,15 +11972,15 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=1; START (EVMaxVoltage)
+        case 110:
+            // Grammar: ID=110; read/write bits=1; START (EVMaxVoltage)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaxVoltage, PhysicalValueType (PhysicalValueType)); next=131
+                    // Event: START (EVMaxVoltage, PhysicalValueType (PhysicalValueType)); next=111
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -13981,7 +11994,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 131;
+                        grammar_id = 111;
                     }
                         // XML: close tag
                         {
@@ -14002,15 +12015,15 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 131:
-            // Grammar: ID=131; read/write bits=1; START (EVMaxCurrent)
+        case 111:
+            // Grammar: ID=111; read/write bits=1; START (EVMaxCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaxCurrent, PhysicalValueType (PhysicalValueType)); next=132
+                    // Event: START (EVMaxCurrent, PhysicalValueType (PhysicalValueType)); next=112
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14024,7 +12037,7 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 132;
+                        grammar_id = 112;
                     }
                         // XML: close tag
                         {
@@ -14045,8 +12058,8 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 132:
-            // Grammar: ID=132; read/write bits=1; START (EVMinCurrent)
+        case 112:
+            // Grammar: ID=112; read/write bits=1; START (EVMinCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -14119,11 +12132,262 @@ static int decode_iso2_AC_EVChargeParameterType(exi_bitstream_t* stream, struct 
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEStatus; type={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); RCD, boolean (1, 1);
+static int decode_iso2_AC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_AC_EVSEStatusType* AC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 113;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_AC_EVSEStatusType(AC_EVSEStatusType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 113:
+            // Grammar: ID=113; read/write bits=1; START (NotificationMaxDelay)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=114
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NotificationMaxDelay", 25);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &AC_EVSEStatusType->NotificationMaxDelay);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", AC_EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 114;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NotificationMaxDelay>", 27);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 114:
+            // Grammar: ID=114; read/write bits=1; START (EVSENotification)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSENotification, EVSENotificationType (string)); next=115
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSENotification", 21);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                AC_EVSEStatusType->EVSENotification = (iso2_EVSENotificationType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "None", 4); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "StopCharging", 12); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ReNegotiation", 13); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 115;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSENotification>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 115:
+            // Grammar: ID=115; read/write bits=1; START (RCD)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (RCD, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RCD", 8);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                AC_EVSEStatusType->RCD = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RCD>", 10);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}AC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: AC_EVSEStatus, AC_EVSEStatusType (1, 1); EVSENominalVoltage, PhysicalValueType (1, 1); EVSEMaxCurrent, PhysicalValueType (1, 1);
 static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 133;
+    int grammar_id = 116;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14134,15 +12398,15 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 133:
-            // Grammar: ID=133; read/write bits=1; START (AC_EVSEStatus)
+        case 116:
+            // Grammar: ID=116; read/write bits=1; START (AC_EVSEStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AC_EVSEStatus, AC_EVSEStatusType (EVSEStatusType)); next=134
+                    // Event: START (AC_EVSEStatus, AC_EVSEStatusType (EVSEStatusType)); next=117
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14156,7 +12420,7 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_AC_EVSEStatusType(stream, &AC_EVSEChargeParameterType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 134;
+                        grammar_id = 117;
                     }
                         // XML: close tag
                         {
@@ -14177,15 +12441,15 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 134:
-            // Grammar: ID=134; read/write bits=1; START (EVSENominalVoltage)
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (EVSENominalVoltage)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSENominalVoltage, PhysicalValueType (PhysicalValueType)); next=135
+                    // Event: START (EVSENominalVoltage, PhysicalValueType (PhysicalValueType)); next=118
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14199,7 +12463,7 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSENominalVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 135;
+                        grammar_id = 118;
                     }
                         // XML: close tag
                         {
@@ -14220,8 +12484,8 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=1; START (EVSEMaxCurrent)
+        case 118:
+            // Grammar: ID=118; read/write bits=1; START (EVSEMaxCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -14294,11 +12558,639 @@ static int decode_iso2_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgBody}BodyElement; type={urn:iso:15118:2:2013:MsgBody}BodyBaseType; base type=; content type=empty;
+//          abstract=True; final=False;
+static int decode_iso2_BodyBaseType(exi_bitstream_t* stream, struct iso2_BodyBaseType* BodyBaseType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    // Element has no particles, so the function just decodes END Element
+    (void)BodyBaseType;
+    uint32_t eventCode;
+
+    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+    if (error == 0)
+    {
+        if (eventCode != 0)
+        {
+            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+        }
+    }
+
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ChargeService; type={urn:iso:15118:2:2013:MsgDataTypes}ChargeServiceType; base type=ServiceType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ServiceID, serviceIDType (1, 1); ServiceName, serviceNameType (0, 1); ServiceCategory, serviceCategoryType (1, 1); ServiceScope, serviceScopeType (0, 1); FreeService, boolean (1, 1); SupportedEnergyTransferMode, SupportedEnergyTransferModeType (1, 1);
+static int decode_iso2_ChargeServiceType(exi_bitstream_t* stream, struct iso2_ChargeServiceType* ChargeServiceType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 119;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_ChargeServiceType(ChargeServiceType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (ServiceID)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=120
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceID", 14);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &ChargeServiceType->ServiceID);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ChargeServiceType->ServiceID); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 120;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceID>", 16);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 120:
+            // Grammar: ID=120; read/write bits=2; START (ServiceName), START (ServiceCategory)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceName, serviceNameType (string)); next=121
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceName", 16);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &ChargeServiceType->ServiceName.charactersLen);
+                            if (error == 0)
+                            {
+                                if (ChargeServiceType->ServiceName.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    ChargeServiceType->ServiceName.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, ChargeServiceType->ServiceName.charactersLen, ChargeServiceType->ServiceName.characters, iso2_ServiceName_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ChargeServiceType->ServiceName.characters, ChargeServiceType->ServiceName.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                ChargeServiceType->ServiceName_isUsed = 1u;
+                                grammar_id = 121;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceName>", 18);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=122
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ChargeServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 122;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 121:
+            // Grammar: ID=121; read/write bits=1; START (ServiceCategory)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceCategory, serviceCategoryType (string)); next=122
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceCategory", 20);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ChargeServiceType->ServiceCategory = (iso2_serviceCategoryType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVCharging", 10); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Internet", 8); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ContractCertificate", 19); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OtherCustom", 11); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 122;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceCategory>", 22);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 122:
+            // Grammar: ID=122; read/write bits=2; START (ServiceScope), START (FreeService)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ServiceScope, serviceScopeType (string)); next=123
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ServiceScope", 17);
+                        (void)xml_tag_start;
+                    // decode: string (len, characters)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            error = exi_basetypes_decoder_uint_16(stream, &ChargeServiceType->ServiceScope.charactersLen);
+                            if (error == 0)
+                            {
+                                if (ChargeServiceType->ServiceScope.charactersLen >= 2)
+                                {
+                                    // string tables and table partitions are not supported, so the length has to be decremented by 2
+                                    ChargeServiceType->ServiceScope.charactersLen -= 2;
+                                    error = exi_basetypes_decoder_characters(stream, ChargeServiceType->ServiceScope.charactersLen, ChargeServiceType->ServiceScope.characters, iso2_ServiceScope_CHARACTER_SIZE);
+                                    if (error == 0)
+                                    {
+                                        // XML: emit string value
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ChargeServiceType->ServiceScope.characters, ChargeServiceType->ServiceScope.charactersLen);
+                                    }
+                                }
+                                else
+                                {
+                                    // the string seems to be in the table, but this is not supported
+                                    error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                ChargeServiceType->ServiceScope_isUsed = 1u;
+                                grammar_id = 123;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ServiceScope>", 19);
+                    }
+                    break;
+                case 1:
+                    // Event: START (FreeService, boolean (boolean)); next=124
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ChargeServiceType->FreeService = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 124;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 123:
+            // Grammar: ID=123; read/write bits=1; START (FreeService)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (FreeService, boolean (boolean)); next=124
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:FreeService", 16);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ChargeServiceType->FreeService = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 124;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:FreeService>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 124:
+            // Grammar: ID=124; read/write bits=1; START (SupportedEnergyTransferMode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SupportedEnergyTransferMode, SupportedEnergyTransferModeType (SupportedEnergyTransferModeType)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SupportedEnergyTransferMode", 32);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_SupportedEnergyTransferModeType(stream, &ChargeServiceType->SupportedEnergyTransferMode, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SupportedEnergyTransferMode>", 34);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ChargingProfile; type={urn:iso:15118:2:2013:MsgDataTypes}ChargingProfileType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: ProfileEntry, ProfileEntryType (1, 24);
 static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_ChargingProfileType* ChargingProfileType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 136;
+    int grammar_id = 125;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14309,15 +13201,15 @@ static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_
     {
         switch (grammar_id)
         {
-        case 136:
-            // Grammar: ID=136; read/write bits=1; START (ProfileEntry)
+        case 125:
+            // Grammar: ID=125; read/write bits=1; START (ProfileEntry)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ProfileEntry, ProfileEntryType (ProfileEntryType)); next=137
+                    // Event: START (ProfileEntry, ProfileEntryType (ProfileEntryType)); next=126
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14337,7 +13229,7 @@ static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_
                         // static array not large enough, only iso2_ProfileEntryType_24_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 137;
+                    grammar_id = 126;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -14357,15 +13249,15 @@ static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_
                 }
             }
             break;
-        case 137:
-            // Grammar: ID=137; read/write bits=2; LOOP (ProfileEntry), END Element
+        case 126:
+            // Grammar: ID=126; read/write bits=2; LOOP (ProfileEntry), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ProfileEntry, ProfileEntryType (ProfileEntryType)); next=137
+                    // Event: LOOP (ProfileEntry, ProfileEntryType (ProfileEntryType)); next=126
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14388,7 +13280,7 @@ static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ChargingProfileType->ProfileEntry.arrayLen < 24)
                     {
-                        grammar_id = 137;
+                        grammar_id = 126;
                     }
                     else
                     {
@@ -14449,11 +13341,454 @@ static int decode_iso2_ChargingProfileType(exi_bitstream_t* stream, struct iso2_
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ContractSignatureCertChain; type={urn:iso:15118:2:2013:MsgDataTypes}CertificateChainType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Id, ID (0, 1); Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
+static int decode_iso2_CertificateChainType(exi_bitstream_t* stream, struct iso2_CertificateChainType* CertificateChainType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 127;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_CertificateChainType(CertificateChainType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 127:
+            // Grammar: ID=127; read/write bits=2; START (Id), START (Certificate)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=128
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &CertificateChainType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (CertificateChainType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            CertificateChainType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, CertificateChainType->Id.charactersLen, CertificateChainType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, CertificateChainType->Id.characters, CertificateChainType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    CertificateChainType->Id_isUsed = 1u;
+                    grammar_id = 128;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                case 1:
+                    // Event: START (Certificate, certificateType (base64Binary)); next=129
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary
+                    error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso2_certificateType_BYTES_SIZE);
+                    if (error == 0)
+                    {
+                        // XML: emit base64 encoded value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        {
+                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                            static const int mod_table[] = {0, 2, 1};
+                            size_t output_length = 4 * ((CertificateChainType->Certificate.bytesLen + 2) / 3);
+                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                            if (encoded_data != NULL)
+                            {
+                                size_t i, j;
+                                for (i = 0, j = 0; i < CertificateChainType->Certificate.bytesLen;)
+                                {
+                                    uint32_t a = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t b = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t c = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t triple = (a << 16) + (b << 8) + c;
+                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                    encoded_data[j++] = encoding_table[triple & 0x3F];
+                                }
+                                for (i = 0; i < (size_t)mod_table[CertificateChainType->Certificate.bytesLen % 3]; i++)
+                                {
+                                    encoded_data[output_length - 1 - i] = '=';
+                                }
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                free(encoded_data);
+                            }
+                            else
+                            {
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                            }
+                        }
+                        grammar_id = 129;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 128:
+            // Grammar: ID=128; read/write bits=1; START (Certificate)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Certificate, certificateType (base64Binary)); next=129
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary
+                    error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso2_certificateType_BYTES_SIZE);
+                    if (error == 0)
+                    {
+                        // XML: emit base64 encoded value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        {
+                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                            static const int mod_table[] = {0, 2, 1};
+                            size_t output_length = 4 * ((CertificateChainType->Certificate.bytesLen + 2) / 3);
+                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                            if (encoded_data != NULL)
+                            {
+                                size_t i, j;
+                                for (i = 0, j = 0; i < CertificateChainType->Certificate.bytesLen;)
+                                {
+                                    uint32_t a = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t b = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t c = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
+                                    uint32_t triple = (a << 16) + (b << 8) + c;
+                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                    encoded_data[j++] = encoding_table[triple & 0x3F];
+                                }
+                                for (i = 0; i < (size_t)mod_table[CertificateChainType->Certificate.bytesLen % 3]; i++)
+                                {
+                                    encoded_data[output_length - 1 - i] = '=';
+                                }
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                free(encoded_data);
+                            }
+                            else
+                            {
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                            }
+                        }
+                        grammar_id = 129;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 129:
+            // Grammar: ID=129; read/write bits=2; START (SubCertificates), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SubCertificates, SubCertificatesType (SubCertificatesType)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SubCertificates", 20);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_SubCertificatesType(stream, &CertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        CertificateChainType->SubCertificates_isUsed = 1u;
+                        grammar_id = 3;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SubCertificates>", 22);
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ContractSignatureEncryptedPrivateKey; type={urn:iso:15118:2:2013:MsgDataTypes}ContractSignatureEncryptedPrivateKeyType; base type=privateKeyType; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (1, 1); CONTENT, ContractSignatureEncryptedPrivateKeyType (1, 1);
+static int decode_iso2_ContractSignatureEncryptedPrivateKeyType(exi_bitstream_t* stream, struct iso2_ContractSignatureEncryptedPrivateKeyType* ContractSignatureEncryptedPrivateKeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 130;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_ContractSignatureEncryptedPrivateKeyType(ContractSignatureEncryptedPrivateKeyType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 130:
+            // Grammar: ID=130; read/write bits=1; START (Id)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=131
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &ContractSignatureEncryptedPrivateKeyType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (ContractSignatureEncryptedPrivateKeyType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            ContractSignatureEncryptedPrivateKeyType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, ContractSignatureEncryptedPrivateKeyType->Id.charactersLen, ContractSignatureEncryptedPrivateKeyType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ContractSignatureEncryptedPrivateKeyType->Id.characters, ContractSignatureEncryptedPrivateKeyType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    grammar_id = 131;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 131:
+            // Grammar: ID=131; read/write bits=1; START (CONTENT)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (CONTENT, ContractSignatureEncryptedPrivateKeyType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (simple)
+                    error = exi_basetypes_decoder_uint_16(stream, &ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen);
+                    if (error == 0)
+                    {
+                        error = exi_basetypes_decoder_bytes(stream, ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen, &ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[0], iso2_ContractSignatureEncryptedPrivateKeyType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen;)
+                                    {
+                                        uint32_t a = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t b = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t c = i < ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen ? ContractSignatureEncryptedPrivateKeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[ContractSignatureEncryptedPrivateKeyType->CONTENT.bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 3;
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); DC_EVStatus, DC_EVStatusType (1, 1); EVMaximumCurrentLimit, PhysicalValueType (1, 1); EVMaximumPowerLimit, PhysicalValueType (0, 1); EVMaximumVoltageLimit, PhysicalValueType (1, 1); EVEnergyCapacity, PhysicalValueType (0, 1); EVEnergyRequest, PhysicalValueType (0, 1); FullSOC, percentValueType (0, 1); BulkSOC, percentValueType (0, 1);
 static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVChargeParameterType* DC_EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 138;
+    int grammar_id = 132;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -14464,15 +13799,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
     {
         switch (grammar_id)
         {
-        case 138:
-            // Grammar: ID=138; read/write bits=2; START (DepartureTime), START (DC_EVStatus)
+        case 132:
+            // Grammar: ID=132; read/write bits=2; START (DepartureTime), START (DC_EVStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=139
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=133
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14490,7 +13825,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DC_EVChargeParameterType->DepartureTime); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 139;
+                        grammar_id = 133;
                     }
                         // XML: close tag
                         {
@@ -14506,7 +13841,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=140
+                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=134
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14520,7 +13855,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_DC_EVStatusType(stream, &DC_EVChargeParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 140;
+                        grammar_id = 134;
                     }
                         // XML: close tag
                         {
@@ -14541,15 +13876,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 139:
-            // Grammar: ID=139; read/write bits=1; START (DC_EVStatus)
+        case 133:
+            // Grammar: ID=133; read/write bits=1; START (DC_EVStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=140
+                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=134
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14563,7 +13898,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_DC_EVStatusType(stream, &DC_EVChargeParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 140;
+                        grammar_id = 134;
                     }
                         // XML: close tag
                         {
@@ -14584,15 +13919,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 140:
-            // Grammar: ID=140; read/write bits=1; START (EVMaximumCurrentLimit)
+        case 134:
+            // Grammar: ID=134; read/write bits=1; START (EVMaximumCurrentLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=141
+                    // Event: START (EVMaximumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=135
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14606,7 +13941,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 141;
+                        grammar_id = 135;
                     }
                         // XML: close tag
                         {
@@ -14627,15 +13962,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=2; START (EVMaximumPowerLimit), START (EVMaximumVoltageLimit)
+        case 135:
+            // Grammar: ID=135; read/write bits=2; START (EVMaximumPowerLimit), START (EVMaximumVoltageLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumPowerLimit, PhysicalValueType (PhysicalValueType)); next=142
+                    // Event: START (EVMaximumPowerLimit, PhysicalValueType (PhysicalValueType)); next=136
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14650,7 +13985,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     if (error == 0)
                     {
                         DC_EVChargeParameterType->EVMaximumPowerLimit_isUsed = 1u;
-                        grammar_id = 142;
+                        grammar_id = 136;
                     }
                         // XML: close tag
                         {
@@ -14666,7 +14001,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=143
+                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=137
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14680,7 +14015,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 143;
+                        grammar_id = 137;
                     }
                         // XML: close tag
                         {
@@ -14701,15 +14036,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 142:
-            // Grammar: ID=142; read/write bits=1; START (EVMaximumVoltageLimit)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (EVMaximumVoltageLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=143
+                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=137
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14723,7 +14058,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 143;
+                        grammar_id = 137;
                     }
                         // XML: close tag
                         {
@@ -14744,15 +14079,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=3; START (EVEnergyCapacity), START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
+        case 137:
+            // Grammar: ID=137; read/write bits=3; START (EVEnergyCapacity), START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVEnergyCapacity, PhysicalValueType (PhysicalValueType)); next=144
+                    // Event: START (EVEnergyCapacity, PhysicalValueType (PhysicalValueType)); next=138
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14767,7 +14102,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     if (error == 0)
                     {
                         DC_EVChargeParameterType->EVEnergyCapacity_isUsed = 1u;
-                        grammar_id = 144;
+                        grammar_id = 138;
                     }
                         // XML: close tag
                         {
@@ -14783,7 +14118,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (EVEnergyRequest, PhysicalValueType (PhysicalValueType)); next=145
+                    // Event: START (EVEnergyRequest, PhysicalValueType (PhysicalValueType)); next=139
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14798,7 +14133,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     if (error == 0)
                     {
                         DC_EVChargeParameterType->EVEnergyRequest_isUsed = 1u;
-                        grammar_id = 145;
+                        grammar_id = 139;
                     }
                         // XML: close tag
                         {
@@ -14814,7 +14149,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 2:
-                    // Event: START (FullSOC, percentValueType (byte)); next=146
+                    // Event: START (FullSOC, percentValueType (byte)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14857,7 +14192,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 146;
+                                grammar_id = 140;
                             }
                             else
                             {
@@ -14954,15 +14289,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 144:
-            // Grammar: ID=144; read/write bits=3; START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
+        case 138:
+            // Grammar: ID=138; read/write bits=3; START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVEnergyRequest, PhysicalValueType (PhysicalValueType)); next=145
+                    // Event: START (EVEnergyRequest, PhysicalValueType (PhysicalValueType)); next=139
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -14977,7 +14312,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     if (error == 0)
                     {
                         DC_EVChargeParameterType->EVEnergyRequest_isUsed = 1u;
-                        grammar_id = 145;
+                        grammar_id = 139;
                     }
                         // XML: close tag
                         {
@@ -14993,7 +14328,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (FullSOC, percentValueType (byte)); next=146
+                    // Event: START (FullSOC, percentValueType (byte)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15036,7 +14371,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 146;
+                                grammar_id = 140;
                             }
                             else
                             {
@@ -15133,15 +14468,15 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 145:
-            // Grammar: ID=145; read/write bits=2; START (FullSOC), START (BulkSOC), END Element
+        case 139:
+            // Grammar: ID=139; read/write bits=2; START (FullSOC), START (BulkSOC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (FullSOC, percentValueType (byte)); next=146
+                    // Event: START (FullSOC, percentValueType (byte)); next=140
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15184,7 +14519,7 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 146;
+                                grammar_id = 140;
                             }
                             else
                             {
@@ -15281,8 +14616,8 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 146:
-            // Grammar: ID=146; read/write bits=2; START (BulkSOC), END Element
+        case 140:
+            // Grammar: ID=140; read/write bits=2; START (BulkSOC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -15395,11 +14730,747 @@ static int decode_iso2_DC_EVChargeParameterType(exi_bitstream_t* stream, struct 
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVPowerDeliveryParameter; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVPowerDeliveryParameterType; base type=EVPowerDeliveryParameterType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DC_EVStatus, DC_EVStatusType (1, 1); BulkChargingComplete, boolean (0, 1); ChargingComplete, boolean (1, 1);
+static int decode_iso2_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 141;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_DC_EVPowerDeliveryParameterType(DC_EVPowerDeliveryParameterType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 141:
+            // Grammar: ID=141; read/write bits=1; START (DC_EVStatus)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (DC_EVStatus, DC_EVStatusType (EVStatusType)); next=142
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:DC_EVStatus", 16);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_DC_EVStatusType(stream, &DC_EVPowerDeliveryParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 142;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:DC_EVStatus>", 18);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 142:
+            // Grammar: ID=142; read/write bits=2; START (BulkChargingComplete), START (ChargingComplete)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (BulkChargingComplete, boolean (boolean)); next=143
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BulkChargingComplete", 25);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                DC_EVPowerDeliveryParameterType->BulkChargingComplete = value;
+                                DC_EVPowerDeliveryParameterType->BulkChargingComplete_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 143;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BulkChargingComplete>", 27);
+                    }
+                    break;
+                case 1:
+                    // Event: START (ChargingComplete, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ChargingComplete", 21);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                DC_EVPowerDeliveryParameterType->ChargingComplete = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ChargingComplete>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 143:
+            // Grammar: ID=143; read/write bits=1; START (ChargingComplete)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ChargingComplete, boolean (boolean)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ChargingComplete", 21);
+                        (void)xml_tag_start;
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                DC_EVPowerDeliveryParameterType->ChargingComplete = value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                if (value) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "true", 4); } else { xml_write(xmlOut, xmlOut_size, xmlOut_pos, "false", 5); }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ChargingComplete>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEStatus; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1);
+static int decode_iso2_DC_EVSEStatusType(exi_bitstream_t* stream, struct iso2_DC_EVSEStatusType* DC_EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 144;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_DC_EVSEStatusType(DC_EVSEStatusType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 144:
+            // Grammar: ID=144; read/write bits=1; START (NotificationMaxDelay)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=145
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NotificationMaxDelay", 25);
+                        (void)xml_tag_start;
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &DC_EVSEStatusType->NotificationMaxDelay);
+                    if (error == 0)
+                    {
+                        // XML: emit value
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                        { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", DC_EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                        grammar_id = 145;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NotificationMaxDelay>", 27);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 145:
+            // Grammar: ID=145; read/write bits=1; START (EVSENotification)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSENotification, EVSENotificationType (string)); next=146
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSENotification", 21);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                DC_EVSEStatusType->EVSENotification = (iso2_EVSENotificationType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "None", 4); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "StopCharging", 12); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ReNegotiation", 13); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 146;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSENotification>", 23);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 146:
+            // Grammar: ID=146; read/write bits=2; START (EVSEIsolationStatus), START (EVSEStatusCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEIsolationStatus, isolationLevelType (string)); next=147
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEIsolationStatus", 24);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
+                            if (error == 0)
+                            {
+                                DC_EVSEStatusType->EVSEIsolationStatus = (iso2_isolationLevelType)value;
+                                DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 1u;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Invalid", 7); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Valid", 5); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Warning", 7); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Fault", 5); break;
+                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "No_IMD", 6); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 147;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEIsolationStatus>", 26);
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEStatusCode, DC_EVSEStatusCodeType (string)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEStatusCode", 19);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 4, &value);
+                            if (error == 0)
+                            {
+                                DC_EVSEStatusType->EVSEStatusCode = (iso2_DC_EVSEStatusCodeType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_NotReady", 13); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Ready", 10); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Shutdown", 13); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_UtilityInterruptEvent", 26); break;
+                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_IsolationMonitoringActive", 30); break;
+                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_EmergencyShutdown", 22); break;
+                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Malfunction", 16); break;
+                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_8", 10); break;
+                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_9", 10); break;
+                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_A", 10); break;
+                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_B", 10); break;
+                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_C", 10); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEStatusCode>", 21);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 147:
+            // Grammar: ID=147; read/write bits=1; START (EVSEStatusCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEStatusCode, DC_EVSEStatusCodeType (string)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEStatusCode", 19);
+                        (void)xml_tag_start;
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 4, &value);
+                            if (error == 0)
+                            {
+                                DC_EVSEStatusType->EVSEStatusCode = (iso2_DC_EVSEStatusCodeType)value;
+                                // XML: emit value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                                switch (value) {
+                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_NotReady", 13); break;
+                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Ready", 10); break;
+                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Shutdown", 13); break;
+                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_UtilityInterruptEvent", 26); break;
+                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_IsolationMonitoringActive", 30); break;
+                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_EmergencyShutdown", 22); break;
+                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EVSE_Malfunction", 16); break;
+                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_8", 10); break;
+                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_9", 10); break;
+                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_A", 10); break;
+                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_B", 10); break;
+                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Reserved_C", 10); break;
+                                default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 3;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEStatusCode>", 21);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}DC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: DC_EVSEStatus, DC_EVSEStatusType (1, 1); EVSEMaximumCurrentLimit, PhysicalValueType (1, 1); EVSEMaximumPowerLimit, PhysicalValueType (1, 1); EVSEMaximumVoltageLimit, PhysicalValueType (1, 1); EVSEMinimumCurrentLimit, PhysicalValueType (1, 1); EVSEMinimumVoltageLimit, PhysicalValueType (1, 1); EVSECurrentRegulationTolerance, PhysicalValueType (0, 1); EVSEPeakCurrentRipple, PhysicalValueType (1, 1); EVSEEnergyToBeDelivered, PhysicalValueType (0, 1);
 static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 147;
+    int grammar_id = 148;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -15410,15 +15481,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
     {
         switch (grammar_id)
         {
-        case 147:
-            // Grammar: ID=147; read/write bits=1; START (DC_EVSEStatus)
+        case 148:
+            // Grammar: ID=148; read/write bits=1; START (DC_EVSEStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DC_EVSEStatus, DC_EVSEStatusType (EVSEStatusType)); next=148
+                    // Event: START (DC_EVSEStatus, DC_EVSEStatusType (EVSEStatusType)); next=149
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15432,7 +15503,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_DC_EVSEStatusType(stream, &DC_EVSEChargeParameterType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 148;
+                        grammar_id = 149;
                     }
                         // XML: close tag
                         {
@@ -15453,15 +15524,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 148:
-            // Grammar: ID=148; read/write bits=1; START (EVSEMaximumCurrentLimit)
+        case 149:
+            // Grammar: ID=149; read/write bits=1; START (EVSEMaximumCurrentLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=149
+                    // Event: START (EVSEMaximumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=150
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15475,7 +15546,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 149;
+                        grammar_id = 150;
                     }
                         // XML: close tag
                         {
@@ -15496,15 +15567,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 149:
-            // Grammar: ID=149; read/write bits=1; START (EVSEMaximumPowerLimit)
+        case 150:
+            // Grammar: ID=150; read/write bits=1; START (EVSEMaximumPowerLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumPowerLimit, PhysicalValueType (PhysicalValueType)); next=150
+                    // Event: START (EVSEMaximumPowerLimit, PhysicalValueType (PhysicalValueType)); next=151
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15518,7 +15589,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 150;
+                        grammar_id = 151;
                     }
                         // XML: close tag
                         {
@@ -15539,15 +15610,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 150:
-            // Grammar: ID=150; read/write bits=1; START (EVSEMaximumVoltageLimit)
+        case 151:
+            // Grammar: ID=151; read/write bits=1; START (EVSEMaximumVoltageLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=151
+                    // Event: START (EVSEMaximumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=152
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15561,7 +15632,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 151;
+                        grammar_id = 152;
                     }
                         // XML: close tag
                         {
@@ -15582,15 +15653,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 151:
-            // Grammar: ID=151; read/write bits=1; START (EVSEMinimumCurrentLimit)
+        case 152:
+            // Grammar: ID=152; read/write bits=1; START (EVSEMinimumCurrentLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=152
+                    // Event: START (EVSEMinimumCurrentLimit, PhysicalValueType (PhysicalValueType)); next=153
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15604,7 +15675,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 152;
+                        grammar_id = 153;
                     }
                         // XML: close tag
                         {
@@ -15625,15 +15696,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 152:
-            // Grammar: ID=152; read/write bits=1; START (EVSEMinimumVoltageLimit)
+        case 153:
+            // Grammar: ID=153; read/write bits=1; START (EVSEMinimumVoltageLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=153
+                    // Event: START (EVSEMinimumVoltageLimit, PhysicalValueType (PhysicalValueType)); next=154
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15647,7 +15718,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 153;
+                        grammar_id = 154;
                     }
                         // XML: close tag
                         {
@@ -15668,15 +15739,15 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 153:
-            // Grammar: ID=153; read/write bits=2; START (EVSECurrentRegulationTolerance), START (EVSEPeakCurrentRipple)
+        case 154:
+            // Grammar: ID=154; read/write bits=2; START (EVSECurrentRegulationTolerance), START (EVSEPeakCurrentRipple)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSECurrentRegulationTolerance, PhysicalValueType (PhysicalValueType)); next=154
+                    // Event: START (EVSECurrentRegulationTolerance, PhysicalValueType (PhysicalValueType)); next=155
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15691,7 +15762,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     if (error == 0)
                     {
                         DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance_isUsed = 1u;
-                        grammar_id = 154;
+                        grammar_id = 155;
                     }
                         // XML: close tag
                         {
@@ -15707,7 +15778,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType (PhysicalValueType)); next=155
+                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType (PhysicalValueType)); next=156
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15721,50 +15792,7 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
                     error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 155;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEPeakCurrentRipple>", 28);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 154:
-            // Grammar: ID=154; read/write bits=1; START (EVSEPeakCurrentRipple)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType (PhysicalValueType)); next=155
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEPeakCurrentRipple", 26);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 155;
+                        grammar_id = 156;
                     }
                         // XML: close tag
                         {
@@ -15786,7 +15814,50 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
             }
             break;
         case 155:
-            // Grammar: ID=155; read/write bits=2; START (EVSEEnergyToBeDelivered), END Element
+            // Grammar: ID=155; read/write bits=1; START (EVSEPeakCurrentRipple)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType (PhysicalValueType)); next=156
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSEPeakCurrentRipple", 26);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 156;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSEPeakCurrentRipple>", 28);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 156:
+            // Grammar: ID=156; read/write bits=2; START (EVSEEnergyToBeDelivered), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -15865,11 +15936,178 @@ static int decode_iso2_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struc
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}DHpublickey; type={urn:iso:15118:2:2013:MsgDataTypes}DiffieHellmanPublickeyType; base type=dHpublickeyType; content type=simple;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, ID (1, 1); CONTENT, DiffieHellmanPublickeyType (1, 1);
+static int decode_iso2_DiffieHellmanPublickeyType(exi_bitstream_t* stream, struct iso2_DiffieHellmanPublickeyType* DiffieHellmanPublickeyType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    int grammar_id = 157;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso2_DiffieHellmanPublickeyType(DiffieHellmanPublickeyType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 157:
+            // Grammar: ID=157; read/write bits=1; START (Id)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Id, ID (NCName)); next=158
+                    // XML: attribute
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &DiffieHellmanPublickeyType->Id.charactersLen);
+                    if (error == 0)
+                    {
+                        if (DiffieHellmanPublickeyType->Id.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            DiffieHellmanPublickeyType->Id.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, DiffieHellmanPublickeyType->Id.charactersLen, DiffieHellmanPublickeyType->Id.characters, iso2_Id_CHARACTER_SIZE);
+                            if (error == 0)
+                            {
+                                // XML: emit string value
+                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, DiffieHellmanPublickeyType->Id.characters, DiffieHellmanPublickeyType->Id.charactersLen);
+                            }
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    grammar_id = 158;
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 158:
+            // Grammar: ID=158; read/write bits=1; START (CONTENT)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (CONTENT, DiffieHellmanPublickeyType (base64Binary)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
+                        (void)xml_tag_start;
+                    // decode exi type: base64Binary (simple)
+                    error = exi_basetypes_decoder_uint_16(stream, &DiffieHellmanPublickeyType->CONTENT.bytesLen);
+                    if (error == 0)
+                    {
+                        error = exi_basetypes_decoder_bytes(stream, DiffieHellmanPublickeyType->CONTENT.bytesLen, &DiffieHellmanPublickeyType->CONTENT.bytes[0], iso2_DiffieHellmanPublickeyType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            // XML: emit base64 encoded value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            {
+                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                                static const int mod_table[] = {0, 2, 1};
+                                size_t output_length = 4 * ((DiffieHellmanPublickeyType->CONTENT.bytesLen + 2) / 3);
+                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
+                                if (encoded_data != NULL)
+                                {
+                                    size_t i, j;
+                                    for (i = 0, j = 0; i < DiffieHellmanPublickeyType->CONTENT.bytesLen;)
+                                    {
+                                        uint32_t a = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t b = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t c = i < DiffieHellmanPublickeyType->CONTENT.bytesLen ? DiffieHellmanPublickeyType->CONTENT.bytes[i++] : 0;
+                                        uint32_t triple = (a << 16) + (b << 8) + c;
+                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
+                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
+                                        encoded_data[j++] = encoding_table[triple & 0x3F];
+                                    }
+                                    for (i = 0; i < (size_t)mod_table[DiffieHellmanPublickeyType->CONTENT.bytesLen % 3]; i++)
+                                    {
+                                        encoded_data[output_length - 1 - i] = '=';
+                                    }
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
+                                    free(encoded_data);
+                                }
+                                else
+                                {
+                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
+                                }
+                            }
+                            grammar_id = 3;
+                        }
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}EVChargeParameterType; base type=; content type=ELEMENT-ONLY;
 //          abstract=True; final=False;
 // Particle: DepartureTime, unsignedInt (0, 1); DC_EVChargeParameter, DC_EVChargeParameterType (1, 1); AC_EVChargeParameter, AC_EVChargeParameterType (1, 1);
 static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso2_EVChargeParameterType* EVChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 156;
+    int grammar_id = 159;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -15880,15 +16118,15 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
     {
         switch (grammar_id)
         {
-        case 156:
-            // Grammar: ID=156; read/write bits=2; START (DepartureTime), START (DC_EVChargeParameter)
+        case 159:
+            // Grammar: ID=159; read/write bits=2; START (DepartureTime), START (DC_EVChargeParameter)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=157
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=160
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15906,7 +16144,7 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", EVChargeParameterType->DepartureTime); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 157;
+                        grammar_id = 160;
                     }
                         // XML: close tag
                         {
@@ -15922,7 +16160,7 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                     }
                     break;
                 case 1:
-                    // Event: START (DC_EVChargeParameter, DC_EVChargeParameterType (EVChargeParameterType)); next=158
+                    // Event: START (DC_EVChargeParameter, DC_EVChargeParameterType (EVChargeParameterType)); next=161
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15936,7 +16174,7 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                     error = decode_iso2_DC_EVChargeParameterType(stream, &EVChargeParameterType->DC_EVChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 158;
+                        grammar_id = 161;
                     }
                         // XML: close tag
                         {
@@ -15957,15 +16195,15 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 157:
-            // Grammar: ID=157; read/write bits=1; START (DC_EVChargeParameter)
+        case 160:
+            // Grammar: ID=160; read/write bits=1; START (DC_EVChargeParameter)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DC_EVChargeParameter, DC_EVChargeParameterType (EVChargeParameterType)); next=158
+                    // Event: START (DC_EVChargeParameter, DC_EVChargeParameterType (EVChargeParameterType)); next=161
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -15979,7 +16217,7 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                     error = decode_iso2_DC_EVChargeParameterType(stream, &EVChargeParameterType->DC_EVChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
-                        grammar_id = 158;
+                        grammar_id = 161;
                     }
                         // XML: close tag
                         {
@@ -16000,8 +16238,8 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 158:
-            // Grammar: ID=158; read/write bits=1; START (AC_EVChargeParameter)
+        case 161:
+            // Grammar: ID=161; read/write bits=1; START (AC_EVChargeParameter)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -16074,11 +16312,49 @@ static int decode_iso2_EVChargeParameterType(exi_bitstream_t* stream, struct iso
     return error;
 }
 
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVPowerDeliveryParameter; type={urn:iso:15118:2:2013:MsgDataTypes}EVPowerDeliveryParameterType; base type=; content type=empty;
+//          abstract=True; final=False;
+static int decode_iso2_EVPowerDeliveryParameterType(exi_bitstream_t* stream, struct iso2_EVPowerDeliveryParameterType* EVPowerDeliveryParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    // Element has no particles, so the function just decodes END Element
+    (void)EVPowerDeliveryParameterType;
+    uint32_t eventCode;
+
+    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+    if (error == 0)
+    {
+        if (eventCode != 0)
+        {
+            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+        }
+    }
+
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVSEChargeParameter; type={urn:iso:15118:2:2013:MsgDataTypes}EVSEChargeParameterType; base type=; content type=empty;
+//          abstract=True; final=False;
+static int decode_iso2_EVSEChargeParameterType(exi_bitstream_t* stream, struct iso2_EVSEChargeParameterType* EVSEChargeParameterType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
+    // Element has no particles, so the function just decodes END Element
+    (void)EVSEChargeParameterType;
+    uint32_t eventCode;
+
+    int error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+    if (error == 0)
+    {
+        if (eventCode != 0)
+        {
+            error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+        }
+    }
+
+    return error;
+}
+
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}EVSEStatus; type={urn:iso:15118:2:2013:MsgDataTypes}EVSEStatusType; base type=; content type=ELEMENT-ONLY;
 //          abstract=True; final=False;
-// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); DC_EVSEStatus, DC_EVSEStatusType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1);
+// Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, EVSENotificationType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1); DC_EVSEStatus, DC_EVSEStatusType (1, 1);
 static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSEStatusType* EVSEStatusType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 159;
+    int grammar_id = 162;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -16089,15 +16365,15 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
     {
         switch (grammar_id)
         {
-        case 159:
-            // Grammar: ID=159; read/write bits=1; START (NotificationMaxDelay)
+        case 162:
+            // Grammar: ID=162; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=160
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=163
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16114,7 +16390,7 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", EVSEStatusType->NotificationMaxDelay); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 160;
+                        grammar_id = 163;
                     }
                         // XML: close tag
                         {
@@ -16135,15 +16411,15 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                 }
             }
             break;
-        case 160:
-            // Grammar: ID=160; read/write bits=1; START (EVSENotification)
+        case 163:
+            // Grammar: ID=163; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSENotification, EVSENotificationType (string)); next=161
+                    // Event: START (EVSENotification, EVSENotificationType (string)); next=164
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16190,7 +16466,7 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 161;
+                                grammar_id = 164;
                             }
                             else
                             {
@@ -16217,58 +16493,15 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                 }
             }
             break;
-        case 161:
-            // Grammar: ID=161; read/write bits=1; START (DC_EVSEStatus)
+        case 164:
+            // Grammar: ID=164; read/write bits=1; START (AC_EVSEStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DC_EVSEStatus, DC_EVSEStatusType (EVSEStatusType)); next=162
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_DC_EVSEStatusType(stream, &EVSEStatusType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        grammar_id = 162;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:DC_EVSEStatus>", 20);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 162:
-            // Grammar: ID=162; read/write bits=1; START (AC_EVSEStatus)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (AC_EVSEStatus, AC_EVSEStatusType (EVSEStatusType)); next=3
+                    // Event: START (AC_EVSEStatus, AC_EVSEStatusType (EVSEStatusType)); next=165
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16280,6 +16513,49 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso2_AC_EVSEStatusType(stream, &EVSEStatusType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
+                    if (error == 0)
+                    {
+                        grammar_id = 165;
+                    }
+                        // XML: close tag
+                        {
+                            int xml_closed = 0;
+                            size_t i;
+                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
+                            {
+                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
+                            }
+                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
+                        }
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AC_EVSEStatus>", 20);
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 165:
+            // Grammar: ID=165; read/write bits=1; START (DC_EVSEStatus)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (DC_EVSEStatus, DC_EVSEStatusType (EVSEStatusType)); next=3
+                    // XML: open tag
+                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
+                    {
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                    }
+                    {
+                        size_t xml_tag_start = *xmlOut_pos;
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:DC_EVSEStatus", 18);
+                        (void)xml_tag_start;
+                    // decode: element
+                    error = decode_iso2_DC_EVSEStatusType(stream, &EVSEStatusType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
                     {
                         grammar_id = 3;
@@ -16294,7 +16570,7 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AC_EVSEStatus>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -16338,7 +16614,7 @@ static int decode_iso2_EVSEStatusType(exi_bitstream_t* stream, struct iso2_EVSES
 //          abstract=False; final=False;
 // Particle: RootCertificateID, X509IssuerSerialType (1, 5) (original max 20);
 static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, struct iso2_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 163;
+    int grammar_id = 166;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -16349,15 +16625,15 @@ static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, str
     {
         switch (grammar_id)
         {
-        case 163:
-            // Grammar: ID=163; read/write bits=1; START (RootCertificateID)
+        case 166:
+            // Grammar: ID=166; read/write bits=1; START (RootCertificateID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=164
+                    // Event: START (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=167
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16377,7 +16653,7 @@ static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, str
                         // static array not large enough, only iso2_X509IssuerSerialType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 164;
+                    grammar_id = 167;
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -16397,15 +16673,15 @@ static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 164:
-            // Grammar: ID=164; read/write bits=2; LOOP (RootCertificateID), END Element
+        case 167:
+            // Grammar: ID=167; read/write bits=2; LOOP (RootCertificateID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=164
+                    // Event: LOOP (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=167
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16428,7 +16704,7 @@ static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, str
                     // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < 20)
                     {
-                        grammar_id = 164;
+                        grammar_id = 167;
                     }
                     else
                     {
@@ -16493,7 +16769,7 @@ static int decode_iso2_ListOfRootCertificateIDsType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); MeterReading, unsignedLong (0, 1); SigMeterReading, sigMeterReadingType (0, 1); MeterStatus, meterStatusType (0, 1); TMeter, long (0, 1);
 static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterInfoType* MeterInfoType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 165;
+    int grammar_id = 168;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -16504,15 +16780,15 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
     {
         switch (grammar_id)
         {
-        case 165:
-            // Grammar: ID=165; read/write bits=1; START (MeterID)
+        case 168:
+            // Grammar: ID=168; read/write bits=1; START (MeterID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterID, meterIDType (string)); next=166
+                    // Event: START (MeterID, meterIDType (string)); next=169
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16566,7 +16842,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 166;
+                                grammar_id = 169;
                             }
                             else
                             {
@@ -16593,15 +16869,15 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                 }
             }
             break;
-        case 166:
-            // Grammar: ID=166; read/write bits=3; START (MeterReading), START (SigMeterReading), START (MeterStatus), START (TMeter), END Element
+        case 169:
+            // Grammar: ID=169; read/write bits=3; START (MeterReading), START (SigMeterReading), START (MeterStatus), START (TMeter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterReading, unsignedLong (nonNegativeInteger)); next=167
+                    // Event: START (MeterReading, unsignedLong (nonNegativeInteger)); next=170
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16619,7 +16895,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRIu64, MeterInfoType->MeterReading); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 167;
+                        grammar_id = 170;
                     }
                         // XML: close tag
                         {
@@ -16635,7 +16911,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                     }
                     break;
                 case 1:
-                    // Event: START (SigMeterReading, sigMeterReadingType (base64Binary)); next=168
+                    // Event: START (SigMeterReading, sigMeterReadingType (base64Binary)); next=171
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16683,7 +16959,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 168;
+                        grammar_id = 171;
                     }
                         // XML: close tag
                         {
@@ -16699,7 +16975,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                     }
                     break;
                 case 2:
-                    // Event: START (MeterStatus, meterStatusType (short)); next=169
+                    // Event: START (MeterStatus, meterStatusType (short)); next=172
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16717,7 +16993,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 169;
+                        grammar_id = 172;
                     }
                         // XML: close tag
                         {
@@ -16777,15 +17053,15 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                 }
             }
             break;
-        case 167:
-            // Grammar: ID=167; read/write bits=3; START (SigMeterReading), START (MeterStatus), START (TMeter), END Element
+        case 170:
+            // Grammar: ID=170; read/write bits=3; START (SigMeterReading), START (MeterStatus), START (TMeter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SigMeterReading, sigMeterReadingType (base64Binary)); next=168
+                    // Event: START (SigMeterReading, sigMeterReadingType (base64Binary)); next=171
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16833,7 +17109,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                             }
                         }
-                        grammar_id = 168;
+                        grammar_id = 171;
                     }
                         // XML: close tag
                         {
@@ -16849,7 +17125,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                     }
                     break;
                 case 1:
-                    // Event: START (MeterStatus, meterStatusType (short)); next=169
+                    // Event: START (MeterStatus, meterStatusType (short)); next=172
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16867,7 +17143,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 169;
+                        grammar_id = 172;
                     }
                         // XML: close tag
                         {
@@ -16927,15 +17203,15 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=2; START (MeterStatus), START (TMeter), END Element
+        case 171:
+            // Grammar: ID=171; read/write bits=2; START (MeterStatus), START (TMeter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterStatus, meterStatusType (short)); next=169
+                    // Event: START (MeterStatus, meterStatusType (short)); next=172
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -16953,7 +17229,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                         // XML: emit value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                         { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%d", MeterInfoType->MeterStatus); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
-                        grammar_id = 169;
+                        grammar_id = 172;
                     }
                         // XML: close tag
                         {
@@ -17013,8 +17289,8 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
                 }
             }
             break;
-        case 169:
-            // Grammar: ID=169; read/write bits=2; START (TMeter), END Element
+        case 172:
+            // Grammar: ID=172; read/write bits=2; START (TMeter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -17100,7 +17376,7 @@ static int decode_iso2_MeterInfoType(exi_bitstream_t* stream, struct iso2_MeterI
 //          abstract=False; final=False;
 // Particle: FaultCode, faultCodeType (1, 1); FaultMsg, faultMsgType (0, 1);
 static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_NotificationType* NotificationType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 170;
+    int grammar_id = 173;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17111,15 +17387,15 @@ static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_Not
     {
         switch (grammar_id)
         {
-        case 170:
-            // Grammar: ID=170; read/write bits=1; START (FaultCode)
+        case 173:
+            // Grammar: ID=173; read/write bits=1; START (FaultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (FaultCode, faultCodeType (string)); next=171
+                    // Event: START (FaultCode, faultCodeType (string)); next=174
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17166,7 +17442,7 @@ static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_Not
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 171;
+                                grammar_id = 174;
                             }
                             else
                             {
@@ -17193,8 +17469,8 @@ static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_Not
                 }
             }
             break;
-        case 171:
-            // Grammar: ID=171; read/write bits=2; START (FaultMsg), END Element
+        case 174:
+            // Grammar: ID=174; read/write bits=2; START (FaultMsg), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -17323,7 +17599,7 @@ static int decode_iso2_NotificationType(exi_bitstream_t* stream, struct iso2_Not
 //          abstract=False; final=False;
 // Particle: PaymentOption, paymentOptionType (1, 2);
 static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso2_PaymentOptionListType* PaymentOptionListType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 172;
+    int grammar_id = 175;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -17334,15 +17610,15 @@ static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso
     {
         switch (grammar_id)
         {
-        case 172:
-            // Grammar: ID=172; read/write bits=1; START (PaymentOption)
+        case 175:
+            // Grammar: ID=175; read/write bits=1; START (PaymentOption)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PaymentOption, paymentOptionType (string)); next=173
+                    // Event: START (PaymentOption, paymentOptionType (string)); next=176
                     // XML: open tag
                     if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
                     {
@@ -17395,7 +17671,7 @@ static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 173;
+                                grammar_id = 176;
                             }
                             else
                             {
@@ -17422,8 +17698,8 @@ static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=2; START (PaymentOption), END Element
+        case 176:
+            // Grammar: ID=176; read/write bits=2; START (PaymentOption), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -17502,282 +17778,6 @@ static int decode_iso2_PaymentOptionListType(exi_bitstream_t* stream, struct iso
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:PaymentOption>", 20);
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}SAProvisioningCertificateChain; type={urn:iso:15118:2:2013:MsgDataTypes}CertificateChainType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
-static int decode_iso2_CertificateChainType(exi_bitstream_t* stream, struct iso2_CertificateChainType* CertificateChainType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos) {
-    int grammar_id = 174;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso2_CertificateChainType(CertificateChainType);
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 174:
-            // Grammar: ID=174; read/write bits=2; START (Id), START (Certificate)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Id, ID (NCName)); next=175
-                    // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns4:Id=\"", 9);
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &CertificateChainType->Id.charactersLen);
-                    if (error == 0)
-                    {
-                        if (CertificateChainType->Id.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            CertificateChainType->Id.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, CertificateChainType->Id.charactersLen, CertificateChainType->Id.characters, iso2_Id_CHARACTER_SIZE);
-                            if (error == 0)
-                            {
-                                // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, CertificateChainType->Id.characters, CertificateChainType->Id.charactersLen);
-                            }
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    CertificateChainType->Id_isUsed = 1u;
-                    grammar_id = 175;
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "\"", 1);
-                    break;
-                case 1:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=176
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary
-                    error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso2_certificateType_BYTES_SIZE);
-                    if (error == 0)
-                    {
-                        // XML: emit base64 encoded value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateChainType->Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateChainType->Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateChainType->Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
-                        grammar_id = 176;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 175:
-            // Grammar: ID=175; read/write bits=1; START (Certificate)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=176
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Certificate", 16);
-                        (void)xml_tag_start;
-                    // decode exi type: base64Binary
-                    error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso2_certificateType_BYTES_SIZE);
-                    if (error == 0)
-                    {
-                        // XML: emit base64 encoded value
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateChainType->Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateChainType->Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateChainType->Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
-                        grammar_id = 176;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Certificate>", 18);
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 176:
-            // Grammar: ID=176; read/write bits=2; START (SubCertificates), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch (eventCode)
-                {
-                case 0:
-                    // Event: START (SubCertificates, SubCertificatesType (SubCertificatesType)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SubCertificates", 20);
-                        (void)xml_tag_start;
-                    // decode: element
-                    error = decode_iso2_SubCertificatesType(stream, &CertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
-                    if (error == 0)
-                    {
-                        CertificateChainType->SubCertificates_isUsed = 1u;
-                        grammar_id = 3;
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SubCertificates>", 22);
                     }
                     break;
                 case 1:
