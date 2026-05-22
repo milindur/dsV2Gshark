@@ -35,12 +35,45 @@
 
 
 
-/* best-effort XML serializer: silently truncates on overflow */
+/* best-effort XML serializer: null/zero-sized buffers disable XML output; 
+   non-NUL-terminated input buffers are reset to empty; 
+   writes that do not fit are skipped while preserving NUL termination. */
+static inline size_t xml_init(char* xmlOut, size_t xmlOut_size) {
+    size_t pos = 0u;
+    if (xmlOut == NULL || xmlOut_size == 0u) return 0u;
+    while (pos < xmlOut_size && xmlOut[pos] != '\0') pos++;
+    if (pos == xmlOut_size) { xmlOut[0] = '\0'; return 0u; }
+    return pos;
+}
 static inline void xml_write(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
-    if (*pos + len >= xmlOut_size) return;
-    memcpy(xmlOut + *pos, str, len);
+    size_t remaining;
+    if (xmlOut == NULL || pos == NULL || str == NULL || xmlOut_size == 0u) return;
+    if (*pos >= xmlOut_size) { *pos = xmlOut_size - 1u; xmlOut[*pos] = '\0'; return; }
+    remaining = xmlOut_size - *pos - 1u;
+    if (len > remaining) return;
+    if (len > 0u) memcpy(xmlOut + *pos, str, len);
     *pos += len;
     xmlOut[*pos] = '\0';
+}
+static inline void xml_write_escaped(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len, int is_attribute) {
+    size_t i;
+    if (str == NULL) return;
+    for (i = 0u; i < len; i++) {
+        switch (str[i]) {
+        case '&': xml_write(xmlOut, xmlOut_size, pos, "&amp;", 5u); break;
+        case '<': xml_write(xmlOut, xmlOut_size, pos, "&lt;", 4u); break;
+        case '>': xml_write(xmlOut, xmlOut_size, pos, "&gt;", 4u); break;
+        case '"': if (is_attribute) { xml_write(xmlOut, xmlOut_size, pos, "&quot;", 6u); } else { xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); } break;
+        case '\'': if (is_attribute) { xml_write(xmlOut, xmlOut_size, pos, "&apos;", 6u); } else { xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); } break;
+        default: xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); break;
+        }
+    }
+}
+static inline void xml_write_escaped_text(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
+    xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 0);
+}
+static inline void xml_write_escaped_attr(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
+    xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 1);
 }
 static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHand_AppProtocolType* AppProtocolType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struct appHand_supportedAppProtocolReq* supportedAppProtocolReq, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
@@ -97,7 +130,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AppProtocolType->ProtocolNamespace.characters, AppProtocolType->ProtocolNamespace.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AppProtocolType->ProtocolNamespace.characters, AppProtocolType->ProtocolNamespace.charactersLen);
                                     }
                                 }
                                 else
@@ -630,9 +663,9 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_SuccessfulNegotiation", 24); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_SuccessfulNegotiationWithMinorDeviation", 42); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Failed_NoNegotiation", 20); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_SuccessfulNegotiation", 24); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_SuccessfulNegotiationWithMinorDeviation", 42); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Failed_NoNegotiation", 20); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -800,7 +833,7 @@ int decode_appHand_exiDocument(exi_bitstream_t* stream, struct appHand_exiDocume
     uint32_t eventCode;
     int error = exi_header_read_and_check(stream);
 
-    size_t xmlOut_pos = strlen(xmlOut);
+    size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
 
     if (error == 0)
     {

@@ -121,8 +121,8 @@ void init_iso20_ac_der_DigestMethodType(struct iso20_ac_der_DigestMethodType* Di
 void init_iso20_ac_der_FrequencyDroopType(struct iso20_ac_der_FrequencyDroopType* FrequencyDroopType) {
     FrequencyDroopType->Enable_isUsed = 0u;
     FrequencyDroopType->Priority_isUsed = 0u;
-    FrequencyDroopType->EU_FrequencyDroop_isUsed = 0u;
     FrequencyDroopType->US_FrequencyDroop_isUsed = 0u;
+    FrequencyDroopType->EU_FrequencyDroop_isUsed = 0u;
 }
 
 void init_iso20_ac_der_FrequencyWattCurveType(struct iso20_ac_der_FrequencyWattCurveType* FrequencyWattCurveType) {
@@ -141,15 +141,15 @@ void init_iso20_ac_der_LimitMaxDischargePowerType(struct iso20_ac_der_LimitMaxDi
     LimitMaxDischargePowerType->PowerMonitoringMustTripCurve_isUsed = 0u;
 }
 
+void init_iso20_ac_der_US_FrequencyDroopSettingsType(struct iso20_ac_der_US_FrequencyDroopSettingsType* US_FrequencyDroopSettingsType) {
+    US_FrequencyDroopSettingsType->OpenLoopResponseTime_isUsed = 0u;
+}
+
 void init_iso20_ac_der_EU_FrequencyDroopSettingsType(struct iso20_ac_der_EU_FrequencyDroopSettingsType* EU_FrequencyDroopSettingsType) {
     EU_FrequencyDroopSettingsType->DeactivationTime_isUsed = 0u;
     EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl_isUsed = 0u;
     EU_FrequencyDroopSettingsType->HysteresisControl_isUsed = 0u;
     EU_FrequencyDroopSettingsType->MaxReactionTime_isUsed = 0u;
-}
-
-void init_iso20_ac_der_US_FrequencyDroopSettingsType(struct iso20_ac_der_US_FrequencyDroopSettingsType* US_FrequencyDroopSettingsType) {
-    US_FrequencyDroopSettingsType->OpenLoopResponseTime_isUsed = 0u;
 }
 
 void init_iso20_ac_der_DERCurveType(struct iso20_ac_der_DERCurveType* DERCurveType) {

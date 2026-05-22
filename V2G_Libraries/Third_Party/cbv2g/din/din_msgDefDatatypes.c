@@ -105,19 +105,18 @@ void init_din_CanonicalizationMethodType(struct din_CanonicalizationMethodType* 
     CanonicalizationMethodType->ANY_isUsed = 0u;
 }
 
-void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType) {
-    DC_EVStatusType->EVCabinConditioning_isUsed = 0u;
-    DC_EVStatusType->EVRESSConditioning_isUsed = 0u;
+void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
+    DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
+}
+
+void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
+    PhysicalValueType->Unit_isUsed = 0u;
 }
 
 void init_din_KeyValueType(struct din_KeyValueType* KeyValueType) {
     KeyValueType->DSAKeyValue_isUsed = 0u;
     KeyValueType->RSAKeyValue_isUsed = 0u;
     KeyValueType->ANY_isUsed = 0u;
-}
-
-void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
-    PhysicalValueType->Unit_isUsed = 0u;
 }
 
 void init_din_PGPDataType(struct din_PGPDataType* PGPDataType) {
@@ -227,8 +226,9 @@ void init_din_DC_EVSEChargeParameterType(struct din_DC_EVSEChargeParameterType* 
     DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered_isUsed = 0u;
 }
 
-void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
-    DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
+void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType) {
+    DC_EVStatusType->EVCabinConditioning_isUsed = 0u;
+    DC_EVStatusType->EVRESSConditioning_isUsed = 0u;
 }
 
 void init_din_EVChargeParameterType(struct din_EVChargeParameterType* EVChargeParameterType) {

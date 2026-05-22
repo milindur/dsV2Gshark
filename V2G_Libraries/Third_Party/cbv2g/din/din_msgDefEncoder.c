@@ -44,10 +44,10 @@ static int encode_din_SalesTariffType(exi_bitstream_t* stream, const struct din_
 static int encode_din_TransformsType(exi_bitstream_t* stream, const struct din_TransformsType* TransformsType);
 static int encode_din_X509IssuerSerialType(exi_bitstream_t* stream, const struct din_X509IssuerSerialType* X509IssuerSerialType);
 static int encode_din_CanonicalizationMethodType(exi_bitstream_t* stream, const struct din_CanonicalizationMethodType* CanonicalizationMethodType);
-static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_DC_EVStatusType* DC_EVStatusType);
-static int encode_din_KeyValueType(exi_bitstream_t* stream, const struct din_KeyValueType* KeyValueType);
+static int encode_din_DC_EVSEStatusType(exi_bitstream_t* stream, const struct din_DC_EVSEStatusType* DC_EVSEStatusType);
 static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct din_PhysicalValueType* PhysicalValueType);
 static int encode_din_ParameterType(exi_bitstream_t* stream, const struct din_ParameterType* ParameterType);
+static int encode_din_KeyValueType(exi_bitstream_t* stream, const struct din_KeyValueType* KeyValueType);
 static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPDataType* PGPDataType);
 static int encode_din_ParameterSetType(exi_bitstream_t* stream, const struct din_ParameterSetType* ParameterSetType);
 static int encode_din_ProfileEntryType(exi_bitstream_t* stream, const struct din_ProfileEntryType* ProfileEntryType);
@@ -67,10 +67,10 @@ static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const 
 static int encode_din_ServiceChargeType(exi_bitstream_t* stream, const struct din_ServiceChargeType* ServiceChargeType);
 static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct din_ChargingProfileType* ChargingProfileType);
 static int encode_din_CertificateChainType(exi_bitstream_t* stream, const struct din_CertificateChainType* CertificateChainType);
+static int encode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType);
+static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_DC_EVStatusType* DC_EVStatusType);
 static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVChargeParameterType* DC_EVChargeParameterType);
 static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, const struct din_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType);
-static int encode_din_DC_EVSEStatusType(exi_bitstream_t* stream, const struct din_DC_EVSEStatusType* DC_EVSEStatusType);
-static int encode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType);
 static int encode_din_EVChargeParameterType(exi_bitstream_t* stream, const struct din_EVChargeParameterType* EVChargeParameterType);
 static int encode_din_EVPowerDeliveryParameterType(exi_bitstream_t* stream, const struct din_EVPowerDeliveryParameterType* EVPowerDeliveryParameterType);
 static int encode_din_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_EVSEChargeParameterType* EVSEChargeParameterType);
@@ -1914,10 +1914,10 @@ static int encode_din_CanonicalizationMethodType(exi_bitstream_t* stream, const 
     return error;
 }
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVStatusType; base type=EVStatusType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: EVReady, boolean (1, 1); EVCabinConditioning, boolean (0, 1); EVRESSConditioning, boolean (0, 1); EVErrorCode, DC_EVErrorCodeType (1, 1); EVRESSSOC, percentValueType (1, 1);
-static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_DC_EVStatusType* DC_EVStatusType) {
+// Particle: EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
+static int encode_din_DC_EVSEStatusType(exi_bitstream_t* stream, const struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
     int grammar_id = 44;
     int done = 0;
     int error = 0;
@@ -1927,39 +1927,39 @@ static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_
         switch (grammar_id)
         {
         case 44:
-            // Grammar: ID=44; read/write bits=1; START (EVReady)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (boolean); next=45
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVReady);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 45;
-                        }
-                    }
-                }
-            }
-            break;
-        case 45:
-            // Grammar: ID=45; read/write bits=2; START (EVCabinConditioning), START (EVRESSConditioning), START (EVErrorCode)
-            if (DC_EVStatusType->EVCabinConditioning_isUsed == 1u)
+            // Grammar: ID=44; read/write bits=2; START (EVSEIsolationStatus), START (EVSEStatusCode)
+            if (DC_EVSEStatusType->EVSEIsolationStatus_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVCabinConditioning, boolean); next=46
+                    // Event: START (EVSEIsolationStatus, string); next=45
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVCabinConditioning);
+                        error = exi_basetypes_encoder_nbit_uint(stream, 2, DC_EVSEStatusType->EVSEIsolationStatus);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 45;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVSEStatusCode, string); next=46
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVSEStatusType->EVSEStatusCode);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
                             // encode END Element
@@ -1972,130 +1972,61 @@ static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_
                     }
                 }
             }
-            else if (DC_EVStatusType->EVRESSConditioning_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVRESSConditioning, boolean); next=47
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVRESSConditioning);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 47;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVErrorCode, string); next=48
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 48;
-                            }
-                        }
-                    }
-                }
-            }
             break;
-        case 46:
-            // Grammar: ID=46; read/write bits=2; START (EVRESSConditioning), START (EVErrorCode)
-            if (DC_EVStatusType->EVRESSConditioning_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVRESSConditioning, boolean); next=47
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVRESSConditioning);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 47;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVErrorCode, string); next=48
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 48;
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        case 47:
-            // Grammar: ID=47; read/write bits=1; START (EVErrorCode)
+        case 45:
+            // Grammar: ID=45; read/write bits=1; START (EVSEStatusCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=48
+                // Event: START (string); next=46
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
+                    error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVSEStatusType->EVSEStatusCode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 48;
+                            grammar_id = 46;
                         }
                     }
                 }
             }
             break;
-        case 48:
-            // Grammar: ID=48; read/write bits=1; START (EVRESSSOC)
+        case 46:
+            // Grammar: ID=46; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (byte); next=3
+                // Event: START (unsignedLong); next=47
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 7, (uint32_t)DC_EVStatusType->EVRESSSOC);
+                    error = exi_basetypes_encoder_uint_32(stream, DC_EVSEStatusType->NotificationMaxDelay);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            grammar_id = 47;
+                        }
+                    }
+                }
+            }
+            break;
+        case 47:
+            // Grammar: ID=47; read/write bits=1; START (EVSENotification)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (string); next=3
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    error = exi_basetypes_encoder_nbit_uint(stream, 2, DC_EVSEStatusType->EVSENotification);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -2131,101 +2062,11 @@ static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_
     return error;
 }
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyValue; type={http://www.w3.org/2000/09/xmldsig#}KeyValueType; base type=; content type=mixed;
-//          abstract=False; final=False; choice=True;
-// Particle: DSAKeyValue, DSAKeyValueType (0, 1); RSAKeyValue, RSAKeyValueType (0, 1); ANY, anyType (0, 1);
-static int encode_din_KeyValueType(exi_bitstream_t* stream, const struct din_KeyValueType* KeyValueType) {
-    int grammar_id = 49;
-    int done = 0;
-    int error = 0;
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 49:
-            // Grammar: ID=49; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
-            if (KeyValueType->DSAKeyValue_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (DSAKeyValue, DSAKeyValueType); next=3
-                    error = encode_din_DSAKeyValueType(stream, &KeyValueType->DSAKeyValue);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 3;
-                    }
-                }
-            }
-            else if (KeyValueType->RSAKeyValue_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (RSAKeyValue, RSAKeyValueType); next=3
-                    error = encode_din_RSAKeyValueType(stream, &KeyValueType->RSAKeyValue);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 3;
-                    }
-                }
-            }
-            else if (KeyValueType->ANY_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (ANY, base64Binary); next=3
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)KeyValueType->ANY.bytesLen);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            error = exi_basetypes_encoder_bytes(stream, KeyValueType->ANY.bytesLen, KeyValueType->ANY.bytes, din_anyType_BYTES_SIZE);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                // encode END Element
-                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                                if (error == EXI_ERROR__NO_ERROR)
-                                {
-                                    grammar_id = 3;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: END Element; next=4
-                done = 1;
-                grammar_id = 4;
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}MeterReading; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVSEMaximumCurrentLimit; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (0, 1); Value, short (1, 1);
 static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct din_PhysicalValueType* PhysicalValueType) {
-    int grammar_id = 50;
+    int grammar_id = 48;
     int done = 0;
     int error = 0;
 
@@ -2233,12 +2074,12 @@ static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct di
     {
         switch (grammar_id)
         {
-        case 50:
-            // Grammar: ID=50; read/write bits=1; START (Multiplier)
+        case 48:
+            // Grammar: ID=48; read/write bits=1; START (Multiplier)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (byte); next=51
+                // Event: START (byte); next=49
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -2249,20 +2090,20 @@ static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct di
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 51;
+                            grammar_id = 49;
                         }
                     }
                 }
             }
             break;
-        case 51:
-            // Grammar: ID=51; read/write bits=2; START (Unit), START (Value)
+        case 49:
+            // Grammar: ID=49; read/write bits=2; START (Unit), START (Value)
             if (PhysicalValueType->Unit_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Unit, string); next=52
+                    // Event: START (Unit, string); next=50
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2273,7 +2114,7 @@ static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct di
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 52;
+                                grammar_id = 50;
                             }
                         }
                     }
@@ -2302,8 +2143,8 @@ static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct di
                 }
             }
             break;
-        case 52:
-            // Grammar: ID=52; read/write bits=1; START (Value)
+        case 50:
+            // Grammar: ID=50; read/write bits=1; START (Value)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -2351,7 +2192,7 @@ static int encode_din_PhysicalValueType(exi_bitstream_t* stream, const struct di
 //          abstract=False; final=False; choice=True;
 // Particle: Name, string (1, 1); ValueType, valueType (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); physicalValue, PhysicalValueType (0, 1); stringValue, string (0, 1);
 static int encode_din_ParameterType(exi_bitstream_t* stream, const struct din_ParameterType* ParameterType) {
-    int grammar_id = 53;
+    int grammar_id = 51;
     int done = 0;
     int error = 0;
 
@@ -2359,12 +2200,12 @@ static int encode_din_ParameterType(exi_bitstream_t* stream, const struct din_Pa
     {
         switch (grammar_id)
         {
-        case 53:
-            // Grammar: ID=53; read/write bits=1; START (Name)
+        case 51:
+            // Grammar: ID=51; read/write bits=1; START (Name)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=54
+                // Event: START (string); next=52
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ParameterType->Name.charactersLen + 2));
@@ -2373,27 +2214,27 @@ static int encode_din_ParameterType(exi_bitstream_t* stream, const struct din_Pa
                     error = exi_basetypes_encoder_characters(stream, ParameterType->Name.charactersLen, ParameterType->Name.characters, din_Name_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 54;
+                        grammar_id = 52;
                     }
                 }
             }
             break;
-        case 54:
-            // Grammar: ID=54; read/write bits=1; START (ValueType)
+        case 52:
+            // Grammar: ID=52; read/write bits=1; START (ValueType)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=55
+                // Event: START (string); next=53
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, ParameterType->ValueType);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 55;
+                    grammar_id = 53;
                 }
             }
             break;
-        case 55:
-            // Grammar: ID=55; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (physicalValue), START (stringValue)
+        case 53:
+            // Grammar: ID=53; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (physicalValue), START (stringValue)
             if (ParameterType->boolValue_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
@@ -2548,11 +2389,11 @@ static int encode_din_ParameterType(exi_bitstream_t* stream, const struct din_Pa
     return error;
 }
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}PGPData; type={http://www.w3.org/2000/09/xmldsig#}PGPDataType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; choice=True; sequence=True (2;
-// Particle: PGPKeyID, base64Binary (1, 1); PGPKeyPacket, base64Binary (0, 1); ANY, anyType (0, 1); PGPKeyPacket, base64Binary (1, 1); ANY, anyType (0, 1);
-static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPDataType* PGPDataType) {
-    int grammar_id = 56;
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyValue; type={http://www.w3.org/2000/09/xmldsig#}KeyValueType; base type=; content type=mixed;
+//          abstract=False; final=False; choice=True;
+// Particle: DSAKeyValue, DSAKeyValueType (0, 1); RSAKeyValue, RSAKeyValueType (0, 1); ANY, anyType (0, 1);
+static int encode_din_KeyValueType(exi_bitstream_t* stream, const struct din_KeyValueType* KeyValueType) {
+    int grammar_id = 54;
     int done = 0;
     int error = 0;
 
@@ -2560,14 +2401,104 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
     {
         switch (grammar_id)
         {
-        case 56:
-            // Grammar: ID=56; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
+        case 54:
+            // Grammar: ID=54; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
+            if (KeyValueType->DSAKeyValue_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (DSAKeyValue, DSAKeyValueType); next=3
+                    error = encode_din_DSAKeyValueType(stream, &KeyValueType->DSAKeyValue);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 3;
+                    }
+                }
+            }
+            else if (KeyValueType->RSAKeyValue_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (RSAKeyValue, RSAKeyValueType); next=3
+                    error = encode_din_RSAKeyValueType(stream, &KeyValueType->RSAKeyValue);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 3;
+                    }
+                }
+            }
+            else if (KeyValueType->ANY_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (ANY, base64Binary); next=3
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)KeyValueType->ANY.bytesLen);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            error = exi_basetypes_encoder_bytes(stream, KeyValueType->ANY.bytesLen, KeyValueType->ANY.bytes, din_anyType_BYTES_SIZE);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                // encode END Element
+                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                                if (error == EXI_ERROR__NO_ERROR)
+                                {
+                                    grammar_id = 3;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: END Element; next=4
+                done = 1;
+                grammar_id = 4;
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}PGPData; type={http://www.w3.org/2000/09/xmldsig#}PGPDataType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; choice=True; sequence=True (2;
+// Particle: PGPKeyID, base64Binary (1, 1); PGPKeyPacket, base64Binary (0, 1); ANY, anyType (0, 1); PGPKeyPacket, base64Binary (1, 1); ANY, anyType (0, 1);
+static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPDataType* PGPDataType) {
+    int grammar_id = 55;
+    int done = 0;
+    int error = 0;
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 55:
+            // Grammar: ID=55; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
             if (PGPDataType->choice_1_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PGPKeyID, base64Binary); next=57
+                    // Event: START (PGPKeyID, base64Binary); next=56
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2581,7 +2512,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 57;
+                                    grammar_id = 56;
                                 }
                             }
                         }
@@ -2593,7 +2524,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PGPKeyPacket, base64Binary); next=58
+                    // Event: START (PGPKeyPacket, base64Binary); next=57
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2607,7 +2538,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 58;
+                                    grammar_id = 57;
                                 }
                             }
                         }
@@ -2615,14 +2546,14 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                 }
             }
             break;
-        case 57:
-            // Grammar: ID=57; read/write bits=3; START (PGPKeyPacket), START (ANY), END Element, START (ANY)
+        case 56:
+            // Grammar: ID=56; read/write bits=3; START (PGPKeyPacket), START (ANY), END Element, START (ANY)
             if (PGPDataType->choice_1_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PGPKeyPacket, base64Binary); next=58
+                    // Event: START (PGPKeyPacket, base64Binary); next=57
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2636,7 +2567,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 58;
+                                    grammar_id = 57;
                                 }
                             }
                         }
@@ -2653,7 +2584,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ANY, base64Binary); next=59
+                    // Event: START (ANY, base64Binary); next=58
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2667,7 +2598,51 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 59;
+                                    grammar_id = 58;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                }
+            }
+            break;
+        case 57:
+            // Grammar: ID=57; read/write bits=3; START (ANY), END Element, END Element, START (ANY)
+            // ***** //
+            //{
+                // No code for unsupported generic event: ANY (index=0)
+            //{
+            // ***** //
+            if (PGPDataType->choice_1_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (ANY, base64Binary); next=58
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)PGPDataType->choice_1.ANY.bytesLen);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            error = exi_basetypes_encoder_bytes(stream, PGPDataType->choice_1.ANY.bytesLen, PGPDataType->choice_1.ANY.bytes, din_anyType_BYTES_SIZE);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                // encode END Element
+                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                                if (error == EXI_ERROR__NO_ERROR)
+                                {
+                                    grammar_id = 58;
                                 }
                             }
                         }
@@ -2686,55 +2661,11 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
             }
             break;
         case 58:
-            // Grammar: ID=58; read/write bits=3; START (ANY), END Element, END Element, START (ANY)
-            // ***** //
-            //{
-                // No code for unsupported generic event: ANY (index=0)
-            //{
-            // ***** //
-            if (PGPDataType->choice_1_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (ANY, base64Binary); next=59
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)PGPDataType->choice_1.ANY.bytesLen);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            error = exi_basetypes_encoder_bytes(stream, PGPDataType->choice_1.ANY.bytesLen, PGPDataType->choice_1.ANY.bytes, din_anyType_BYTES_SIZE);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                // encode END Element
-                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                                if (error == EXI_ERROR__NO_ERROR)
-                                {
-                                    grammar_id = 59;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
-                }
-            }
-            break;
-        case 59:
-            // Grammar: ID=59; read/write bits=1; START (PGPKeyPacket)
+            // Grammar: ID=58; read/write bits=1; START (PGPKeyPacket)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=60
+                // Event: START (base64Binary); next=59
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -2748,15 +2679,15 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 60;
+                                grammar_id = 59;
                             }
                         }
                     }
                 }
             }
             break;
-        case 60:
-            // Grammar: ID=60; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 59:
+            // Grammar: ID=59; read/write bits=2; START (ANY), END Element, START (ANY)
             // ***** //
             //{
                 // No code for unsupported generic event: ANY (index=0)
@@ -2767,7 +2698,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ANY, base64Binary); next=59
+                    // Event: START (ANY, base64Binary); next=58
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2781,7 +2712,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 59;
+                                    grammar_id = 58;
                                 }
                             }
                         }
@@ -2826,7 +2757,7 @@ static int encode_din_PGPDataType(exi_bitstream_t* stream, const struct din_PGPD
 //          abstract=False; final=False;
 // Particle: ParameterSetID, short (1, 1); Parameter, ParameterType (1, 1) (original max unbounded);
 static int encode_din_ParameterSetType(exi_bitstream_t* stream, const struct din_ParameterSetType* ParameterSetType) {
-    int grammar_id = 61;
+    int grammar_id = 60;
     int done = 0;
     int error = 0;
 
@@ -2834,12 +2765,12 @@ static int encode_din_ParameterSetType(exi_bitstream_t* stream, const struct din
     {
         switch (grammar_id)
         {
-        case 61:
-            // Grammar: ID=61; read/write bits=1; START (ParameterSetID)
+        case 60:
+            // Grammar: ID=60; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (int); next=62
+                // Event: START (int); next=61
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -2850,27 +2781,27 @@ static int encode_din_ParameterSetType(exi_bitstream_t* stream, const struct din
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 62;
+                            grammar_id = 61;
                         }
                     }
                 }
             }
             break;
-        case 62:
-            // Grammar: ID=62; read/write bits=1; START (Parameter)
+        case 61:
+            // Grammar: ID=61; read/write bits=1; START (Parameter)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ParameterType); next=63
+                // Event: START (ParameterType); next=62
                 error = encode_din_ParameterType(stream, &ParameterSetType->Parameter);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 63;
+                    grammar_id = 62;
                 }
             }
             break;
-        case 63:
-            // Grammar: ID=63; read/write bits=2; START (Parameter), END Element
+        case 62:
+            // Grammar: ID=62; read/write bits=2; START (Parameter), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -2922,7 +2853,7 @@ static int encode_din_ParameterSetType(exi_bitstream_t* stream, const struct din
 //          abstract=False; final=False;
 // Particle: ChargingProfileEntryStart, unsignedInt (1, 1); ChargingProfileEntryMaxPower, PMaxType (1, 1);
 static int encode_din_ProfileEntryType(exi_bitstream_t* stream, const struct din_ProfileEntryType* ProfileEntryType) {
-    int grammar_id = 64;
+    int grammar_id = 63;
     int done = 0;
     int error = 0;
 
@@ -2930,12 +2861,12 @@ static int encode_din_ProfileEntryType(exi_bitstream_t* stream, const struct din
     {
         switch (grammar_id)
         {
-        case 64:
-            // Grammar: ID=64; read/write bits=1; START (ChargingProfileEntryStart)
+        case 63:
+            // Grammar: ID=63; read/write bits=1; START (ChargingProfileEntryStart)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedLong); next=65
+                // Event: START (unsignedLong); next=64
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -2946,14 +2877,14 @@ static int encode_din_ProfileEntryType(exi_bitstream_t* stream, const struct din
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 65;
+                            grammar_id = 64;
                         }
                     }
                 }
             }
             break;
-        case 65:
-            // Grammar: ID=65; read/write bits=1; START (ChargingProfileEntryMaxPower)
+        case 64:
+            // Grammar: ID=64; read/write bits=1; START (ChargingProfileEntryMaxPower)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3001,7 +2932,7 @@ static int encode_din_ProfileEntryType(exi_bitstream_t* stream, const struct din
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1); DigestMethod, DigestMethodType (1, 1); DigestValue, DigestValueType (1, 1);
 static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_ReferenceType* ReferenceType) {
-    int grammar_id = 66;
+    int grammar_id = 65;
     int done = 0;
     int error = 0;
 
@@ -3009,14 +2940,14 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
     {
         switch (grammar_id)
         {
-        case 66:
-            // Grammar: ID=66; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
+        case 65:
+            // Grammar: ID=65; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
             if (ReferenceType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=67
+                    // Event: START (Id, NCName); next=66
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->Id.charactersLen + 2));
@@ -3025,7 +2956,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->Id.charactersLen, ReferenceType->Id.characters, din_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 67;
+                            grammar_id = 66;
                         }
                     }
                 }
@@ -3035,7 +2966,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Type, anyURI); next=68
+                    // Event: START (Type, anyURI); next=67
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->Type.charactersLen + 2));
@@ -3044,7 +2975,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->Type.charactersLen, ReferenceType->Type.characters, din_Type_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 68;
+                            grammar_id = 67;
                         }
                     }
                 }
@@ -3054,7 +2985,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (URI, anyURI); next=69
+                    // Event: START (URI, anyURI); next=68
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->URI.charactersLen + 2));
@@ -3063,7 +2994,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->URI.charactersLen, ReferenceType->URI.characters, din_URI_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 69;
+                            grammar_id = 68;
                         }
                     }
                 }
@@ -3073,11 +3004,11 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Transforms, TransformsType); next=70
+                    // Event: START (Transforms, TransformsType); next=69
                     error = encode_din_TransformsType(stream, &ReferenceType->Transforms);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 70;
+                        grammar_id = 69;
                     }
                 }
             }
@@ -3086,23 +3017,23 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 4);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DigestMethod, DigestMethodType); next=71
+                    // Event: START (DigestMethod, DigestMethodType); next=70
                     error = encode_din_DigestMethodType(stream, &ReferenceType->DigestMethod);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 71;
+                        grammar_id = 70;
                     }
                 }
             }
             break;
-        case 67:
-            // Grammar: ID=67; read/write bits=3; START (Type), START (URI), START (Transforms), START (DigestMethod)
+        case 66:
+            // Grammar: ID=66; read/write bits=3; START (Type), START (URI), START (Transforms), START (DigestMethod)
             if (ReferenceType->Type_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Type, anyURI); next=68
+                    // Event: START (Type, anyURI); next=67
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->Type.charactersLen + 2));
@@ -3111,7 +3042,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->Type.charactersLen, ReferenceType->Type.characters, din_Type_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 68;
+                            grammar_id = 67;
                         }
                     }
                 }
@@ -3121,7 +3052,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (URI, anyURI); next=69
+                    // Event: START (URI, anyURI); next=68
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->URI.charactersLen + 2));
@@ -3130,7 +3061,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->URI.charactersLen, ReferenceType->URI.characters, din_URI_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 69;
+                            grammar_id = 68;
                         }
                     }
                 }
@@ -3140,11 +3071,11 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Transforms, TransformsType); next=70
+                    // Event: START (Transforms, TransformsType); next=69
                     error = encode_din_TransformsType(stream, &ReferenceType->Transforms);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 70;
+                        grammar_id = 69;
                     }
                 }
             }
@@ -3153,23 +3084,23 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DigestMethod, DigestMethodType); next=71
+                    // Event: START (DigestMethod, DigestMethodType); next=70
                     error = encode_din_DigestMethodType(stream, &ReferenceType->DigestMethod);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 71;
+                        grammar_id = 70;
                     }
                 }
             }
             break;
-        case 68:
-            // Grammar: ID=68; read/write bits=2; START (URI), START (Transforms), START (DigestMethod)
+        case 67:
+            // Grammar: ID=67; read/write bits=2; START (URI), START (Transforms), START (DigestMethod)
             if (ReferenceType->URI_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (URI, anyURI); next=69
+                    // Event: START (URI, anyURI); next=68
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ReferenceType->URI.charactersLen + 2));
@@ -3178,7 +3109,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                         error = exi_basetypes_encoder_characters(stream, ReferenceType->URI.charactersLen, ReferenceType->URI.characters, din_URI_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 69;
+                            grammar_id = 68;
                         }
                     }
                 }
@@ -3188,11 +3119,11 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Transforms, TransformsType); next=70
+                    // Event: START (Transforms, TransformsType); next=69
                     error = encode_din_TransformsType(stream, &ReferenceType->Transforms);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 70;
+                        grammar_id = 69;
                     }
                 }
             }
@@ -3201,27 +3132,27 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DigestMethod, DigestMethodType); next=71
+                    // Event: START (DigestMethod, DigestMethodType); next=70
                     error = encode_din_DigestMethodType(stream, &ReferenceType->DigestMethod);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 71;
+                        grammar_id = 70;
                     }
                 }
             }
             break;
-        case 69:
-            // Grammar: ID=69; read/write bits=2; START (Transforms), START (DigestMethod)
+        case 68:
+            // Grammar: ID=68; read/write bits=2; START (Transforms), START (DigestMethod)
             if (ReferenceType->Transforms_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Transforms, TransformsType); next=70
+                    // Event: START (Transforms, TransformsType); next=69
                     error = encode_din_TransformsType(stream, &ReferenceType->Transforms);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 70;
+                        grammar_id = 69;
                     }
                 }
             }
@@ -3230,30 +3161,30 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DigestMethod, DigestMethodType); next=71
+                    // Event: START (DigestMethod, DigestMethodType); next=70
                     error = encode_din_DigestMethodType(stream, &ReferenceType->DigestMethod);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 71;
+                        grammar_id = 70;
                     }
                 }
             }
             break;
-        case 70:
-            // Grammar: ID=70; read/write bits=1; START (DigestMethod)
+        case 69:
+            // Grammar: ID=69; read/write bits=1; START (DigestMethod)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (DigestMethodType); next=71
+                // Event: START (DigestMethodType); next=70
                 error = encode_din_DigestMethodType(stream, &ReferenceType->DigestMethod);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 71;
+                    grammar_id = 70;
                 }
             }
             break;
-        case 71:
-            // Grammar: ID=71; read/write bits=1; START (DigestValue)
+        case 70:
+            // Grammar: ID=70; read/write bits=1; START (DigestValue)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3305,7 +3236,7 @@ static int encode_din_ReferenceType(exi_bitstream_t* stream, const struct din_Re
 //          abstract=False; final=False;
 // Particle: Type, anyURI (0, 1); URI, anyURI (0, 1); Transforms, TransformsType (0, 1);
 static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct din_RetrievalMethodType* RetrievalMethodType) {
-    int grammar_id = 72;
+    int grammar_id = 71;
     int done = 0;
     int error = 0;
 
@@ -3313,14 +3244,14 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 72:
-            // Grammar: ID=72; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
+        case 71:
+            // Grammar: ID=71; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
             if (RetrievalMethodType->Type_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Type, anyURI); next=73
+                    // Event: START (Type, anyURI); next=72
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(RetrievalMethodType->Type.charactersLen + 2));
@@ -3329,7 +3260,7 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_characters(stream, RetrievalMethodType->Type.charactersLen, RetrievalMethodType->Type.characters, din_Type_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 73;
+                            grammar_id = 72;
                         }
                     }
                 }
@@ -3339,7 +3270,7 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (URI, anyURI); next=74
+                    // Event: START (URI, anyURI); next=73
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(RetrievalMethodType->URI.charactersLen + 2));
@@ -3348,7 +3279,7 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_characters(stream, RetrievalMethodType->URI.charactersLen, RetrievalMethodType->URI.characters, din_URI_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 74;
+                            grammar_id = 73;
                         }
                     }
                 }
@@ -3377,14 +3308,14 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                 }
             }
             break;
-        case 73:
-            // Grammar: ID=73; read/write bits=2; START (URI), START (Transforms), END Element
+        case 72:
+            // Grammar: ID=72; read/write bits=2; START (URI), START (Transforms), END Element
             if (RetrievalMethodType->URI_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (URI, anyURI); next=74
+                    // Event: START (URI, anyURI); next=73
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(RetrievalMethodType->URI.charactersLen + 2));
@@ -3393,7 +3324,7 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_characters(stream, RetrievalMethodType->URI.charactersLen, RetrievalMethodType->URI.characters, din_URI_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 74;
+                            grammar_id = 73;
                         }
                     }
                 }
@@ -3422,8 +3353,8 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
                 }
             }
             break;
-        case 74:
-            // Grammar: ID=74; read/write bits=2; START (Transforms), END Element
+        case 73:
+            // Grammar: ID=73; read/write bits=2; START (Transforms), END Element
             if (RetrievalMethodType->Transforms_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -3475,7 +3406,7 @@ static int encode_din_RetrievalMethodType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: SAScheduleTupleID, SAIDType (1, 1); PMaxSchedule, PMaxScheduleType (1, 1); SalesTariff, SalesTariffType (0, 1);
 static int encode_din_SAScheduleTupleType(exi_bitstream_t* stream, const struct din_SAScheduleTupleType* SAScheduleTupleType) {
-    int grammar_id = 75;
+    int grammar_id = 74;
     int done = 0;
     int error = 0;
 
@@ -3483,12 +3414,12 @@ static int encode_din_SAScheduleTupleType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 75:
-            // Grammar: ID=75; read/write bits=1; START (SAScheduleTupleID)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (SAScheduleTupleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (short); next=76
+                // Event: START (short); next=75
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3499,27 +3430,27 @@ static int encode_din_SAScheduleTupleType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 76;
+                            grammar_id = 75;
                         }
                     }
                 }
             }
             break;
-        case 76:
-            // Grammar: ID=76; read/write bits=1; START (PMaxSchedule)
+        case 75:
+            // Grammar: ID=75; read/write bits=1; START (PMaxSchedule)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (PMaxScheduleType); next=77
+                // Event: START (PMaxScheduleType); next=76
                 error = encode_din_PMaxScheduleType(stream, &SAScheduleTupleType->PMaxSchedule);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 77;
+                    grammar_id = 76;
                 }
             }
             break;
-        case 77:
-            // Grammar: ID=77; read/write bits=2; START (SalesTariff), END Element
+        case 76:
+            // Grammar: ID=76; read/write bits=2; START (SalesTariff), END Element
             if (SAScheduleTupleType->SalesTariff_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -3571,7 +3502,7 @@ static int encode_din_SAScheduleTupleType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
 static int encode_din_SPKIDataType(exi_bitstream_t* stream, const struct din_SPKIDataType* SPKIDataType) {
-    int grammar_id = 78;
+    int grammar_id = 77;
     int done = 0;
     int error = 0;
 
@@ -3579,12 +3510,12 @@ static int encode_din_SPKIDataType(exi_bitstream_t* stream, const struct din_SPK
     {
         switch (grammar_id)
         {
-        case 78:
-            // Grammar: ID=78; read/write bits=1; START (SPKISexp)
+        case 77:
+            // Grammar: ID=77; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=79
+                // Event: START (base64Binary); next=78
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3598,15 +3529,15 @@ static int encode_din_SPKIDataType(exi_bitstream_t* stream, const struct din_SPK
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 79;
+                                grammar_id = 78;
                             }
                         }
                     }
                 }
             }
             break;
-        case 79:
-            // Grammar: ID=79; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 78:
+            // Grammar: ID=78; read/write bits=2; START (ANY), END Element, START (ANY)
             // ***** //
             //{
                 // No code for unsupported generic event: ANY (index=0)
@@ -3676,7 +3607,7 @@ static int encode_din_SPKIDataType(exi_bitstream_t* stream, const struct din_SPK
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); ParameterSetID, short (0, 1);
 static int encode_din_SelectedServiceType(exi_bitstream_t* stream, const struct din_SelectedServiceType* SelectedServiceType) {
-    int grammar_id = 80;
+    int grammar_id = 79;
     int done = 0;
     int error = 0;
 
@@ -3684,12 +3615,12 @@ static int encode_din_SelectedServiceType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 80:
-            // Grammar: ID=80; read/write bits=1; START (ServiceID)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=81
+                // Event: START (unsignedShort); next=80
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3700,14 +3631,14 @@ static int encode_din_SelectedServiceType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 81;
+                            grammar_id = 80;
                         }
                     }
                 }
             }
             break;
-        case 81:
-            // Grammar: ID=81; read/write bits=2; START (ParameterSetID), END Element
+        case 80:
+            // Grammar: ID=80; read/write bits=2; START (ParameterSetID), END Element
             if (SelectedServiceType->ParameterSetID_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -3768,7 +3699,7 @@ static int encode_din_SelectedServiceType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); ServiceName, serviceNameType (0, 1); ServiceCategory, serviceCategoryType (1, 1); ServiceScope, serviceScopeType (0, 1);
 static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_ServiceTagType* ServiceTagType) {
-    int grammar_id = 82;
+    int grammar_id = 81;
     int done = 0;
     int error = 0;
 
@@ -3776,12 +3707,12 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
     {
         switch (grammar_id)
         {
-        case 82:
-            // Grammar: ID=82; read/write bits=1; START (ServiceID)
+        case 81:
+            // Grammar: ID=81; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=83
+                // Event: START (unsignedShort); next=82
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3792,20 +3723,20 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 83;
+                            grammar_id = 82;
                         }
                     }
                 }
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=2; START (ServiceName), START (ServiceCategory)
+        case 82:
+            // Grammar: ID=82; read/write bits=2; START (ServiceName), START (ServiceCategory)
             if (ServiceTagType->ServiceName_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ServiceName, string); next=84
+                    // Event: START (ServiceName, string); next=83
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -3821,7 +3752,7 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 84;
+                                    grammar_id = 83;
                                 }
                             }
                         }
@@ -3833,7 +3764,7 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ServiceCategory, string); next=85
+                    // Event: START (ServiceCategory, string); next=84
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3844,19 +3775,19 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 85;
+                                grammar_id = 84;
                             }
                         }
                     }
                 }
             }
             break;
-        case 84:
-            // Grammar: ID=84; read/write bits=1; START (ServiceCategory)
+        case 83:
+            // Grammar: ID=83; read/write bits=1; START (ServiceCategory)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=85
+                // Event: START (string); next=84
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3867,14 +3798,14 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 85;
+                            grammar_id = 84;
                         }
                     }
                 }
             }
             break;
-        case 85:
-            // Grammar: ID=85; read/write bits=2; START (ServiceScope), END Element
+        case 84:
+            // Grammar: ID=84; read/write bits=2; START (ServiceScope), END Element
             if (ServiceTagType->ServiceScope_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -3941,7 +3872,7 @@ static int encode_din_ServiceTagType(exi_bitstream_t* stream, const struct din_S
 //          abstract=False; final=False;
 // Particle: ServiceTag, ServiceTagType (1, 1); FreeService, boolean (1, 1);
 static int encode_din_ServiceType(exi_bitstream_t* stream, const struct din_ServiceType* ServiceType) {
-    int grammar_id = 86;
+    int grammar_id = 85;
     int done = 0;
     int error = 0;
 
@@ -3949,21 +3880,21 @@ static int encode_din_ServiceType(exi_bitstream_t* stream, const struct din_Serv
     {
         switch (grammar_id)
         {
-        case 86:
-            // Grammar: ID=86; read/write bits=1; START (ServiceTag)
+        case 85:
+            // Grammar: ID=85; read/write bits=1; START (ServiceTag)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ServiceTagType); next=87
+                // Event: START (ServiceTagType); next=86
                 error = encode_din_ServiceTagType(stream, &ServiceType->ServiceTag);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 87;
+                    grammar_id = 86;
                 }
             }
             break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; START (FreeService)
+        case 86:
+            // Grammar: ID=86; read/write bits=1; START (FreeService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4011,7 +3942,7 @@ static int encode_din_ServiceType(exi_bitstream_t* stream, const struct din_Serv
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
 static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct din_SignatureMethodType* SignatureMethodType) {
-    int grammar_id = 88;
+    int grammar_id = 87;
     int done = 0;
     int error = 0;
 
@@ -4019,12 +3950,12 @@ static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 88:
-            // Grammar: ID=88; read/write bits=1; START (Algorithm)
+        case 87:
+            // Grammar: ID=87; read/write bits=1; START (Algorithm)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (anyURI); next=89
+                // Event: START (anyURI); next=88
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignatureMethodType->Algorithm.charactersLen + 2));
@@ -4033,19 +3964,19 @@ static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct 
                     error = exi_basetypes_encoder_characters(stream, SignatureMethodType->Algorithm.charactersLen, SignatureMethodType->Algorithm.characters, din_Algorithm_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 89;
+                        grammar_id = 88;
                     }
                 }
             }
             break;
-        case 89:
-            // Grammar: ID=89; read/write bits=3; START (HMACOutputLength), START (ANY), END Element, START (ANY)
+        case 88:
+            // Grammar: ID=88; read/write bits=3; START (HMACOutputLength), START (ANY), END Element, START (ANY)
             if (SignatureMethodType->HMACOutputLength_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (HMACOutputLength, integer); next=90
+                    // Event: START (HMACOutputLength, integer); next=89
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -4056,7 +3987,7 @@ static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 90;
+                                grammar_id = 89;
                             }
                         }
                     }
@@ -4104,8 +4035,8 @@ static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct 
                 }
             }
             break;
-        case 90:
-            // Grammar: ID=90; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (ANY), END Element, START (ANY)
             // ***** //
             //{
                 // No code for unsupported generic event: ANY (index=0)
@@ -4175,7 +4106,7 @@ static int encode_din_SignatureMethodType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1) (original max unbounded);
 static int encode_din_SubCertificatesType(exi_bitstream_t* stream, const struct din_SubCertificatesType* SubCertificatesType) {
-    int grammar_id = 91;
+    int grammar_id = 90;
     int done = 0;
     int error = 0;
 
@@ -4183,12 +4114,12 @@ static int encode_din_SubCertificatesType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 91:
-            // Grammar: ID=91; read/write bits=1; START (Certificate)
+        case 90:
+            // Grammar: ID=90; read/write bits=1; START (Certificate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=92
+                // Event: START (base64Binary); next=91
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4202,15 +4133,15 @@ static int encode_din_SubCertificatesType(exi_bitstream_t* stream, const struct 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 92;
+                                grammar_id = 91;
                             }
                         }
                     }
                 }
             }
             break;
-        case 92:
-            // Grammar: ID=92; read/write bits=2; START (Certificate), END Element
+        case 91:
+            // Grammar: ID=91; read/write bits=2; START (Certificate), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -4275,7 +4206,7 @@ static int encode_din_SubCertificatesType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: X509IssuerSerial, X509IssuerSerialType (0, 1); X509SKI, base64Binary (0, 1); X509SubjectName, string (0, 1); X509Certificate, base64Binary (0, 1); X509CRL, base64Binary (0, 1); ANY, anyType (0, 1);
 static int encode_din_X509DataType(exi_bitstream_t* stream, const struct din_X509DataType* X509DataType) {
-    int grammar_id = 93;
+    int grammar_id = 92;
     int done = 0;
     int error = 0;
 
@@ -4283,8 +4214,8 @@ static int encode_din_X509DataType(exi_bitstream_t* stream, const struct din_X50
     {
         switch (grammar_id)
         {
-        case 93:
-            // Grammar: ID=93; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
+        case 92:
+            // Grammar: ID=92; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
             if (X509DataType->X509IssuerSerial_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
@@ -4458,7 +4389,7 @@ static int encode_din_X509DataType(exi_bitstream_t* stream, const struct din_X50
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (1, 1); EAmount, PhysicalValueType (1, 1); EVMaxVoltage, PhysicalValueType (1, 1); EVMaxCurrent, PhysicalValueType (1, 1); EVMinCurrent, PhysicalValueType (1, 1);
 static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const struct din_AC_EVChargeParameterType* AC_EVChargeParameterType) {
-    int grammar_id = 94;
+    int grammar_id = 93;
     int done = 0;
     int error = 0;
 
@@ -4466,12 +4397,12 @@ static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const st
     {
         switch (grammar_id)
         {
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (DepartureTime)
+        case 93:
+            // Grammar: ID=93; read/write bits=1; START (DepartureTime)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedLong); next=95
+                // Event: START (unsignedLong); next=94
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4482,19 +4413,32 @@ static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 95;
+                            grammar_id = 94;
                         }
                     }
                 }
             }
             break;
+        case 94:
+            // Grammar: ID=94; read/write bits=1; START (EAmount)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=95
+                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EAmount);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 95;
+                }
+            }
+            break;
         case 95:
-            // Grammar: ID=95; read/write bits=1; START (EAmount)
+            // Grammar: ID=95; read/write bits=1; START (EVMaxVoltage)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (PhysicalValueType); next=96
-                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EAmount);
+                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxVoltage);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 96;
@@ -4502,12 +4446,12 @@ static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const st
             }
             break;
         case 96:
-            // Grammar: ID=96; read/write bits=1; START (EVMaxVoltage)
+            // Grammar: ID=96; read/write bits=1; START (EVMaxCurrent)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (PhysicalValueType); next=97
-                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxVoltage);
+                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxCurrent);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 97;
@@ -4515,20 +4459,7 @@ static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const st
             }
             break;
         case 97:
-            // Grammar: ID=97; read/write bits=1; START (EVMaxCurrent)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=98
-                error = encode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxCurrent);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 98;
-                }
-            }
-            break;
-        case 98:
-            // Grammar: ID=98; read/write bits=1; START (EVMinCurrent)
+            // Grammar: ID=97; read/write bits=1; START (EVMinCurrent)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4567,7 +4498,7 @@ static int encode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False; derivation=extension;
 // Particle: PowerSwitchClosed, boolean (1, 1); RCD, boolean (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
 static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct din_AC_EVSEStatusType* AC_EVSEStatusType) {
-    int grammar_id = 99;
+    int grammar_id = 98;
     int done = 0;
     int error = 0;
 
@@ -4575,8 +4506,30 @@ static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct di
     {
         switch (grammar_id)
         {
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (PowerSwitchClosed)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (boolean); next=99
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    error = exi_basetypes_encoder_bool(stream, AC_EVSEStatusType->PowerSwitchClosed);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            grammar_id = 99;
+                        }
+                    }
+                }
+            }
+            break;
         case 99:
-            // Grammar: ID=99; read/write bits=1; START (PowerSwitchClosed)
+            // Grammar: ID=99; read/write bits=1; START (RCD)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4584,7 +4537,7 @@ static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct di
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_bool(stream, AC_EVSEStatusType->PowerSwitchClosed);
+                    error = exi_basetypes_encoder_bool(stream, AC_EVSEStatusType->RCD);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -4598,15 +4551,15 @@ static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct di
             }
             break;
         case 100:
-            // Grammar: ID=100; read/write bits=1; START (RCD)
+            // Grammar: ID=100; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (boolean); next=101
+                // Event: START (unsignedLong); next=101
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_bool(stream, AC_EVSEStatusType->RCD);
+                    error = exi_basetypes_encoder_uint_32(stream, AC_EVSEStatusType->NotificationMaxDelay);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -4620,29 +4573,7 @@ static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct di
             }
             break;
         case 101:
-            // Grammar: ID=101; read/write bits=1; START (NotificationMaxDelay)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (unsignedLong); next=102
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_uint_32(stream, AC_EVSEStatusType->NotificationMaxDelay);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 102;
-                        }
-                    }
-                }
-            }
-            break;
-        case 102:
-            // Grammar: ID=102; read/write bits=1; START (EVSENotification)
+            // Grammar: ID=101; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4690,7 +4621,7 @@ static int encode_din_AC_EVSEStatusType(exi_bitstream_t* stream, const struct di
 //          abstract=False; final=False; derivation=extension;
 // Particle: AC_EVSEStatus, AC_EVSEStatusType (1, 1); EVSEMaxVoltage, PhysicalValueType (1, 1); EVSEMaxCurrent, PhysicalValueType (1, 1); EVSEMinCurrent, PhysicalValueType (1, 1);
 static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType) {
-    int grammar_id = 103;
+    int grammar_id = 102;
     int done = 0;
     int error = 0;
 
@@ -4698,13 +4629,26 @@ static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const 
     {
         switch (grammar_id)
         {
-        case 103:
-            // Grammar: ID=103; read/write bits=1; START (AC_EVSEStatus)
+        case 102:
+            // Grammar: ID=102; read/write bits=1; START (AC_EVSEStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (EVSEStatusType); next=104
+                // Event: START (EVSEStatusType); next=103
                 error = encode_din_AC_EVSEStatusType(stream, &AC_EVSEChargeParameterType->AC_EVSEStatus);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 103;
+                }
+            }
+            break;
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (EVSEMaxVoltage)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=104
+                error = encode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxVoltage);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 104;
@@ -4712,12 +4656,12 @@ static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const 
             }
             break;
         case 104:
-            // Grammar: ID=104; read/write bits=1; START (EVSEMaxVoltage)
+            // Grammar: ID=104; read/write bits=1; START (EVSEMaxCurrent)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (PhysicalValueType); next=105
-                error = encode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxVoltage);
+                error = encode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxCurrent);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 105;
@@ -4725,20 +4669,7 @@ static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const 
             }
             break;
         case 105:
-            // Grammar: ID=105; read/write bits=1; START (EVSEMaxCurrent)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=106
-                error = encode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxCurrent);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 106;
-                }
-            }
-            break;
-        case 106:
-            // Grammar: ID=106; read/write bits=1; START (EVSEMinCurrent)
+            // Grammar: ID=105; read/write bits=1; START (EVSEMinCurrent)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4777,7 +4708,7 @@ static int encode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, const 
 //          abstract=False; final=False; derivation=extension;
 // Particle: ServiceTag, ServiceTagType (1, 1); FreeService, boolean (1, 1); EnergyTransferType, EVSESupportedEnergyTransferType (1, 1);
 static int encode_din_ServiceChargeType(exi_bitstream_t* stream, const struct din_ServiceChargeType* ServiceChargeType) {
-    int grammar_id = 107;
+    int grammar_id = 106;
     int done = 0;
     int error = 0;
 
@@ -4785,25 +4716,25 @@ static int encode_din_ServiceChargeType(exi_bitstream_t* stream, const struct di
     {
         switch (grammar_id)
         {
-        case 107:
-            // Grammar: ID=107; read/write bits=1; START (ServiceTag)
+        case 106:
+            // Grammar: ID=106; read/write bits=1; START (ServiceTag)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ServiceTagType); next=108
+                // Event: START (ServiceTagType); next=107
                 error = encode_din_ServiceTagType(stream, &ServiceChargeType->ServiceTag);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 108;
+                    grammar_id = 107;
                 }
             }
             break;
-        case 108:
-            // Grammar: ID=108; read/write bits=1; START (FreeService)
+        case 107:
+            // Grammar: ID=107; read/write bits=1; START (FreeService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (boolean); next=109
+                // Event: START (boolean); next=108
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4814,14 +4745,14 @@ static int encode_din_ServiceChargeType(exi_bitstream_t* stream, const struct di
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 109;
+                            grammar_id = 108;
                         }
                     }
                 }
             }
             break;
-        case 109:
-            // Grammar: ID=109; read/write bits=1; START (EnergyTransferType)
+        case 108:
+            // Grammar: ID=108; read/write bits=1; START (EnergyTransferType)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4869,7 +4800,7 @@ static int encode_din_ServiceChargeType(exi_bitstream_t* stream, const struct di
 //          abstract=False; final=False;
 // Particle: SAScheduleTupleID, SAIDType (1, 1); ProfileEntry, ProfileEntryType (1, 24) (original max unbounded);
 static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct din_ChargingProfileType* ChargingProfileType) {
-    int grammar_id = 110;
+    int grammar_id = 109;
     int done = 0;
     int error = 0;
     uint16_t ProfileEntry_currentIndex = 0;
@@ -4878,12 +4809,12 @@ static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct 
     {
         switch (grammar_id)
         {
-        case 110:
-            // Grammar: ID=110; read/write bits=1; START (SAScheduleTupleID)
+        case 109:
+            // Grammar: ID=109; read/write bits=1; START (SAScheduleTupleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (short); next=111
+                // Event: START (short); next=110
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4894,24 +4825,24 @@ static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 111;
+                            grammar_id = 110;
                         }
                     }
                 }
             }
             break;
-        case 111:
-            // Grammar: ID=111; read/write bits=1; START (ProfileEntry)
+        case 110:
+            // Grammar: ID=110; read/write bits=1; START (ProfileEntry)
             if (ProfileEntry_currentIndex < ChargingProfileType->ProfileEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ProfileEntryType); next=112
+                    // Event: START (ProfileEntryType); next=111
                     error = encode_din_ProfileEntryType(stream, &ChargingProfileType->ProfileEntry.array[ProfileEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 112;
+                        grammar_id = 111;
                     }
                 }
             }
@@ -4920,18 +4851,18 @@ static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct 
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=2; LOOP (ProfileEntry), END Element
+        case 111:
+            // Grammar: ID=111; read/write bits=2; LOOP (ProfileEntry), END Element
             if (ProfileEntry_currentIndex < ChargingProfileType->ProfileEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ProfileEntryType); next=112
+                    // Event: LOOP (ProfileEntryType); next=111
                     error = encode_din_ProfileEntryType(stream, &ChargingProfileType->ProfileEntry.array[ProfileEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 112;
+                        grammar_id = 111;
                     }
                 }
             }
@@ -4973,7 +4904,7 @@ static int encode_din_ChargingProfileType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
 static int encode_din_CertificateChainType(exi_bitstream_t* stream, const struct din_CertificateChainType* CertificateChainType) {
-    int grammar_id = 113;
+    int grammar_id = 112;
     int done = 0;
     int error = 0;
 
@@ -4981,12 +4912,12 @@ static int encode_din_CertificateChainType(exi_bitstream_t* stream, const struct
     {
         switch (grammar_id)
         {
-        case 113:
-            // Grammar: ID=113; read/write bits=1; START (Certificate)
+        case 112:
+            // Grammar: ID=112; read/write bits=1; START (Certificate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=114
+                // Event: START (base64Binary); next=113
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -5000,15 +4931,15 @@ static int encode_din_CertificateChainType(exi_bitstream_t* stream, const struct
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 114;
+                                grammar_id = 113;
                             }
                         }
                     }
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=2; START (SubCertificates), END Element
+        case 113:
+            // Grammar: ID=113; read/write bits=2; START (SubCertificates), END Element
             if (CertificateChainType->SubCertificates_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -5056,11 +4987,11 @@ static int encode_din_CertificateChainType(exi_bitstream_t* stream, const struct
     return error;
 }
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: DC_EVStatus, DC_EVStatusType (1, 1); EVMaximumCurrentLimit, PhysicalValueType (1, 1); EVMaximumPowerLimit, PhysicalValueType (0, 1); EVMaximumVoltageLimit, PhysicalValueType (1, 1); EVEnergyCapacity, PhysicalValueType (0, 1); EVEnergyRequest, PhysicalValueType (0, 1); FullSOC, percentValueType (0, 1); BulkSOC, percentValueType (0, 1);
-static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVChargeParameterType* DC_EVChargeParameterType) {
-    int grammar_id = 115;
+// Particle: DC_EVSEStatus, DC_EVSEStatusType (1, 1); EVSEMaximumCurrentLimit, PhysicalValueType (1, 1); EVSEMaximumPowerLimit, PhysicalValueType (0, 1); EVSEMaximumVoltageLimit, PhysicalValueType (1, 1); EVSEMinimumCurrentLimit, PhysicalValueType (1, 1); EVSEMinimumVoltageLimit, PhysicalValueType (1, 1); EVSECurrentRegulationTolerance, PhysicalValueType (0, 1); EVSEPeakCurrentRipple, PhysicalValueType (1, 1); EVSEEnergyToBeDelivered, PhysicalValueType (0, 1);
+static int encode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType) {
+    int grammar_id = 114;
     int done = 0;
     int error = 0;
 
@@ -5068,13 +4999,26 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
     {
         switch (grammar_id)
         {
-        case 115:
-            // Grammar: ID=115; read/write bits=1; START (DC_EVStatus)
+        case 114:
+            // Grammar: ID=114; read/write bits=1; START (DC_EVSEStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (EVStatusType); next=116
-                error = encode_din_DC_EVStatusType(stream, &DC_EVChargeParameterType->DC_EVStatus);
+                // Event: START (EVSEStatusType); next=115
+                error = encode_din_DC_EVSEStatusType(stream, &DC_EVSEChargeParameterType->DC_EVSEStatus);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 115;
+                }
+            }
+            break;
+        case 115:
+            // Grammar: ID=115; read/write bits=1; START (EVSEMaximumCurrentLimit)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=116
+                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumCurrentLimit);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 116;
@@ -5082,30 +5026,17 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
             }
             break;
         case 116:
-            // Grammar: ID=116; read/write bits=1; START (EVMaximumCurrentLimit)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=117
-                error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumCurrentLimit);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 117;
-                }
-            }
-            break;
-        case 117:
-            // Grammar: ID=117; read/write bits=2; START (EVMaximumPowerLimit), START (EVMaximumVoltageLimit)
-            if (DC_EVChargeParameterType->EVMaximumPowerLimit_isUsed == 1u)
+            // Grammar: ID=116; read/write bits=2; START (EVSEMaximumPowerLimit), START (EVSEMaximumVoltageLimit)
+            if (DC_EVSEChargeParameterType->EVSEMaximumPowerLimit_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumPowerLimit, PhysicalValueType); next=118
-                    error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumPowerLimit);
+                    // Event: START (EVSEMaximumPowerLimit, PhysicalValueType); next=117
+                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumPowerLimit);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                 }
             }
@@ -5114,22 +5045,35 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType); next=119
-                    error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit);
+                    // Event: START (EVSEMaximumVoltageLimit, PhysicalValueType); next=118
+                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 119;
+                        grammar_id = 118;
                     }
                 }
             }
             break;
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (EVSEMaximumVoltageLimit)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=118
+                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 118;
+                }
+            }
+            break;
         case 118:
-            // Grammar: ID=118; read/write bits=1; START (EVMaximumVoltageLimit)
+            // Grammar: ID=118; read/write bits=1; START (EVSEMinimumCurrentLimit)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (PhysicalValueType); next=119
-                error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit);
+                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumCurrentLimit);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 119;
@@ -5137,17 +5081,418 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
             }
             break;
         case 119:
-            // Grammar: ID=119; read/write bits=3; START (EVEnergyCapacity), START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
+            // Grammar: ID=119; read/write bits=1; START (EVSEMinimumVoltageLimit)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=120
+                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumVoltageLimit);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 120;
+                }
+            }
+            break;
+        case 120:
+            // Grammar: ID=120; read/write bits=2; START (EVSECurrentRegulationTolerance), START (EVSEPeakCurrentRipple)
+            if (DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVSECurrentRegulationTolerance, PhysicalValueType); next=121
+                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 121;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType); next=122
+                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 122;
+                    }
+                }
+            }
+            break;
+        case 121:
+            // Grammar: ID=121; read/write bits=1; START (EVSEPeakCurrentRipple)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=122
+                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 122;
+                }
+            }
+            break;
+        case 122:
+            // Grammar: ID=122; read/write bits=2; START (EVSEEnergyToBeDelivered), END Element
+            if (DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVSEEnergyToBeDelivered, PhysicalValueType); next=3
+                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 3;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: END Element; next=4
+                    done = 1;
+                    grammar_id = 4;
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: END Element; next=4
+                done = 1;
+                grammar_id = 4;
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVStatusType; base type=EVStatusType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: EVReady, boolean (1, 1); EVCabinConditioning, boolean (0, 1); EVRESSConditioning, boolean (0, 1); EVErrorCode, DC_EVErrorCodeType (1, 1); EVRESSSOC, percentValueType (1, 1);
+static int encode_din_DC_EVStatusType(exi_bitstream_t* stream, const struct din_DC_EVStatusType* DC_EVStatusType) {
+    int grammar_id = 123;
+    int done = 0;
+    int error = 0;
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 123:
+            // Grammar: ID=123; read/write bits=1; START (EVReady)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (boolean); next=124
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVReady);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            grammar_id = 124;
+                        }
+                    }
+                }
+            }
+            break;
+        case 124:
+            // Grammar: ID=124; read/write bits=2; START (EVCabinConditioning), START (EVRESSConditioning), START (EVErrorCode)
+            if (DC_EVStatusType->EVCabinConditioning_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVCabinConditioning, boolean); next=125
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVCabinConditioning);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 125;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (DC_EVStatusType->EVRESSConditioning_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVRESSConditioning, boolean); next=126
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVRESSConditioning);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 126;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVErrorCode, string); next=127
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 127;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        case 125:
+            // Grammar: ID=125; read/write bits=2; START (EVRESSConditioning), START (EVErrorCode)
+            if (DC_EVStatusType->EVRESSConditioning_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVRESSConditioning, boolean); next=126
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_bool(stream, DC_EVStatusType->EVRESSConditioning);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 126;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVErrorCode, string); next=127
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 127;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        case 126:
+            // Grammar: ID=126; read/write bits=1; START (EVErrorCode)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (string); next=127
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVStatusType->EVErrorCode);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            grammar_id = 127;
+                        }
+                    }
+                }
+            }
+            break;
+        case 127:
+            // Grammar: ID=127; read/write bits=1; START (EVRESSSOC)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (byte); next=3
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    error = exi_basetypes_encoder_nbit_uint(stream, 7, (uint32_t)DC_EVStatusType->EVRESSSOC);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            grammar_id = 3;
+                        }
+                    }
+                }
+            }
+            break;
+        case 3:
+            // Grammar: ID=3; read/write bits=1; END Element
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: END Element; next=4
+                done = 1;
+                grammar_id = 4;
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DC_EVStatus, DC_EVStatusType (1, 1); EVMaximumCurrentLimit, PhysicalValueType (1, 1); EVMaximumPowerLimit, PhysicalValueType (0, 1); EVMaximumVoltageLimit, PhysicalValueType (1, 1); EVEnergyCapacity, PhysicalValueType (0, 1); EVEnergyRequest, PhysicalValueType (0, 1); FullSOC, percentValueType (0, 1); BulkSOC, percentValueType (0, 1);
+static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVChargeParameterType* DC_EVChargeParameterType) {
+    int grammar_id = 128;
+    int done = 0;
+    int error = 0;
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 128:
+            // Grammar: ID=128; read/write bits=1; START (DC_EVStatus)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (EVStatusType); next=129
+                error = encode_din_DC_EVStatusType(stream, &DC_EVChargeParameterType->DC_EVStatus);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 129;
+                }
+            }
+            break;
+        case 129:
+            // Grammar: ID=129; read/write bits=1; START (EVMaximumCurrentLimit)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=130
+                error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumCurrentLimit);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 130;
+                }
+            }
+            break;
+        case 130:
+            // Grammar: ID=130; read/write bits=2; START (EVMaximumPowerLimit), START (EVMaximumVoltageLimit)
+            if (DC_EVChargeParameterType->EVMaximumPowerLimit_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVMaximumPowerLimit, PhysicalValueType); next=131
+                    error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumPowerLimit);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 131;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVMaximumVoltageLimit, PhysicalValueType); next=132
+                    error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 132;
+                    }
+                }
+            }
+            break;
+        case 131:
+            // Grammar: ID=131; read/write bits=1; START (EVMaximumVoltageLimit)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (PhysicalValueType); next=132
+                error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 132;
+                }
+            }
+            break;
+        case 132:
+            // Grammar: ID=132; read/write bits=3; START (EVEnergyCapacity), START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
             if (DC_EVChargeParameterType->EVEnergyCapacity_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVEnergyCapacity, PhysicalValueType); next=120
+                    // Event: START (EVEnergyCapacity, PhysicalValueType); next=133
                     error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyCapacity);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 133;
                     }
                 }
             }
@@ -5156,11 +5501,11 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVEnergyRequest, PhysicalValueType); next=121
+                    // Event: START (EVEnergyRequest, PhysicalValueType); next=134
                     error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 121;
+                        grammar_id = 134;
                     }
                 }
             }
@@ -5169,7 +5514,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (FullSOC, byte); next=122
+                    // Event: START (FullSOC, byte); next=135
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -5180,7 +5525,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 122;
+                                grammar_id = 135;
                             }
                         }
                     }
@@ -5219,18 +5564,18 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=3; START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
+        case 133:
+            // Grammar: ID=133; read/write bits=3; START (EVEnergyRequest), START (FullSOC), START (BulkSOC), END Element
             if (DC_EVChargeParameterType->EVEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVEnergyRequest, PhysicalValueType); next=121
+                    // Event: START (EVEnergyRequest, PhysicalValueType); next=134
                     error = encode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 121;
+                        grammar_id = 134;
                     }
                 }
             }
@@ -5239,7 +5584,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (FullSOC, byte); next=122
+                    // Event: START (FullSOC, byte); next=135
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -5250,7 +5595,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 122;
+                                grammar_id = 135;
                             }
                         }
                     }
@@ -5289,14 +5634,14 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 }
             }
             break;
-        case 121:
-            // Grammar: ID=121; read/write bits=2; START (FullSOC), START (BulkSOC), END Element
+        case 134:
+            // Grammar: ID=134; read/write bits=2; START (FullSOC), START (BulkSOC), END Element
             if (DC_EVChargeParameterType->FullSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (FullSOC, byte); next=122
+                    // Event: START (FullSOC, byte); next=135
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -5307,7 +5652,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 122;
+                                grammar_id = 135;
                             }
                         }
                     }
@@ -5346,8 +5691,8 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
                 }
             }
             break;
-        case 122:
-            // Grammar: ID=122; read/write bits=2; START (BulkSOC), END Element
+        case 135:
+            // Grammar: ID=135; read/write bits=2; START (BulkSOC), END Element
             if (DC_EVChargeParameterType->BulkSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -5408,7 +5753,7 @@ static int encode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False; derivation=extension;
 // Particle: DC_EVStatus, DC_EVStatusType (1, 1); BulkChargingComplete, boolean (0, 1); ChargingComplete, boolean (1, 1);
 static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, const struct din_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType) {
-    int grammar_id = 123;
+    int grammar_id = 136;
     int done = 0;
     int error = 0;
 
@@ -5416,27 +5761,27 @@ static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, c
     {
         switch (grammar_id)
         {
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (DC_EVStatus)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (DC_EVStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (EVStatusType); next=124
+                // Event: START (EVStatusType); next=137
                 error = encode_din_DC_EVStatusType(stream, &DC_EVPowerDeliveryParameterType->DC_EVStatus);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 124;
+                    grammar_id = 137;
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=2; START (BulkChargingComplete), START (ChargingComplete)
+        case 137:
+            // Grammar: ID=137; read/write bits=2; START (BulkChargingComplete), START (ChargingComplete)
             if (DC_EVPowerDeliveryParameterType->BulkChargingComplete_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BulkChargingComplete, boolean); next=125
+                    // Event: START (BulkChargingComplete, boolean); next=138
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -5447,7 +5792,7 @@ static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, c
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 125;
+                                grammar_id = 138;
                             }
                         }
                     }
@@ -5476,8 +5821,8 @@ static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, c
                 }
             }
             break;
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (ChargingComplete)
+        case 138:
+            // Grammar: ID=138; read/write bits=1; START (ChargingComplete)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -5495,351 +5840,6 @@ static int encode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, c
                             grammar_id = 3;
                         }
                     }
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: END Element; next=4
-                done = 1;
-                grammar_id = 4;
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
-static int encode_din_DC_EVSEStatusType(exi_bitstream_t* stream, const struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
-    int grammar_id = 126;
-    int done = 0;
-    int error = 0;
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 126:
-            // Grammar: ID=126; read/write bits=2; START (EVSEIsolationStatus), START (EVSEStatusCode)
-            if (DC_EVSEStatusType->EVSEIsolationStatus_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEIsolationStatus, string); next=127
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 2, DC_EVSEStatusType->EVSEIsolationStatus);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 127;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEStatusCode, string); next=128
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVSEStatusType->EVSEStatusCode);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 128;
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        case 127:
-            // Grammar: ID=127; read/write bits=1; START (EVSEStatusCode)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (string); next=128
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 4, DC_EVSEStatusType->EVSEStatusCode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 128;
-                        }
-                    }
-                }
-            }
-            break;
-        case 128:
-            // Grammar: ID=128; read/write bits=1; START (NotificationMaxDelay)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (unsignedLong); next=129
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_uint_32(stream, DC_EVSEStatusType->NotificationMaxDelay);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 129;
-                        }
-                    }
-                }
-            }
-            break;
-        case 129:
-            // Grammar: ID=129; read/write bits=1; START (EVSENotification)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (string); next=3
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 2, DC_EVSEStatusType->EVSENotification);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 3;
-                        }
-                    }
-                }
-            }
-            break;
-        case 3:
-            // Grammar: ID=3; read/write bits=1; END Element
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: END Element; next=4
-                done = 1;
-                grammar_id = 4;
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DC_EVSEStatus, DC_EVSEStatusType (1, 1); EVSEMaximumCurrentLimit, PhysicalValueType (1, 1); EVSEMaximumPowerLimit, PhysicalValueType (0, 1); EVSEMaximumVoltageLimit, PhysicalValueType (1, 1); EVSEMinimumCurrentLimit, PhysicalValueType (1, 1); EVSEMinimumVoltageLimit, PhysicalValueType (1, 1); EVSECurrentRegulationTolerance, PhysicalValueType (0, 1); EVSEPeakCurrentRipple, PhysicalValueType (1, 1); EVSEEnergyToBeDelivered, PhysicalValueType (0, 1);
-static int encode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, const struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType) {
-    int grammar_id = 130;
-    int done = 0;
-    int error = 0;
-
-    while (!done)
-    {
-        switch (grammar_id)
-        {
-        case 130:
-            // Grammar: ID=130; read/write bits=1; START (DC_EVSEStatus)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (EVSEStatusType); next=131
-                error = encode_din_DC_EVSEStatusType(stream, &DC_EVSEChargeParameterType->DC_EVSEStatus);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 131;
-                }
-            }
-            break;
-        case 131:
-            // Grammar: ID=131; read/write bits=1; START (EVSEMaximumCurrentLimit)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=132
-                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumCurrentLimit);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 132;
-                }
-            }
-            break;
-        case 132:
-            // Grammar: ID=132; read/write bits=2; START (EVSEMaximumPowerLimit), START (EVSEMaximumVoltageLimit)
-            if (DC_EVSEChargeParameterType->EVSEMaximumPowerLimit_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEMaximumPowerLimit, PhysicalValueType); next=133
-                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumPowerLimit);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 133;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEMaximumVoltageLimit, PhysicalValueType); next=134
-                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 134;
-                    }
-                }
-            }
-            break;
-        case 133:
-            // Grammar: ID=133; read/write bits=1; START (EVSEMaximumVoltageLimit)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=134
-                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 134;
-                }
-            }
-            break;
-        case 134:
-            // Grammar: ID=134; read/write bits=1; START (EVSEMinimumCurrentLimit)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=135
-                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumCurrentLimit);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 135;
-                }
-            }
-            break;
-        case 135:
-            // Grammar: ID=135; read/write bits=1; START (EVSEMinimumVoltageLimit)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=136
-                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumVoltageLimit);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 136;
-                }
-            }
-            break;
-        case 136:
-            // Grammar: ID=136; read/write bits=2; START (EVSECurrentRegulationTolerance), START (EVSEPeakCurrentRipple)
-            if (DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSECurrentRegulationTolerance, PhysicalValueType); next=137
-                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 137;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEPeakCurrentRipple, PhysicalValueType); next=138
-                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 138;
-                    }
-                }
-            }
-            break;
-        case 137:
-            // Grammar: ID=137; read/write bits=1; START (EVSEPeakCurrentRipple)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (PhysicalValueType); next=138
-                error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 138;
-                }
-            }
-            break;
-        case 138:
-            // Grammar: ID=138; read/write bits=2; START (EVSEEnergyToBeDelivered), END Element
-            if (DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVSEEnergyToBeDelivered, PhysicalValueType); next=3
-                    error = encode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 3;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=4
-                    done = 1;
-                    grammar_id = 4;
                 }
             }
             break;

@@ -834,6 +834,22 @@ struct iso20_ac_der_FrequencyWattCurveType {
 
 };
 
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}US_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: db, RationalNumberType (1, 1); k, RationalNumberType (1, 1); PowerReference, powerReferenceType (1, 1); OpenLoopResponseTime, RationalNumberType (0, 1);
+struct iso20_ac_der_US_FrequencyDroopSettingsType {
+    // db, RationalNumberType
+    struct iso20_ac_der_RationalNumberType db;
+    // k, RationalNumberType
+    struct iso20_ac_der_RationalNumberType k;
+    // PowerReference, powerReferenceType (base: string)
+    iso20_ac_der_powerReferenceType PowerReference;
+    // OpenLoopResponseTime, RationalNumberType
+    struct iso20_ac_der_RationalNumberType OpenLoopResponseTime;
+    unsigned int OpenLoopResponseTime_isUsed:1;
+
+};
+
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}EU_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Fstart, RationalNumberType (1, 1); s, RationalNumberType (1, 1); DeactivationTime, RationalNumberType (0, 1); IntentionalDelayPowerControl, RationalNumberType (0, 1); PowerReference, powerReferenceType (1, 1); HysteresisControl, HysteresisControlType (0, 1); MaxReactionTime, RationalNumberType (0, 1);
@@ -856,22 +872,6 @@ struct iso20_ac_der_EU_FrequencyDroopSettingsType {
     // MaxReactionTime, RationalNumberType
     struct iso20_ac_der_RationalNumberType MaxReactionTime;
     unsigned int MaxReactionTime_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}US_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: db, RationalNumberType (1, 1); k, RationalNumberType (1, 1); PowerReference, powerReferenceType (1, 1); OpenLoopResponseTime, RationalNumberType (0, 1);
-struct iso20_ac_der_US_FrequencyDroopSettingsType {
-    // db, RationalNumberType
-    struct iso20_ac_der_RationalNumberType db;
-    // k, RationalNumberType
-    struct iso20_ac_der_RationalNumberType k;
-    // PowerReference, powerReferenceType (base: string)
-    iso20_ac_der_powerReferenceType PowerReference;
-    // OpenLoopResponseTime, RationalNumberType
-    struct iso20_ac_der_RationalNumberType OpenLoopResponseTime;
-    unsigned int OpenLoopResponseTime_isUsed:1;
 
 };
 
@@ -1090,7 +1090,7 @@ struct iso20_ac_der_US_FrequencyDroopType {
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}FrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}FrequencyDroopType; base type=; content type=ELEMENT-ONLY;
 //          abstract=True; final=False;
-// Particle: Enable, boolean (0, 1); Priority, unsignedShort (0, 1); EU_FrequencyDroop, EU_FrequencyDroopType (0, 1); US_FrequencyDroop, US_FrequencyDroopType (0, 1);
+// Particle: Enable, boolean (0, 1); Priority, unsignedShort (0, 1); US_FrequencyDroop, US_FrequencyDroopType (0, 1); EU_FrequencyDroop, EU_FrequencyDroopType (0, 1);
 struct iso20_ac_der_FrequencyDroopType {
     // Enable, boolean
     int Enable;
@@ -1099,11 +1099,11 @@ struct iso20_ac_der_FrequencyDroopType {
     uint16_t Priority;
     unsigned int Priority_isUsed:1;
     union {
-        struct iso20_ac_der_EU_FrequencyDroopType EU_FrequencyDroop;
         struct iso20_ac_der_US_FrequencyDroopType US_FrequencyDroop;
+        struct iso20_ac_der_EU_FrequencyDroopType EU_FrequencyDroop;
     };
-    unsigned int EU_FrequencyDroop_isUsed:1;
     unsigned int US_FrequencyDroop_isUsed:1;
+    unsigned int EU_FrequencyDroop_isUsed:1;
 };
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}ActivePowerSupport; type={urn:iso:std:iso:15118:-20:AC-DER}ActivePowerSupportType; base type=; content type=ELEMENT-ONLY;

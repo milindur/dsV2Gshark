@@ -88,10 +88,6 @@ void init_iso2_CanonicalizationMethodType(struct iso2_CanonicalizationMethodType
     CanonicalizationMethodType->ANY_isUsed = 0u;
 }
 
-void init_iso2_PhysicalValueType(struct iso2_PhysicalValueType* PhysicalValueType) {
-    (void) PhysicalValueType;
-}
-
 void init_iso2_KeyValueType(struct iso2_KeyValueType* KeyValueType) {
     KeyValueType->DSAKeyValue_isUsed = 0u;
     KeyValueType->RSAKeyValue_isUsed = 0u;
@@ -152,10 +148,6 @@ void init_iso2_X509DataType(struct iso2_X509DataType* X509DataType) {
     X509DataType->X509Certificate_isUsed = 0u;
     X509DataType->X509CRL_isUsed = 0u;
     X509DataType->ANY_isUsed = 0u;
-}
-
-void init_iso2_DC_EVStatusType(struct iso2_DC_EVStatusType* DC_EVStatusType) {
-    (void) DC_EVStatusType;
 }
 
 void init_iso2_KeyInfoType(struct iso2_KeyInfoType* KeyInfoType) {
@@ -240,11 +232,6 @@ void init_iso2_ChargingProfileType(struct iso2_ChargingProfileType* ChargingProf
     ChargingProfileType->ProfileEntry.arrayLen = 0u;
 }
 
-void init_iso2_CertificateChainType(struct iso2_CertificateChainType* CertificateChainType) {
-    CertificateChainType->Id_isUsed = 0u;
-    CertificateChainType->SubCertificates_isUsed = 0u;
-}
-
 void init_iso2_ContractSignatureEncryptedPrivateKeyType(struct iso2_ContractSignatureEncryptedPrivateKeyType* ContractSignatureEncryptedPrivateKeyType) {
     (void) ContractSignatureEncryptedPrivateKeyType;
 }
@@ -271,6 +258,10 @@ void init_iso2_DC_EVSEStatusType(struct iso2_DC_EVSEStatusType* DC_EVSEStatusTyp
     DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
 }
 
+void init_iso2_DC_EVStatusType(struct iso2_DC_EVStatusType* DC_EVStatusType) {
+    (void) DC_EVStatusType;
+}
+
 void init_iso2_DiffieHellmanPublickeyType(struct iso2_DiffieHellmanPublickeyType* DiffieHellmanPublickeyType) {
     (void) DiffieHellmanPublickeyType;
 }
@@ -291,6 +282,10 @@ void init_iso2_EVSEStatusType(struct iso2_EVSEStatusType* EVSEStatusType) {
     (void) EVSEStatusType;
 }
 
+void init_iso2_PhysicalValueType(struct iso2_PhysicalValueType* PhysicalValueType) {
+    (void) PhysicalValueType;
+}
+
 void init_iso2_ListOfRootCertificateIDsType(struct iso2_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
     ListOfRootCertificateIDsType->RootCertificateID.arrayLen = 0u;
 }
@@ -308,6 +303,11 @@ void init_iso2_NotificationType(struct iso2_NotificationType* NotificationType) 
 
 void init_iso2_PaymentOptionListType(struct iso2_PaymentOptionListType* PaymentOptionListType) {
     PaymentOptionListType->PaymentOption.arrayLen = 0u;
+}
+
+void init_iso2_CertificateChainType(struct iso2_CertificateChainType* CertificateChainType) {
+    CertificateChainType->Id_isUsed = 0u;
+    CertificateChainType->SubCertificates_isUsed = 0u;
 }
 
 void init_iso2_SAScheduleListType(struct iso2_SAScheduleListType* SAScheduleListType) {

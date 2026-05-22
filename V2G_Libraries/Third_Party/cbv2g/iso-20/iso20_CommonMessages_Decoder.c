@@ -35,12 +35,45 @@
 
 
 
-/* best-effort XML serializer: silently truncates on overflow */
+/* best-effort XML serializer: null/zero-sized buffers disable XML output; 
+   non-NUL-terminated input buffers are reset to empty; 
+   writes that do not fit are skipped while preserving NUL termination. */
+static inline size_t xml_init(char* xmlOut, size_t xmlOut_size) {
+    size_t pos = 0u;
+    if (xmlOut == NULL || xmlOut_size == 0u) return 0u;
+    while (pos < xmlOut_size && xmlOut[pos] != '\0') pos++;
+    if (pos == xmlOut_size) { xmlOut[0] = '\0'; return 0u; }
+    return pos;
+}
 static inline void xml_write(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
-    if (*pos + len >= xmlOut_size) return;
-    memcpy(xmlOut + *pos, str, len);
+    size_t remaining;
+    if (xmlOut == NULL || pos == NULL || str == NULL || xmlOut_size == 0u) return;
+    if (*pos >= xmlOut_size) { *pos = xmlOut_size - 1u; xmlOut[*pos] = '\0'; return; }
+    remaining = xmlOut_size - *pos - 1u;
+    if (len > remaining) return;
+    if (len > 0u) memcpy(xmlOut + *pos, str, len);
     *pos += len;
     xmlOut[*pos] = '\0';
+}
+static inline void xml_write_escaped(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len, int is_attribute) {
+    size_t i;
+    if (str == NULL) return;
+    for (i = 0u; i < len; i++) {
+        switch (str[i]) {
+        case '&': xml_write(xmlOut, xmlOut_size, pos, "&amp;", 5u); break;
+        case '<': xml_write(xmlOut, xmlOut_size, pos, "&lt;", 4u); break;
+        case '>': xml_write(xmlOut, xmlOut_size, pos, "&gt;", 4u); break;
+        case '"': if (is_attribute) { xml_write(xmlOut, xmlOut_size, pos, "&quot;", 6u); } else { xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); } break;
+        case '\'': if (is_attribute) { xml_write(xmlOut, xmlOut_size, pos, "&apos;", 6u); } else { xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); } break;
+        default: xml_write(xmlOut, xmlOut_size, pos, &str[i], 1u); break;
+        }
+    }
+}
+static inline void xml_write_escaped_text(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
+    xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 0);
+}
+static inline void xml_write_escaped_attr(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
+    xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 1);
 }
 static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_TransformType* TransformType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DSAKeyValueType* DSAKeyValueType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
@@ -182,7 +215,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=1
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Algorithm=\"", 16);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Algorithm=\"", 12);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &TransformType->Algorithm.charactersLen);
                     if (error == 0)
@@ -195,7 +228,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, TransformType->Algorithm.characters, TransformType->Algorithm.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, TransformType->Algorithm.characters, TransformType->Algorithm.charactersLen);
                             }
                         }
                         else
@@ -249,7 +282,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, TransformType->XPath.characters, TransformType->XPath.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, TransformType->XPath.characters, TransformType->XPath.charactersLen);
                                     }
                                 }
                                 else
@@ -1307,7 +1340,7 @@ static int decode_iso20_DigestMethodType(exi_bitstream_t* stream, struct iso20_D
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=12
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Algorithm=\"", 16);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Algorithm=\"", 12);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &DigestMethodType->Algorithm.charactersLen);
                     if (error == 0)
@@ -1320,7 +1353,7 @@ static int decode_iso20_DigestMethodType(exi_bitstream_t* stream, struct iso20_D
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, DigestMethodType->Algorithm.characters, DigestMethodType->Algorithm.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, DigestMethodType->Algorithm.characters, DigestMethodType->Algorithm.charactersLen);
                             }
                         }
                         else
@@ -1860,7 +1893,7 @@ static int decode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, struct iso
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, X509IssuerSerialType->X509IssuerName.characters, X509IssuerSerialType->X509IssuerName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, X509IssuerSerialType->X509IssuerName.characters, X509IssuerSerialType->X509IssuerName.charactersLen);
                                     }
                                 }
                                 else
@@ -2020,7 +2053,7 @@ static int decode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, stru
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=20
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Algorithm=\"", 16);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Algorithm=\"", 12);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &CanonicalizationMethodType->Algorithm.charactersLen);
                     if (error == 0)
@@ -2033,7 +2066,7 @@ static int decode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, stru
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, CanonicalizationMethodType->Algorithm.characters, CanonicalizationMethodType->Algorithm.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, CanonicalizationMethodType->Algorithm.characters, CanonicalizationMethodType->Algorithm.charactersLen);
                             }
                         }
                         else
@@ -3061,7 +3094,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Duration", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Duration", 13);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceLevelScheduleEntryType->Duration);
@@ -3082,7 +3115,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Duration>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Duration>", 15);
                     }
                     break;
                 default:
@@ -3107,7 +3140,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevel", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevel", 15);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -3159,7 +3192,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevel>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevel>", 17);
                     }
                     break;
                 default:
@@ -3224,7 +3257,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 0:
                     // Event: START (Id, ID (NCName)); next=30
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->Id.charactersLen);
                     if (error == 0)
@@ -3237,7 +3270,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Id.characters, ReferenceType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Id.characters, ReferenceType->Id.charactersLen);
                             }
                         }
                         else
@@ -3253,7 +3286,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 1:
                     // Event: START (Type, anyURI (anyURI)); next=31
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Type=\"", 7);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->Type.charactersLen);
                     if (error == 0)
@@ -3266,7 +3299,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Type.characters, ReferenceType->Type.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Type.characters, ReferenceType->Type.charactersLen);
                             }
                         }
                         else
@@ -3282,7 +3315,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 2:
                     // Event: START (URI, anyURI (anyURI)); next=32
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " URI=\"", 6);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->URI.charactersLen);
                     if (error == 0)
@@ -3295,7 +3328,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
                             }
                         }
                         else
@@ -3385,7 +3418,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=31
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Type=\"", 7);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->Type.charactersLen);
                     if (error == 0)
@@ -3398,7 +3431,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Type.characters, ReferenceType->Type.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->Type.characters, ReferenceType->Type.charactersLen);
                             }
                         }
                         else
@@ -3414,7 +3447,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 1:
                     // Event: START (URI, anyURI (anyURI)); next=32
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " URI=\"", 6);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->URI.charactersLen);
                     if (error == 0)
@@ -3427,7 +3460,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
                             }
                         }
                         else
@@ -3517,7 +3550,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=32
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " URI=\"", 6);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ReferenceType->URI.charactersLen);
                     if (error == 0)
@@ -3530,7 +3563,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->URI.characters, ReferenceType->URI.charactersLen);
                             }
                         }
                         else
@@ -3859,7 +3892,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=36
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Type=\"", 11);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Type=\"", 7);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &RetrievalMethodType->Type.charactersLen);
                     if (error == 0)
@@ -3872,7 +3905,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->Type.characters, RetrievalMethodType->Type.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->Type.characters, RetrievalMethodType->Type.charactersLen);
                             }
                         }
                         else
@@ -3888,7 +3921,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                 case 1:
                     // Event: START (URI, anyURI (anyURI)); next=37
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " URI=\"", 6);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &RetrievalMethodType->URI.charactersLen);
                     if (error == 0)
@@ -3901,7 +3934,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->URI.characters, RetrievalMethodType->URI.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->URI.characters, RetrievalMethodType->URI.charactersLen);
                             }
                         }
                         else
@@ -3966,7 +3999,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=37
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:URI=\"", 10);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " URI=\"", 6);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &RetrievalMethodType->URI.charactersLen);
                     if (error == 0)
@@ -3979,7 +4012,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->URI.characters, RetrievalMethodType->URI.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, RetrievalMethodType->URI.characters, RetrievalMethodType->URI.charactersLen);
                             }
                         }
                         else
@@ -4369,7 +4402,7 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=41
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Algorithm=\"", 16);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Algorithm=\"", 12);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureMethodType->Algorithm.charactersLen);
                     if (error == 0)
@@ -4382,7 +4415,7 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignatureMethodType->Algorithm.characters, SignatureMethodType->Algorithm.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignatureMethodType->Algorithm.characters, SignatureMethodType->Algorithm.charactersLen);
                             }
                         }
                         else
@@ -4832,7 +4865,7 @@ static int decode_iso20_X509DataType(exi_bitstream_t* stream, struct iso20_X509D
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->X509SubjectName.characters, X509DataType->X509SubjectName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->X509SubjectName.characters, X509DataType->X509SubjectName.charactersLen);
                                     }
                                 }
                                 else
@@ -5140,7 +5173,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Exponent", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Exponent", 13);
                         (void)xml_tag_start;
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -5193,7 +5226,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Exponent>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Exponent>", 15);
                     }
                     break;
                 default:
@@ -5218,7 +5251,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Value", 10);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Value", 10);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &RationalNumberType->Value);
@@ -5239,7 +5272,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Value>", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Value>", 12);
                     }
                     break;
                 default:
@@ -5310,7 +5343,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EnergyFee", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EnergyFee", 14);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &EVPriceRuleType->EnergyFee, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5328,7 +5361,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EnergyFee>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EnergyFee>", 16);
                     }
                     break;
                 default:
@@ -5353,7 +5386,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &EVPriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5371,7 +5404,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -5442,7 +5475,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Duration", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Duration", 13);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PowerScheduleEntryType->Duration);
@@ -5463,7 +5496,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Duration>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Duration>", 15);
                     }
                     break;
                 default:
@@ -5488,7 +5521,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Power", 10);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Power", 10);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleEntryType->Power, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5506,7 +5539,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Power>", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Power>", 12);
                     }
                     break;
                 default:
@@ -5531,7 +5564,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Power_L2", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Power_L2", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleEntryType->Power_L2, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5550,7 +5583,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Power_L2>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Power_L2>", 15);
                     }
                     break;
                 case 1:
@@ -5562,7 +5595,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Power_L3", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Power_L3", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleEntryType->Power_L3, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5581,7 +5614,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Power_L3>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Power_L3>", 15);
                     }
                     break;
                 case 2:
@@ -5611,7 +5644,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Power_L3", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Power_L3", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleEntryType->Power_L3, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5630,7 +5663,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Power_L3>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Power_L3>", 15);
                     }
                     break;
                 case 1:
@@ -5706,7 +5739,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Duration", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Duration", 13);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &EVPowerScheduleEntryType->Duration);
@@ -5727,7 +5760,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Duration>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Duration>", 15);
                     }
                     break;
                 default:
@@ -5752,7 +5785,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Power", 10);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Power", 10);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &EVPowerScheduleEntryType->Power, xmlOut, xmlOut_size, xmlOut_pos);
@@ -5770,7 +5803,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Power>", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Power>", 12);
                     }
                     break;
                 default:
@@ -5841,7 +5874,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Duration", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Duration", 13);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &EVPriceRuleStackType->Duration);
@@ -5862,7 +5895,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Duration>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Duration>", 15);
                     }
                     break;
                 default:
@@ -5887,7 +5920,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPriceRule", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPriceRule", 16);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPriceRuleStackType->EVPriceRule.arrayLen < iso20_EVPriceRuleType_8_ARRAY_SIZE)
@@ -5910,7 +5943,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPriceRule>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPriceRule>", 18);
                     }
                     break;
                 default:
@@ -5935,7 +5968,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPriceRule", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPriceRule", 16);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPriceRuleStackType->EVPriceRule.arrayLen < iso20_EVPriceRuleType_8_ARRAY_SIZE)
@@ -5966,7 +5999,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPriceRule>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPriceRule>", 18);
                     }
                     break;
                 case 1:
@@ -6042,7 +6075,7 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerScheduleEntry", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerScheduleEntry", 23);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PowerScheduleEntryListType->PowerScheduleEntry.arrayLen < iso20_PowerScheduleEntryType_1024_ARRAY_SIZE)
@@ -6065,7 +6098,7 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerScheduleEntry>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerScheduleEntry>", 25);
                     }
                     break;
                 default:
@@ -6090,7 +6123,7 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerScheduleEntry", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerScheduleEntry", 23);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PowerScheduleEntryListType->PowerScheduleEntry.arrayLen < iso20_PowerScheduleEntryType_1024_ARRAY_SIZE)
@@ -6121,7 +6154,7 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerScheduleEntry>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerScheduleEntry>", 25);
                     }
                     break;
                 case 1:
@@ -6197,7 +6230,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EnergyFee", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EnergyFee", 14);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->EnergyFee, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6215,7 +6248,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EnergyFee>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EnergyFee>", 16);
                     }
                     break;
                 default:
@@ -6240,7 +6273,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParkingFee", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParkingFee", 15);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->ParkingFee, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6259,7 +6292,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParkingFee>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParkingFee>", 17);
                     }
                     break;
                 case 1:
@@ -6271,7 +6304,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParkingFeePeriod", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParkingFeePeriod", 21);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleType->ParkingFeePeriod);
@@ -6293,7 +6326,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParkingFeePeriod>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParkingFeePeriod>", 23);
                     }
                     break;
                 case 2:
@@ -6305,7 +6338,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CarbonDioxideEmission", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CarbonDioxideEmission", 26);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
@@ -6327,7 +6360,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CarbonDioxideEmission>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CarbonDioxideEmission>", 28);
                     }
                     break;
                 case 3:
@@ -6339,7 +6372,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RenewableGenerationPercentage", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RenewableGenerationPercentage", 34);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -6392,7 +6425,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RenewableGenerationPercentage>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RenewableGenerationPercentage>", 36);
                     }
                     break;
                 case 4:
@@ -6404,7 +6437,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6422,7 +6455,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -6447,7 +6480,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParkingFeePeriod", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParkingFeePeriod", 21);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleType->ParkingFeePeriod);
@@ -6469,7 +6502,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParkingFeePeriod>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParkingFeePeriod>", 23);
                     }
                     break;
                 case 1:
@@ -6481,7 +6514,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CarbonDioxideEmission", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CarbonDioxideEmission", 26);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
@@ -6503,7 +6536,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CarbonDioxideEmission>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CarbonDioxideEmission>", 28);
                     }
                     break;
                 case 2:
@@ -6515,7 +6548,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RenewableGenerationPercentage", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RenewableGenerationPercentage", 34);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -6568,7 +6601,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RenewableGenerationPercentage>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RenewableGenerationPercentage>", 36);
                     }
                     break;
                 case 3:
@@ -6580,7 +6613,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6598,7 +6631,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -6623,7 +6656,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CarbonDioxideEmission", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CarbonDioxideEmission", 26);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
@@ -6645,7 +6678,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CarbonDioxideEmission>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CarbonDioxideEmission>", 28);
                     }
                     break;
                 case 1:
@@ -6657,7 +6690,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RenewableGenerationPercentage", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RenewableGenerationPercentage", 34);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -6710,7 +6743,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RenewableGenerationPercentage>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RenewableGenerationPercentage>", 36);
                     }
                     break;
                 case 2:
@@ -6722,7 +6755,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6740,7 +6773,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -6765,7 +6798,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RenewableGenerationPercentage", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RenewableGenerationPercentage", 34);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -6818,7 +6851,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RenewableGenerationPercentage>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RenewableGenerationPercentage>", 36);
                     }
                     break;
                 case 1:
@@ -6830,7 +6863,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6848,7 +6881,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -6873,7 +6906,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerRangeStart", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerRangeStart", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->PowerRangeStart, xmlOut, xmlOut_size, xmlOut_pos);
@@ -6891,7 +6924,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerRangeStart>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerRangeStart>", 22);
                     }
                     break;
                 default:
@@ -6962,7 +6995,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceName", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceName", 16);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -6982,7 +7015,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AdditionalServiceType->ServiceName.characters, AdditionalServiceType->ServiceName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AdditionalServiceType->ServiceName.characters, AdditionalServiceType->ServiceName.charactersLen);
                                     }
                                 }
                                 else
@@ -7026,7 +7059,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceName>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceName>", 18);
                     }
                     break;
                 default:
@@ -7051,7 +7084,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceFee", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceFee", 15);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AdditionalServiceType->ServiceFee, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7069,7 +7102,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceFee>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceFee>", 17);
                     }
                     break;
                 default:
@@ -7140,7 +7173,7 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerScheduleEntry", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerScheduleEntry", 25);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen < iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE)
@@ -7163,7 +7196,7 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerScheduleEntry>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerScheduleEntry>", 27);
                     }
                     break;
                 default:
@@ -7188,7 +7221,7 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerScheduleEntry", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerScheduleEntry", 25);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen < iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE)
@@ -7219,7 +7252,7 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerScheduleEntry>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerScheduleEntry>", 27);
                     }
                     break;
                 case 1:
@@ -7295,7 +7328,7 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPriceRuleStack", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPriceRuleStack", 21);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPriceRuleStackListType->EVPriceRuleStack.arrayLen < iso20_EVPriceRuleStackType_1024_ARRAY_SIZE)
@@ -7318,7 +7351,7 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPriceRuleStack>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPriceRuleStack>", 23);
                     }
                     break;
                 default:
@@ -7343,7 +7376,7 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPriceRuleStack", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPriceRuleStack", 21);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPriceRuleStackListType->EVPriceRuleStack.arrayLen < iso20_EVPriceRuleStackType_1024_ARRAY_SIZE)
@@ -7374,7 +7407,7 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPriceRuleStack>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPriceRuleStack>", 23);
                     }
                     break;
                 case 1:
@@ -7450,7 +7483,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRuleDescription", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRuleDescription", 28);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -7470,7 +7503,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, OverstayRuleType->OverstayRuleDescription.characters, OverstayRuleType->OverstayRuleDescription.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, OverstayRuleType->OverstayRuleDescription.characters, OverstayRuleType->OverstayRuleDescription.charactersLen);
                                     }
                                 }
                                 else
@@ -7515,7 +7548,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRuleDescription>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRuleDescription>", 30);
                     }
                     break;
                 case 1:
@@ -7527,7 +7560,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:StartTime", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:StartTime", 14);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleType->StartTime);
@@ -7548,7 +7581,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:StartTime>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:StartTime>", 16);
                     }
                     break;
                 default:
@@ -7573,7 +7606,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:StartTime", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:StartTime", 14);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleType->StartTime);
@@ -7594,7 +7627,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:StartTime>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:StartTime>", 16);
                     }
                     break;
                 default:
@@ -7619,7 +7652,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayFee", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayFee", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &OverstayRuleType->OverstayFee, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7637,7 +7670,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayFee>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayFee>", 18);
                     }
                     break;
                 default:
@@ -7662,7 +7695,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayFeePeriod", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayFeePeriod", 22);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleType->OverstayFeePeriod);
@@ -7683,7 +7716,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayFeePeriod>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayFeePeriod>", 24);
                     }
                     break;
                 default:
@@ -7754,7 +7787,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PowerScheduleType->TimeAnchor);
@@ -7775,7 +7808,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -7800,7 +7833,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AvailableEnergy", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AvailableEnergy", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->AvailableEnergy, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7819,7 +7852,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AvailableEnergy>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AvailableEnergy>", 22);
                     }
                     break;
                 case 1:
@@ -7831,7 +7864,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerTolerance", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerTolerance", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7850,7 +7883,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerTolerance>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerTolerance>", 21);
                     }
                     break;
                 case 2:
@@ -7862,7 +7895,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerScheduleEntries", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerScheduleEntries", 25);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PowerScheduleEntryListType(stream, &PowerScheduleType->PowerScheduleEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7880,7 +7913,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerScheduleEntries>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerScheduleEntries>", 27);
                     }
                     break;
                 default:
@@ -7905,7 +7938,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerTolerance", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerTolerance", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7924,7 +7957,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerTolerance>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerTolerance>", 21);
                     }
                     break;
                 case 1:
@@ -7936,7 +7969,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerScheduleEntries", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerScheduleEntries", 25);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PowerScheduleEntryListType(stream, &PowerScheduleType->PowerScheduleEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7954,7 +7987,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerScheduleEntries>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerScheduleEntries>", 27);
                     }
                     break;
                 default:
@@ -7979,7 +8012,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerScheduleEntries", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerScheduleEntries", 25);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PowerScheduleEntryListType(stream, &PowerScheduleType->PowerScheduleEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -7997,7 +8030,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerScheduleEntries>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerScheduleEntries>", 27);
                     }
                     break;
                 default:
@@ -8068,7 +8101,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Duration", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Duration", 13);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleStackType->Duration);
@@ -8089,7 +8122,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Duration>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Duration>", 15);
                     }
                     break;
                 default:
@@ -8114,7 +8147,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRule", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRule", 14);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
@@ -8137,7 +8170,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRule>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRule>", 16);
                     }
                     break;
                 default:
@@ -8162,7 +8195,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRule", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRule", 14);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
@@ -8193,7 +8226,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRule>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRule>", 16);
                     }
                     break;
                 case 1:
@@ -8269,7 +8302,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRuleID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRuleID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &TaxRuleType->TaxRuleID);
@@ -8290,7 +8323,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRuleID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRuleID>", 16);
                     }
                     break;
                 default:
@@ -8315,7 +8348,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRuleName", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRuleName", 16);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8335,7 +8368,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, TaxRuleType->TaxRuleName.characters, TaxRuleType->TaxRuleName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, TaxRuleType->TaxRuleName.characters, TaxRuleType->TaxRuleName.charactersLen);
                                     }
                                 }
                                 else
@@ -8380,7 +8413,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRuleName>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRuleName>", 18);
                     }
                     break;
                 case 1:
@@ -8392,7 +8425,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRate", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRate", 12);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate, xmlOut, xmlOut_size, xmlOut_pos);
@@ -8410,7 +8443,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRate>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRate>", 14);
                     }
                     break;
                 default:
@@ -8435,7 +8468,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRate", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRate", 12);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate, xmlOut, xmlOut_size, xmlOut_pos);
@@ -8453,7 +8486,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRate>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRate>", 14);
                     }
                     break;
                 default:
@@ -8478,7 +8511,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxIncludedInPrice", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxIncludedInPrice", 23);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8531,7 +8564,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxIncludedInPrice>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxIncludedInPrice>", 25);
                     }
                     break;
                 case 1:
@@ -8543,7 +8576,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AppliesToEnergyFee", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AppliesToEnergyFee", 23);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8595,7 +8628,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AppliesToEnergyFee>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AppliesToEnergyFee>", 25);
                     }
                     break;
                 default:
@@ -8620,7 +8653,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AppliesToEnergyFee", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AppliesToEnergyFee", 23);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8672,7 +8705,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AppliesToEnergyFee>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AppliesToEnergyFee>", 25);
                     }
                     break;
                 default:
@@ -8697,7 +8730,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AppliesToParkingFee", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AppliesToParkingFee", 24);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8749,7 +8782,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AppliesToParkingFee>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AppliesToParkingFee>", 26);
                     }
                     break;
                 default:
@@ -8774,7 +8807,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AppliesToOverstayFee", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AppliesToOverstayFee", 25);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8826,7 +8859,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AppliesToOverstayFee>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AppliesToOverstayFee>", 27);
                     }
                     break;
                 default:
@@ -8851,7 +8884,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AppliesMinimumMaximumCost", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AppliesMinimumMaximumCost", 30);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -8903,7 +8936,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AppliesMinimumMaximumCost>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AppliesMinimumMaximumCost>", 32);
                     }
                     break;
                 default:
@@ -8974,7 +9007,7 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalService", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AdditionalService", 22);
                         (void)xml_tag_start;
                     // decode: element array
                     if (AdditionalServiceListType->AdditionalService.arrayLen < iso20_AdditionalServiceType_5_ARRAY_SIZE)
@@ -8997,7 +9030,7 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalService>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AdditionalService>", 24);
                     }
                     break;
                 default:
@@ -9022,7 +9055,7 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalService", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AdditionalService", 22);
                         (void)xml_tag_start;
                     // decode: element array
                     if (AdditionalServiceListType->AdditionalService.arrayLen < iso20_AdditionalServiceType_5_ARRAY_SIZE)
@@ -9053,7 +9086,7 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalService>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AdditionalService>", 24);
                     }
                     break;
                 case 1:
@@ -9129,7 +9162,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVAbsolutePriceScheduleType->TimeAnchor);
@@ -9150,7 +9183,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -9175,7 +9208,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Currency", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Currency", 13);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -9195,7 +9228,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, EVAbsolutePriceScheduleType->Currency.characters, EVAbsolutePriceScheduleType->Currency.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, EVAbsolutePriceScheduleType->Currency.characters, EVAbsolutePriceScheduleType->Currency.charactersLen);
                                     }
                                 }
                                 else
@@ -9239,7 +9272,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Currency>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Currency>", 15);
                     }
                     break;
                 default:
@@ -9264,7 +9297,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceAlgorithm", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceAlgorithm", 19);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -9284,7 +9317,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, EVAbsolutePriceScheduleType->PriceAlgorithm.characters, EVAbsolutePriceScheduleType->PriceAlgorithm.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, EVAbsolutePriceScheduleType->PriceAlgorithm.characters, EVAbsolutePriceScheduleType->PriceAlgorithm.charactersLen);
                                     }
                                 }
                                 else
@@ -9328,7 +9361,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceAlgorithm>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceAlgorithm>", 21);
                     }
                     break;
                 default:
@@ -9353,7 +9386,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPriceRuleStacks", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPriceRuleStacks", 22);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVPriceRuleStackListType(stream, &EVAbsolutePriceScheduleType->EVPriceRuleStacks, xmlOut, xmlOut_size, xmlOut_pos);
@@ -9371,7 +9404,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPriceRuleStacks>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPriceRuleStacks>", 24);
                     }
                     break;
                 default:
@@ -9442,7 +9475,7 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVPowerScheduleType->TimeAnchor);
@@ -9463,7 +9496,7 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -9488,7 +9521,7 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerScheduleEntries", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerScheduleEntries", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVPowerScheduleEntryListType(stream, &EVPowerScheduleType->EVPowerScheduleEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -9506,7 +9539,7 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerScheduleEntries>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerScheduleEntries>", 29);
                     }
                     break;
                 default:
@@ -9577,7 +9610,7 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Amount", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Amount", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &DetailedCostType->Amount, xmlOut, xmlOut_size, xmlOut_pos);
@@ -9595,7 +9628,7 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Amount>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Amount>", 13);
                     }
                     break;
                 default:
@@ -9620,7 +9653,7 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:CostPerUnit", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CostPerUnit", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &DetailedCostType->CostPerUnit, xmlOut, xmlOut_size, xmlOut_pos);
@@ -9638,7 +9671,7 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:CostPerUnit>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CostPerUnit>", 18);
                     }
                     break;
                 default:
@@ -9703,7 +9736,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                 case 0:
                     // Event: START (Id, ID (NCName)); next=101
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &KeyInfoType->Id.charactersLen);
                     if (error == 0)
@@ -9716,7 +9749,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->Id.characters, KeyInfoType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->Id.characters, KeyInfoType->Id.charactersLen);
                             }
                         }
                         else
@@ -9758,7 +9791,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->KeyName.characters, KeyInfoType->KeyName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->KeyName.characters, KeyInfoType->KeyName.charactersLen);
                                     }
                                 }
                                 else
@@ -9990,7 +10023,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->MgmtData.characters, KeyInfoType->MgmtData.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->MgmtData.characters, KeyInfoType->MgmtData.charactersLen);
                                     }
                                 }
                                 else
@@ -10144,7 +10177,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->KeyName.characters, KeyInfoType->KeyName.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->KeyName.characters, KeyInfoType->KeyName.charactersLen);
                                     }
                                 }
                                 else
@@ -10376,7 +10409,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->MgmtData.characters, KeyInfoType->MgmtData.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->MgmtData.characters, KeyInfoType->MgmtData.charactersLen);
                                     }
                                 }
                                 else
@@ -10550,7 +10583,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 0:
                     // Event: START (Encoding, anyURI (anyURI)); next=103
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Encoding=\"", 15);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Encoding=\"", 11);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Encoding.charactersLen);
                     if (error == 0)
@@ -10563,7 +10596,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Encoding.characters, ObjectType->Encoding.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Encoding.characters, ObjectType->Encoding.charactersLen);
                             }
                         }
                         else
@@ -10579,7 +10612,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 1:
                     // Event: START (Id, ID (NCName)); next=104
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -10592,7 +10625,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
                             }
                         }
                         else
@@ -10608,7 +10641,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 2:
                     // Event: START (MimeType, string (string)); next=105
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " MimeType=\"", 11);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -10621,7 +10654,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
                             }
                         }
                         else
@@ -10745,7 +10778,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 0:
                     // Event: START (Id, ID (NCName)); next=104
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -10758,7 +10791,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->Id.characters, ObjectType->Id.charactersLen);
                             }
                         }
                         else
@@ -10774,7 +10807,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 1:
                     // Event: START (MimeType, string (string)); next=105
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " MimeType=\"", 11);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -10787,7 +10820,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
                             }
                         }
                         else
@@ -10911,7 +10944,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 case 0:
                     // Event: START (MimeType, string (string)); next=105
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:MimeType=\"", 15);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " MimeType=\"", 11);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -10924,7 +10957,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->MimeType.characters, ObjectType->MimeType.charactersLen);
                             }
                         }
                         else
@@ -11208,7 +11241,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayTimeThreshold", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayTimeThreshold", 26);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleListType->OverstayTimeThreshold);
@@ -11230,7 +11263,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayTimeThreshold>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayTimeThreshold>", 28);
                     }
                     break;
                 case 1:
@@ -11242,7 +11275,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayPowerThreshold", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayPowerThreshold", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold, xmlOut, xmlOut_size, xmlOut_pos);
@@ -11261,7 +11294,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayPowerThreshold>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayPowerThreshold>", 29);
                     }
                     break;
                 case 2:
@@ -11273,7 +11306,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11296,7 +11329,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 default:
@@ -11321,7 +11354,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11352,7 +11385,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 case 1:
@@ -11382,7 +11415,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayPowerThreshold", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayPowerThreshold", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold, xmlOut, xmlOut_size, xmlOut_pos);
@@ -11401,7 +11434,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayPowerThreshold>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayPowerThreshold>", 29);
                     }
                     break;
                 case 1:
@@ -11413,7 +11446,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11436,7 +11469,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 default:
@@ -11461,7 +11494,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11492,7 +11525,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 case 1:
@@ -11522,7 +11555,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11545,7 +11578,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 default:
@@ -11570,7 +11603,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRule", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRule", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
@@ -11601,7 +11634,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRule>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRule>", 19);
                     }
                     break;
                 case 1:
@@ -11671,7 +11704,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                 case 0:
                     // Event: START (Name, nameType (string)); next=113
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Name=\"", 11);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Name=\"", 11);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ParameterType->Name.charactersLen);
                     if (error == 0)
@@ -11684,7 +11717,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->Name.characters, ParameterType->Name.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->Name.characters, ParameterType->Name.charactersLen);
                             }
                         }
                         else
@@ -11718,7 +11751,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:boolValue", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:boolValue", 14);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -11771,7 +11804,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:boolValue>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:boolValue>", 16);
                     }
                     break;
                 case 1:
@@ -11783,7 +11816,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:byteValue", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:byteValue", 14);
                         (void)xml_tag_start;
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -11837,7 +11870,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:byteValue>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:byteValue>", 16);
                     }
                     break;
                 case 2:
@@ -11849,7 +11882,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:shortValue", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:shortValue", 15);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ParameterType->shortValue);
@@ -11871,7 +11904,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:shortValue>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:shortValue>", 17);
                     }
                     break;
                 case 3:
@@ -11883,7 +11916,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:intValue", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:intValue", 13);
                         (void)xml_tag_start;
                     // decode: int
                     error = decode_exi_type_integer32(stream, &ParameterType->intValue);
@@ -11905,7 +11938,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:intValue>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:intValue>", 15);
                     }
                     break;
                 case 4:
@@ -11917,7 +11950,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:rationalNumber", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:rationalNumber", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &ParameterType->rationalNumber, xmlOut, xmlOut_size, xmlOut_pos);
@@ -11936,7 +11969,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:rationalNumber>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:rationalNumber>", 21);
                     }
                     break;
                 case 5:
@@ -11948,7 +11981,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:finiteString", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:finiteString", 17);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -11968,7 +12001,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->finiteString.characters, ParameterType->finiteString.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, ParameterType->finiteString.characters, ParameterType->finiteString.charactersLen);
                                     }
                                 }
                                 else
@@ -12013,7 +12046,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:finiteString>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:finiteString>", 19);
                     }
                     break;
                 default:
@@ -12084,7 +12117,7 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelScheduleEntry", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelScheduleEntry", 28);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen < iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE)
@@ -12107,7 +12140,7 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelScheduleEntry>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelScheduleEntry>", 30);
                     }
                     break;
                 default:
@@ -12132,7 +12165,7 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelScheduleEntry", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelScheduleEntry", 28);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen < iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE)
@@ -12163,7 +12196,7 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelScheduleEntry>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelScheduleEntry>", 30);
                     }
                     break;
                 case 1:
@@ -12239,7 +12272,7 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStack", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStack", 19);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceRuleStackListType->PriceRuleStack.arrayLen < iso20_PriceRuleStackType_64_ARRAY_SIZE)
@@ -12262,7 +12295,7 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStack>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStack>", 21);
                     }
                     break;
                 default:
@@ -12287,7 +12320,7 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStack", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStack", 19);
                         (void)xml_tag_start;
                     // decode: element array
                     if (PriceRuleStackListType->PriceRuleStack.arrayLen < iso20_PriceRuleStackType_64_ARRAY_SIZE)
@@ -12318,7 +12351,7 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStack>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStack>", 21);
                     }
                     break;
                 case 1:
@@ -12388,7 +12421,7 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
                 case 0:
                     // Event: START (Id, ID (NCName)); next=119
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
                     if (error == 0)
@@ -12401,7 +12434,7 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->Id.characters, SignatureValueType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->Id.characters, SignatureValueType->Id.charactersLen);
                             }
                         }
                         else
@@ -12623,7 +12656,7 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
                 case 0:
                     // Event: START (Id, ID (NCName)); next=121
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedInfoType->Id.charactersLen);
                     if (error == 0)
@@ -12636,7 +12669,7 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedInfoType->Id.characters, SignedInfoType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignedInfoType->Id.characters, SignedInfoType->Id.charactersLen);
                             }
                         }
                         else
@@ -12934,7 +12967,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Certificate", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary (Array)
                     if (SubCertificatesType->Certificate.arrayLen < iso20_certificateType_3_ARRAY_SIZE)
@@ -12942,7 +12975,6 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                         error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso20_certificateType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            SubCertificatesType->Certificate.arrayLen++;
                             // XML: emit base64 encoded value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                             {
@@ -12976,6 +13008,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
+                            SubCertificatesType->Certificate.arrayLen++;
                             grammar_id = 126;
                         }
                     }
@@ -12993,7 +13026,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Certificate>", 18);
                     }
                     break;
                 default:
@@ -13018,7 +13051,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Certificate", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary (Array)
                     if (SubCertificatesType->Certificate.arrayLen < iso20_certificateType_3_ARRAY_SIZE)
@@ -13026,7 +13059,6 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                         error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso20_certificateType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            SubCertificatesType->Certificate.arrayLen++;
                             // XML: emit base64 encoded value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                             {
@@ -13060,6 +13092,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
                                 }
                             }
+                            SubCertificatesType->Certificate.arrayLen++;
                             grammar_id = 126;
                         }
                     }
@@ -13077,7 +13110,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Certificate>", 18);
                     }
                     break;
                 case 1:
@@ -13153,7 +13186,7 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxRuleID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRuleID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DetailedTaxType->TaxRuleID);
@@ -13174,7 +13207,7 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxRuleID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRuleID>", 16);
                     }
                     break;
                 default:
@@ -13199,7 +13232,7 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Amount", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Amount", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &DetailedTaxType->Amount, xmlOut, xmlOut_size, xmlOut_pos);
@@ -13217,7 +13250,7 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Amount>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Amount>", 13);
                     }
                     break;
                 default:
@@ -13288,7 +13321,7 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRule", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRule", 12);
                         (void)xml_tag_start;
                     // decode: element array
                     if (TaxRuleListType->TaxRule.arrayLen < iso20_TaxRuleType_10_ARRAY_SIZE)
@@ -13311,7 +13344,7 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRule>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRule>", 14);
                     }
                     break;
                 default:
@@ -13336,7 +13369,7 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRule", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRule", 12);
                         (void)xml_tag_start;
                     // decode: element array
                     if (TaxRuleListType->TaxRule.arrayLen < iso20_TaxRuleType_10_ARRAY_SIZE)
@@ -13367,7 +13400,7 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRule>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRule>", 14);
                     }
                     break;
                 case 1:
@@ -13437,7 +13470,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 case 0:
                     // Event: START (Id, ID (NCName)); next=132
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &AbsolutePriceScheduleType->Id.charactersLen);
                     if (error == 0)
@@ -13450,7 +13483,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Id.characters, AbsolutePriceScheduleType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Id.characters, AbsolutePriceScheduleType->Id.charactersLen);
                             }
                         }
                         else
@@ -13472,7 +13505,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &AbsolutePriceScheduleType->TimeAnchor);
@@ -13493,7 +13526,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -13518,7 +13551,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &AbsolutePriceScheduleType->TimeAnchor);
@@ -13539,7 +13572,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -13564,7 +13597,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceScheduleID", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceScheduleID", 20);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AbsolutePriceScheduleType->PriceScheduleID);
@@ -13585,7 +13618,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceScheduleID>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceScheduleID>", 22);
                     }
                     break;
                 default:
@@ -13610,7 +13643,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceScheduleDescription", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceScheduleDescription", 29);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -13630,7 +13663,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->PriceScheduleDescription.characters, AbsolutePriceScheduleType->PriceScheduleDescription.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->PriceScheduleDescription.characters, AbsolutePriceScheduleType->PriceScheduleDescription.charactersLen);
                                     }
                                 }
                                 else
@@ -13675,7 +13708,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceScheduleDescription>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceScheduleDescription>", 31);
                     }
                     break;
                 case 1:
@@ -13687,7 +13720,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Currency", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Currency", 13);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -13707,7 +13740,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Currency.characters, AbsolutePriceScheduleType->Currency.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Currency.characters, AbsolutePriceScheduleType->Currency.charactersLen);
                                     }
                                 }
                                 else
@@ -13751,7 +13784,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Currency>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Currency>", 15);
                     }
                     break;
                 default:
@@ -13776,7 +13809,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Currency", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Currency", 13);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -13796,7 +13829,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Currency.characters, AbsolutePriceScheduleType->Currency.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Currency.characters, AbsolutePriceScheduleType->Currency.charactersLen);
                                     }
                                 }
                                 else
@@ -13840,7 +13873,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Currency>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Currency>", 15);
                     }
                     break;
                 default:
@@ -13865,7 +13898,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Language", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Language", 13);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -13885,7 +13918,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Language.characters, AbsolutePriceScheduleType->Language.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->Language.characters, AbsolutePriceScheduleType->Language.charactersLen);
                                     }
                                 }
                                 else
@@ -13929,7 +13962,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Language>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Language>", 15);
                     }
                     break;
                 default:
@@ -13954,7 +13987,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceAlgorithm", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceAlgorithm", 19);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -13974,7 +14007,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->PriceAlgorithm.characters, AbsolutePriceScheduleType->PriceAlgorithm.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, AbsolutePriceScheduleType->PriceAlgorithm.characters, AbsolutePriceScheduleType->PriceAlgorithm.charactersLen);
                                     }
                                 }
                                 else
@@ -14018,7 +14051,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceAlgorithm>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceAlgorithm>", 21);
                     }
                     break;
                 default:
@@ -14043,7 +14076,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MinimumCost", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MinimumCost", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MinimumCost, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14062,7 +14095,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MinimumCost>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MinimumCost>", 18);
                     }
                     break;
                 case 1:
@@ -14074,7 +14107,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MaximumCost", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MaximumCost", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14093,7 +14126,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MaximumCost>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MaximumCost>", 18);
                     }
                     break;
                 case 2:
@@ -14105,7 +14138,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRules", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRules", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14124,7 +14157,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRules>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRules>", 15);
                     }
                     break;
                 case 3:
@@ -14136,7 +14169,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStacks", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStacks", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14154,7 +14187,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStacks>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStacks>", 22);
                     }
                     break;
                 default:
@@ -14179,7 +14212,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MaximumCost", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MaximumCost", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14198,7 +14231,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MaximumCost>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MaximumCost>", 18);
                     }
                     break;
                 case 1:
@@ -14210,7 +14243,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRules", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRules", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14229,7 +14262,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRules>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRules>", 15);
                     }
                     break;
                 case 2:
@@ -14241,7 +14274,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStacks", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStacks", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14259,7 +14292,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStacks>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStacks>", 22);
                     }
                     break;
                 default:
@@ -14284,7 +14317,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxRules", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TaxRules", 13);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14303,7 +14336,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxRules>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TaxRules>", 15);
                     }
                     break;
                 case 1:
@@ -14315,7 +14348,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStacks", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStacks", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14333,7 +14366,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStacks>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStacks>", 22);
                     }
                     break;
                 default:
@@ -14358,7 +14391,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceRuleStacks", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceRuleStacks", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14376,7 +14409,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceRuleStacks>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceRuleStacks>", 22);
                     }
                     break;
                 default:
@@ -14401,7 +14434,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayRules", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OverstayRules", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_OverstayRuleListType(stream, &AbsolutePriceScheduleType->OverstayRules, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14420,7 +14453,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayRules>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OverstayRules>", 20);
                     }
                     break;
                 case 1:
@@ -14432,7 +14465,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalSelectedServices", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AdditionalSelectedServices", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AdditionalServiceListType(stream, &AbsolutePriceScheduleType->AdditionalSelectedServices, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14451,7 +14484,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalSelectedServices>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AdditionalSelectedServices>", 33);
                     }
                     break;
                 case 2:
@@ -14481,7 +14514,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalSelectedServices", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AdditionalSelectedServices", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AdditionalServiceListType(stream, &AbsolutePriceScheduleType->AdditionalSelectedServices, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14500,7 +14533,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalSelectedServices>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AdditionalSelectedServices>", 33);
                     }
                     break;
                 case 1:
@@ -14576,7 +14609,7 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Certificate", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ContractCertificateChainType->Certificate.bytesLen, &ContractCertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
@@ -14627,7 +14660,7 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Certificate>", 18);
                     }
                     break;
                 default:
@@ -14652,7 +14685,7 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SubCertificates", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SubCertificates", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SubCertificatesType(stream, &ContractCertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14670,7 +14703,7 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SubCertificates>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SubCertificates>", 22);
                     }
                     break;
                 default:
@@ -14779,7 +14812,7 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerSchedule", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerSchedule", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVPowerScheduleType(stream, &EVEnergyOfferType->EVPowerSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14797,7 +14830,7 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerSchedule>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerSchedule>", 22);
                     }
                     break;
                 default:
@@ -14822,7 +14855,7 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVAbsolutePriceSchedule", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVAbsolutePriceSchedule", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVAbsolutePriceScheduleType(stream, &EVEnergyOfferType->EVAbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -14840,7 +14873,7 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVAbsolutePriceSchedule>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVAbsolutePriceSchedule>", 30);
                     }
                     break;
                 default:
@@ -14911,7 +14944,7 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerProfileEntry", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerProfileEntry", 24);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen < iso20_PowerScheduleEntryType_2048_ARRAY_SIZE)
@@ -14934,7 +14967,7 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerProfileEntry>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerProfileEntry>", 26);
                     }
                     break;
                 default:
@@ -14959,7 +14992,7 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerProfileEntry", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerProfileEntry", 24);
                         (void)xml_tag_start;
                     // decode: element array
                     if (EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen < iso20_PowerScheduleEntryType_2048_ARRAY_SIZE)
@@ -14990,7 +15023,7 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerProfileEntry>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerProfileEntry>", 26);
                     }
                     break;
                 case 1:
@@ -15066,7 +15099,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterID", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterID", 12);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -15086,7 +15119,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, MeterInfoType->MeterID.characters, MeterInfoType->MeterID.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, MeterInfoType->MeterID.characters, MeterInfoType->MeterID.charactersLen);
                                     }
                                 }
                                 else
@@ -15130,7 +15163,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterID>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterID>", 14);
                     }
                     break;
                 default:
@@ -15155,7 +15188,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ChargedEnergyReadingWh", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargedEnergyReadingWh", 27);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->ChargedEnergyReadingWh);
@@ -15176,7 +15209,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ChargedEnergyReadingWh>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargedEnergyReadingWh>", 29);
                     }
                     break;
                 default:
@@ -15201,7 +15234,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BPT_DischargedEnergyReadingWh", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_DischargedEnergyReadingWh", 34);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_DischargedEnergyReadingWh);
@@ -15223,7 +15256,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BPT_DischargedEnergyReadingWh>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_DischargedEnergyReadingWh>", 36);
                     }
                     break;
                 case 1:
@@ -15235,7 +15268,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:CapacitiveEnergyReadingVARh", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CapacitiveEnergyReadingVARh", 32);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
@@ -15257,7 +15290,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:CapacitiveEnergyReadingVARh>", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CapacitiveEnergyReadingVARh>", 34);
                     }
                     break;
                 case 2:
@@ -15269,7 +15302,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BPT_InductiveEnergyReadingVARh", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_InductiveEnergyReadingVARh", 35);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
@@ -15291,7 +15324,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BPT_InductiveEnergyReadingVARh>", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_InductiveEnergyReadingVARh>", 37);
                     }
                     break;
                 case 3:
@@ -15303,7 +15336,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterSignature", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterSignature", 19);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
@@ -15355,7 +15388,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterSignature>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterSignature>", 21);
                     }
                     break;
                 case 4:
@@ -15367,7 +15400,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterStatus", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
@@ -15389,7 +15422,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterStatus>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 5:
@@ -15401,7 +15434,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -15423,7 +15456,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 6:
@@ -15453,7 +15486,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:CapacitiveEnergyReadingVARh", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CapacitiveEnergyReadingVARh", 32);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
@@ -15475,7 +15508,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:CapacitiveEnergyReadingVARh>", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CapacitiveEnergyReadingVARh>", 34);
                     }
                     break;
                 case 1:
@@ -15487,7 +15520,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BPT_InductiveEnergyReadingVARh", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_InductiveEnergyReadingVARh", 35);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
@@ -15509,7 +15542,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BPT_InductiveEnergyReadingVARh>", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_InductiveEnergyReadingVARh>", 37);
                     }
                     break;
                 case 2:
@@ -15521,7 +15554,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterSignature", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterSignature", 19);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
@@ -15573,7 +15606,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterSignature>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterSignature>", 21);
                     }
                     break;
                 case 3:
@@ -15585,7 +15618,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterStatus", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
@@ -15607,7 +15640,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterStatus>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 4:
@@ -15619,7 +15652,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -15641,7 +15674,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 5:
@@ -15671,7 +15704,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BPT_InductiveEnergyReadingVARh", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_InductiveEnergyReadingVARh", 35);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
@@ -15693,7 +15726,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BPT_InductiveEnergyReadingVARh>", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_InductiveEnergyReadingVARh>", 37);
                     }
                     break;
                 case 1:
@@ -15705,7 +15738,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterSignature", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterSignature", 19);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
@@ -15757,7 +15790,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterSignature>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterSignature>", 21);
                     }
                     break;
                 case 2:
@@ -15769,7 +15802,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterStatus", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
@@ -15791,7 +15824,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterStatus>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 3:
@@ -15803,7 +15836,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -15825,7 +15858,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 4:
@@ -15855,7 +15888,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterSignature", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterSignature", 19);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
@@ -15907,7 +15940,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterSignature>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterSignature>", 21);
                     }
                     break;
                 case 1:
@@ -15919,7 +15952,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterStatus", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
@@ -15941,7 +15974,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterStatus>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 2:
@@ -15953,7 +15986,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -15975,7 +16008,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 3:
@@ -16005,7 +16038,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterStatus", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
@@ -16027,7 +16060,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterStatus>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 1:
@@ -16039,7 +16072,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -16061,7 +16094,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 2:
@@ -16091,7 +16124,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:MeterTimestamp", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterTimestamp", 19);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->MeterTimestamp);
@@ -16113,7 +16146,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:MeterTimestamp>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterTimestamp>", 21);
                     }
                     break;
                 case 1:
@@ -16189,7 +16222,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSetID", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParameterSetID", 19);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ParameterSetType->ParameterSetID);
@@ -16210,7 +16243,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSetID>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParameterSetID>", 21);
                     }
                     break;
                 default:
@@ -16235,7 +16268,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Parameter", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Parameter", 14);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ParameterSetType->Parameter.arrayLen < iso20_ParameterType_8_ARRAY_SIZE)
@@ -16258,7 +16291,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Parameter>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Parameter>", 16);
                     }
                     break;
                 default:
@@ -16283,7 +16316,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Parameter", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Parameter", 14);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ParameterSetType->Parameter.arrayLen < iso20_ParameterType_8_ARRAY_SIZE)
@@ -16314,7 +16347,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Parameter>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Parameter>", 16);
                     }
                     break;
                 case 1:
@@ -16384,7 +16417,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 case 0:
                     // Event: START (Id, ID (NCName)); next=162
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &PriceLevelScheduleType->Id.charactersLen);
                     if (error == 0)
@@ -16397,7 +16430,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, PriceLevelScheduleType->Id.characters, PriceLevelScheduleType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, PriceLevelScheduleType->Id.characters, PriceLevelScheduleType->Id.charactersLen);
                             }
                         }
                         else
@@ -16419,7 +16452,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PriceLevelScheduleType->TimeAnchor);
@@ -16440,7 +16473,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -16465,7 +16498,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PriceLevelScheduleType->TimeAnchor);
@@ -16486,7 +16519,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -16511,7 +16544,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceScheduleID", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceScheduleID", 20);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceLevelScheduleType->PriceScheduleID);
@@ -16532,7 +16565,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceScheduleID>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceScheduleID>", 22);
                     }
                     break;
                 default:
@@ -16557,7 +16590,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceScheduleDescription", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceScheduleDescription", 29);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -16577,7 +16610,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, PriceLevelScheduleType->PriceScheduleDescription.characters, PriceLevelScheduleType->PriceScheduleDescription.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, PriceLevelScheduleType->PriceScheduleDescription.characters, PriceLevelScheduleType->PriceScheduleDescription.charactersLen);
                                     }
                                 }
                                 else
@@ -16622,7 +16655,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceScheduleDescription>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceScheduleDescription>", 31);
                     }
                     break;
                 case 1:
@@ -16634,7 +16667,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NumberOfPriceLevels", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:NumberOfPriceLevels", 24);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -16686,7 +16719,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NumberOfPriceLevels>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:NumberOfPriceLevels>", 26);
                     }
                     break;
                 default:
@@ -16711,7 +16744,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NumberOfPriceLevels", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:NumberOfPriceLevels", 24);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -16763,7 +16796,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NumberOfPriceLevels>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:NumberOfPriceLevels>", 26);
                     }
                     break;
                 default:
@@ -16788,7 +16821,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelScheduleEntries", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelScheduleEntries", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleEntryListType(stream, &PriceLevelScheduleType->PriceLevelScheduleEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -16806,7 +16839,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelScheduleEntries>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelScheduleEntries>", 32);
                     }
                     break;
                 default:
@@ -16877,7 +16910,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerSchedule", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerSchedule", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PowerScheduleType(stream, &ChargingScheduleType->PowerSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -16895,7 +16928,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerSchedule>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerSchedule>", 20);
                     }
                     break;
                 default:
@@ -16920,7 +16953,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AbsolutePriceSchedule", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AbsolutePriceSchedule", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AbsolutePriceScheduleType(stream, &ChargingScheduleType->AbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -16939,7 +16972,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                     }
                     break;
                 case 1:
@@ -16951,7 +16984,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelSchedule", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelSchedule", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleType(stream, &ChargingScheduleType->PriceLevelSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -16970,7 +17003,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelSchedule>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelSchedule>", 25);
                     }
                     break;
                 case 2:
@@ -17046,7 +17079,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &ReceiptType->TimeAnchor);
@@ -17067,7 +17100,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -17092,7 +17125,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EnergyCosts", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EnergyCosts", 16);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->EnergyCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17111,7 +17144,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EnergyCosts>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EnergyCosts>", 18);
                     }
                     break;
                 case 1:
@@ -17123,7 +17156,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OccupancyCosts", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OccupancyCosts", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17142,7 +17175,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OccupancyCosts>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OccupancyCosts>", 21);
                     }
                     break;
                 case 2:
@@ -17154,7 +17187,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:AdditionalServicesCosts", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalServicesCosts", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17173,7 +17206,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AdditionalServicesCosts>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalServicesCosts>", 30);
                     }
                     break;
                 case 3:
@@ -17185,7 +17218,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OverstayCosts", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17204,7 +17237,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OverstayCosts>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
                     }
                     break;
                 case 4:
@@ -17216,7 +17249,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17239,7 +17272,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 5:
@@ -17269,7 +17302,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17300,7 +17333,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -17330,7 +17363,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OccupancyCosts", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OccupancyCosts", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17349,7 +17382,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OccupancyCosts>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OccupancyCosts>", 21);
                     }
                     break;
                 case 1:
@@ -17361,7 +17394,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:AdditionalServicesCosts", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalServicesCosts", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17380,7 +17413,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AdditionalServicesCosts>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalServicesCosts>", 30);
                     }
                     break;
                 case 2:
@@ -17392,7 +17425,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OverstayCosts", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17411,7 +17444,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OverstayCosts>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
                     }
                     break;
                 case 3:
@@ -17423,7 +17456,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17446,7 +17479,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 4:
@@ -17476,7 +17509,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17507,7 +17540,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -17537,7 +17570,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:AdditionalServicesCosts", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AdditionalServicesCosts", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17556,7 +17589,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:AdditionalServicesCosts>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AdditionalServicesCosts>", 30);
                     }
                     break;
                 case 1:
@@ -17568,7 +17601,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OverstayCosts", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17587,7 +17620,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OverstayCosts>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
                     }
                     break;
                 case 2:
@@ -17599,7 +17632,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17622,7 +17655,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 3:
@@ -17652,7 +17685,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17683,7 +17716,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -17713,7 +17746,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:OverstayCosts", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OverstayCosts", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts, xmlOut, xmlOut_size, xmlOut_pos);
@@ -17732,7 +17765,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:OverstayCosts>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OverstayCosts>", 20);
                     }
                     break;
                 case 1:
@@ -17744,7 +17777,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17767,7 +17800,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 2:
@@ -17797,7 +17830,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17828,7 +17861,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -17858,7 +17891,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17881,7 +17914,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -17911,7 +17944,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TaxCosts", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TaxCosts", 13);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
@@ -17942,7 +17975,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TaxCosts>", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TaxCosts>", 15);
                     }
                     break;
                 case 1:
@@ -18018,7 +18051,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ScheduleTupleID", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ScheduleTupleID", 20);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &ScheduleTupleType->ScheduleTupleID);
@@ -18039,7 +18072,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ScheduleTupleID>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ScheduleTupleID>", 22);
                     }
                     break;
                 default:
@@ -18064,7 +18097,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingSchedule", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingSchedule", 21);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ChargingScheduleType(stream, &ScheduleTupleType->ChargingSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -18082,7 +18115,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingSchedule>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingSchedule>", 23);
                     }
                     break;
                 default:
@@ -18107,7 +18140,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DischargingSchedule", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DischargingSchedule", 24);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ChargingScheduleType(stream, &ScheduleTupleType->DischargingSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -18126,7 +18159,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DischargingSchedule>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DischargingSchedule>", 26);
                     }
                     break;
                 case 1:
@@ -18202,7 +18235,7 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedScheduleTupleID", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedScheduleTupleID", 28);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Scheduled_EVPPTControlModeType->SelectedScheduleTupleID);
@@ -18223,7 +18256,7 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedScheduleTupleID>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedScheduleTupleID>", 30);
                     }
                     break;
                 default:
@@ -18248,7 +18281,7 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerToleranceAcceptance", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerToleranceAcceptance", 29);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -18265,8 +18298,8 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "PowerToleranceNotConfirmed", 26); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "PowerToleranceConfirmed", 23); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "PowerToleranceNotConfirmed", 26); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "PowerToleranceConfirmed", 23); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -18305,7 +18338,7 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerToleranceAcceptance>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerToleranceAcceptance>", 31);
                     }
                     break;
                 case 1:
@@ -18381,7 +18414,7 @@ static int decode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, s
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedScheduleTupleID", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedScheduleTupleID", 28);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Scheduled_SMDTControlModeType->SelectedScheduleTupleID);
@@ -18402,7 +18435,7 @@ static int decode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, s
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedScheduleTupleID>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedScheduleTupleID>", 30);
                     }
                     break;
                 default:
@@ -18473,7 +18506,7 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceType->ServiceID);
@@ -18494,7 +18527,7 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -18519,7 +18552,7 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FreeService", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:FreeService", 16);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -18571,7 +18604,7 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FreeService>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:FreeService>", 18);
                     }
                     break;
                 default:
@@ -18636,7 +18669,7 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 case 0:
                     // Event: START (Id, ID (NCName)); next=189
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureType->Id.charactersLen);
                     if (error == 0)
@@ -18649,7 +18682,7 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignatureType->Id.characters, SignatureType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignatureType->Id.characters, SignatureType->Id.charactersLen);
                             }
                         }
                         else
@@ -19065,7 +19098,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ProviderID", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ProviderID", 15);
                         (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (SupportedProvidersListType->ProviderID.arrayLen < iso20_nameType_128_ARRAY_SIZE)
@@ -19085,10 +19118,10 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                                         error = exi_basetypes_decoder_characters(stream, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, iso20_ProviderID_CHARACTER_SIZE);
                                         if (error == 0)
                                         {
-                                            SupportedProvidersListType->ProviderID.arrayLen++;
                                             // XML: emit string value
                                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen);
+                                            xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen);
+                                            SupportedProvidersListType->ProviderID.arrayLen++;
                                         }
                                     }
                                     else
@@ -19137,7 +19170,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ProviderID>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ProviderID>", 17);
                     }
                     break;
                 default:
@@ -19162,7 +19195,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ProviderID", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ProviderID", 15);
                         (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (SupportedProvidersListType->ProviderID.arrayLen < iso20_nameType_128_ARRAY_SIZE)
@@ -19182,10 +19215,10 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                                         error = exi_basetypes_decoder_characters(stream, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, iso20_ProviderID_CHARACTER_SIZE);
                                         if (error == 0)
                                         {
-                                            SupportedProvidersListType->ProviderID.arrayLen++;
                                             // XML: emit string value
                                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen);
+                                            xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].characters, SupportedProvidersListType->ProviderID.array[SupportedProvidersListType->ProviderID.arrayLen].charactersLen);
+                                            SupportedProvidersListType->ProviderID.arrayLen++;
                                         }
                                     }
                                     else
@@ -19234,7 +19267,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ProviderID>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ProviderID>", 17);
                     }
                     break;
                 case 1:
@@ -19310,7 +19343,7 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Certificate", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
@@ -19361,7 +19394,7 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Certificate>", 18);
                     }
                     break;
                 default:
@@ -19386,7 +19419,7 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SubCertificates", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SubCertificates", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SubCertificatesType(stream, &CertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19405,7 +19438,7 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SubCertificates>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SubCertificates>", 22);
                     }
                     break;
                 case 1:
@@ -19481,7 +19514,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DepartureTime", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DepartureTime", 18);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_SEReqControlModeType->DepartureTime);
@@ -19502,7 +19535,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DepartureTime>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DepartureTime>", 20);
                     }
                     break;
                 default:
@@ -19527,7 +19560,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MinimumSOC", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MinimumSOC", 15);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -19580,7 +19613,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MinimumSOC>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MinimumSOC>", 17);
                     }
                     break;
                 case 1:
@@ -19592,7 +19625,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetSOC", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetSOC", 14);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -19645,7 +19678,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetSOC>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetSOC>", 16);
                     }
                     break;
                 case 2:
@@ -19657,7 +19690,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTargetEnergyRequest", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetEnergyRequest", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19675,7 +19708,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTargetEnergyRequest>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetEnergyRequest>", 28);
                     }
                     break;
                 default:
@@ -19700,7 +19733,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetSOC", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetSOC", 14);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -19753,7 +19786,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetSOC>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetSOC>", 16);
                     }
                     break;
                 case 1:
@@ -19765,7 +19798,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTargetEnergyRequest", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetEnergyRequest", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19783,7 +19816,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTargetEnergyRequest>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetEnergyRequest>", 28);
                     }
                     break;
                 default:
@@ -19808,7 +19841,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTargetEnergyRequest", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetEnergyRequest", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19826,7 +19859,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTargetEnergyRequest>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetEnergyRequest>", 28);
                     }
                     break;
                 default:
@@ -19851,7 +19884,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19869,7 +19902,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumEnergyRequest>", 29);
                     }
                     break;
                 default:
@@ -19894,7 +19927,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMinimumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19912,7 +19945,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumEnergyRequest>", 29);
                     }
                     break;
                 default:
@@ -19937,7 +19970,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumV2XEnergyRequest", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumV2XEnergyRequest", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumV2XEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19956,7 +19989,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumV2XEnergyRequest>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumV2XEnergyRequest>", 32);
                     }
                     break;
                 case 1:
@@ -19968,7 +20001,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumV2XEnergyRequest", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumV2XEnergyRequest", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMinimumV2XEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -19987,7 +20020,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumV2XEnergyRequest>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumV2XEnergyRequest>", 32);
                     }
                     break;
                 case 2:
@@ -20017,7 +20050,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumV2XEnergyRequest", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumV2XEnergyRequest", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMinimumV2XEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20036,7 +20069,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumV2XEnergyRequest>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumV2XEnergyRequest>", 32);
                     }
                     break;
                 case 1:
@@ -20112,7 +20145,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DepartureTime", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DepartureTime", 18);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_SEResControlModeType->DepartureTime);
@@ -20134,7 +20167,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DepartureTime>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DepartureTime>", 20);
                     }
                     break;
                 case 1:
@@ -20146,7 +20179,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MinimumSOC", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MinimumSOC", 15);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -20199,7 +20232,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MinimumSOC>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MinimumSOC>", 17);
                     }
                     break;
                 case 2:
@@ -20211,7 +20244,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetSOC", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetSOC", 14);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -20264,7 +20297,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetSOC>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetSOC>", 16);
                     }
                     break;
                 case 3:
@@ -20276,7 +20309,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AbsolutePriceSchedule", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AbsolutePriceSchedule", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AbsolutePriceScheduleType(stream, &Dynamic_SEResControlModeType->AbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20295,7 +20328,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                     }
                     break;
                 case 4:
@@ -20307,7 +20340,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelSchedule", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelSchedule", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleType(stream, &Dynamic_SEResControlModeType->PriceLevelSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20326,7 +20359,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelSchedule>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelSchedule>", 25);
                     }
                     break;
                 case 5:
@@ -20356,7 +20389,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MinimumSOC", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MinimumSOC", 15);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -20409,7 +20442,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MinimumSOC>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MinimumSOC>", 17);
                     }
                     break;
                 case 1:
@@ -20421,7 +20454,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetSOC", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetSOC", 14);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -20474,7 +20507,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetSOC>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetSOC>", 16);
                     }
                     break;
                 case 2:
@@ -20486,7 +20519,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AbsolutePriceSchedule", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AbsolutePriceSchedule", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AbsolutePriceScheduleType(stream, &Dynamic_SEResControlModeType->AbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20505,7 +20538,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                     }
                     break;
                 case 3:
@@ -20517,7 +20550,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelSchedule", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelSchedule", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleType(stream, &Dynamic_SEResControlModeType->PriceLevelSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20536,7 +20569,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelSchedule>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelSchedule>", 25);
                     }
                     break;
                 case 4:
@@ -20566,7 +20599,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetSOC", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetSOC", 14);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -20619,7 +20652,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetSOC>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetSOC>", 16);
                     }
                     break;
                 case 1:
@@ -20631,7 +20664,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AbsolutePriceSchedule", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AbsolutePriceSchedule", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AbsolutePriceScheduleType(stream, &Dynamic_SEResControlModeType->AbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20650,7 +20683,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                     }
                     break;
                 case 2:
@@ -20662,7 +20695,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelSchedule", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelSchedule", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleType(stream, &Dynamic_SEResControlModeType->PriceLevelSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20681,7 +20714,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelSchedule>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelSchedule>", 25);
                     }
                     break;
                 case 3:
@@ -20711,7 +20744,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AbsolutePriceSchedule", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AbsolutePriceSchedule", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_AbsolutePriceScheduleType(stream, &Dynamic_SEResControlModeType->AbsolutePriceSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20730,7 +20763,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                     }
                     break;
                 case 1:
@@ -20742,7 +20775,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PriceLevelSchedule", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PriceLevelSchedule", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PriceLevelScheduleType(stream, &Dynamic_SEResControlModeType->PriceLevelSchedule, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20761,7 +20794,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PriceLevelSchedule>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PriceLevelSchedule>", 25);
                     }
                     break;
                 case 2:
@@ -20875,7 +20908,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeAnchor", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TimeAnchor", 15);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVPowerProfileType->TimeAnchor);
@@ -20896,7 +20929,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeAnchor>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TimeAnchor>", 17);
                     }
                     break;
                 default:
@@ -20921,7 +20954,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_EVPPTControlMode", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_EVPPTControlMode", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_EVPPTControlModeType(stream, &EVPowerProfileType->Dynamic_EVPPTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20940,7 +20973,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_EVPPTControlMode>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_EVPPTControlMode>", 31);
                     }
                     break;
                 case 1:
@@ -20952,7 +20985,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_EVPPTControlMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_EVPPTControlMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_EVPPTControlModeType(stream, &EVPowerProfileType->Scheduled_EVPPTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -20971,7 +21004,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_EVPPTControlMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_EVPPTControlMode>", 33);
                     }
                     break;
                 default:
@@ -20996,7 +21029,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerProfileEntries", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerProfileEntries", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVPowerProfileEntryListType(stream, &EVPowerProfileType->EVPowerProfileEntries, xmlOut, xmlOut_size, xmlOut_pos);
@@ -21014,7 +21047,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerProfileEntries>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerProfileEntries>", 28);
                     }
                     break;
                 default:
@@ -21085,7 +21118,7 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:NotificationMaxDelay", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NotificationMaxDelay", 25);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &EVSEStatusType->NotificationMaxDelay);
@@ -21106,7 +21139,7 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:NotificationMaxDelay>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NotificationMaxDelay>", 27);
                     }
                     break;
                 default:
@@ -21131,7 +21164,7 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:EVSENotification", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSENotification", 21);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -21147,12 +21180,12 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Pause", 5); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ExitStandby", 11); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Terminate", 9); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ScheduleRenegotiation", 21); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ServiceRenegotiation", 20); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "MeteringConfirmation", 20); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Pause", 5); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "ExitStandby", 11); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Terminate", 9); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "ScheduleRenegotiation", 21); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "ServiceRenegotiation", 20); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "MeteringConfirmation", 20); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -21191,7 +21224,7 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:EVSENotification>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSENotification>", 23);
                     }
                     break;
                 default:
@@ -21262,7 +21295,7 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Service", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Service", 12);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ServiceListType->Service.arrayLen < iso20_ServiceType_8_ARRAY_SIZE)
@@ -21285,7 +21318,7 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Service>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Service>", 14);
                     }
                     break;
                 default:
@@ -21310,7 +21343,7 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Service", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Service", 12);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ServiceListType->Service.arrayLen < iso20_ServiceType_8_ARRAY_SIZE)
@@ -21341,7 +21374,7 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Service>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Service>", 14);
                     }
                     break;
                 case 1:
@@ -21417,7 +21450,7 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:SessionID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SessionID", 14);
                         (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], iso20_sessionIDType_BYTES_SIZE);
@@ -21446,7 +21479,7 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:SessionID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SessionID>", 16);
                     }
                     break;
                 default:
@@ -21471,7 +21504,7 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:TimeStamp", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeStamp", 14);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
@@ -21492,7 +21525,7 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:TimeStamp>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeStamp>", 16);
                     }
                     break;
                 default:
@@ -21612,7 +21645,7 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RootCertificateID", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RootCertificateID", 22);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < iso20_X509IssuerSerialType_20_ARRAY_SIZE)
@@ -21635,7 +21668,7 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RootCertificateID>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RootCertificateID>", 24);
                     }
                     break;
                 default:
@@ -21660,7 +21693,7 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:RootCertificateID", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RootCertificateID", 22);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < iso20_X509IssuerSerialType_20_ARRAY_SIZE)
@@ -21691,7 +21724,7 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:RootCertificateID>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RootCertificateID>", 24);
                     }
                     break;
                 case 1:
@@ -21761,7 +21794,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                 case 0:
                     // Event: START (Id, ID (NCName)); next=224
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedCertificateChainType->Id.charactersLen);
                     if (error == 0)
@@ -21774,7 +21807,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedCertificateChainType->Id.characters, SignedCertificateChainType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignedCertificateChainType->Id.characters, SignedCertificateChainType->Id.charactersLen);
                             }
                         }
                         else
@@ -21808,7 +21841,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Certificate", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedCertificateChainType->Certificate.bytesLen, &SignedCertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
@@ -21859,7 +21892,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Certificate>", 18);
                     }
                     break;
                 default:
@@ -21884,7 +21917,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SubCertificates", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SubCertificates", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SubCertificatesType(stream, &SignedCertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
@@ -21903,7 +21936,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SubCertificates>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SubCertificates>", 22);
                     }
                     break;
                 case 1:
@@ -21973,7 +22006,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                 case 0:
                     // Event: START (Id, ID (NCName)); next=227
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &PnC_AReqAuthorizationModeType->Id.charactersLen);
                     if (error == 0)
@@ -21986,7 +22019,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, PnC_AReqAuthorizationModeType->Id.characters, PnC_AReqAuthorizationModeType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, PnC_AReqAuthorizationModeType->Id.characters, PnC_AReqAuthorizationModeType->Id.charactersLen);
                             }
                         }
                         else
@@ -22020,7 +22053,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:GenChallenge", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GenChallenge", 17);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PnC_AReqAuthorizationModeType->GenChallenge.bytesLen, &PnC_AReqAuthorizationModeType->GenChallenge.bytes[0], iso20_genChallengeType_BYTES_SIZE);
@@ -22071,7 +22104,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:GenChallenge>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GenChallenge>", 19);
                     }
                     break;
                 default:
@@ -22096,7 +22129,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ContractCertificateChain", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractCertificateChain", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ContractCertificateChainType(stream, &PnC_AReqAuthorizationModeType->ContractCertificateChain, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22114,7 +22147,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ContractCertificateChain>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractCertificateChain>", 31);
                     }
                     break;
                 default:
@@ -22185,7 +22218,7 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:GenChallenge", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GenChallenge", 17);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PnC_ASResAuthorizationModeType->GenChallenge.bytesLen, &PnC_ASResAuthorizationModeType->GenChallenge.bytes[0], iso20_genChallengeType_BYTES_SIZE);
@@ -22236,7 +22269,7 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:GenChallenge>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GenChallenge>", 19);
                     }
                     break;
                 default:
@@ -22261,7 +22294,7 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SupportedProviders", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SupportedProviders", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SupportedProvidersListType(stream, &PnC_ASResAuthorizationModeType->SupportedProviders, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22280,7 +22313,7 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SupportedProviders>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SupportedProviders>", 25);
                     }
                     break;
                 case 1:
@@ -22356,7 +22389,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EMAID", 10);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EMAID", 10);
                         (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (EMAIDListType->EMAID.arrayLen < iso20_identifierType_8_ARRAY_SIZE)
@@ -22376,10 +22409,10 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                                         error = exi_basetypes_decoder_characters(stream, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, iso20_EMAID_CHARACTER_SIZE);
                                         if (error == 0)
                                         {
-                                            EMAIDListType->EMAID.arrayLen++;
                                             // XML: emit string value
                                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen);
+                                            xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen);
+                                            EMAIDListType->EMAID.arrayLen++;
                                         }
                                     }
                                     else
@@ -22428,7 +22461,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EMAID>", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EMAID>", 12);
                     }
                     break;
                 default:
@@ -22453,7 +22486,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EMAID", 10);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EMAID", 10);
                         (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (EMAIDListType->EMAID.arrayLen < iso20_identifierType_8_ARRAY_SIZE)
@@ -22473,10 +22506,10 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                                         error = exi_basetypes_decoder_characters(stream, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, iso20_EMAID_CHARACTER_SIZE);
                                         if (error == 0)
                                         {
-                                            EMAIDListType->EMAID.arrayLen++;
                                             // XML: emit string value
                                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen);
+                                            xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen);
+                                            EMAIDListType->EMAID.arrayLen++;
                                         }
                                     }
                                     else
@@ -22525,7 +22558,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EMAID>", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EMAID>", 12);
                     }
                     break;
                 case 1:
@@ -22601,7 +22634,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DepartureTime", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DepartureTime", 18);
                         (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Scheduled_SEReqControlModeType->DepartureTime);
@@ -22623,7 +22656,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DepartureTime>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DepartureTime>", 20);
                     }
                     break;
                 case 1:
@@ -22635,7 +22668,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTargetEnergyRequest", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetEnergyRequest", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22654,7 +22687,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTargetEnergyRequest>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetEnergyRequest>", 28);
                     }
                     break;
                 case 2:
@@ -22666,7 +22699,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22685,7 +22718,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumEnergyRequest>", 29);
                     }
                     break;
                 case 3:
@@ -22697,7 +22730,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22716,7 +22749,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumEnergyRequest>", 29);
                     }
                     break;
                 case 4:
@@ -22728,7 +22761,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyOffer", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVEnergyOffer", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVEnergyOfferType(stream, &Scheduled_SEReqControlModeType->EVEnergyOffer, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22747,7 +22780,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyOffer>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVEnergyOffer>", 20);
                     }
                     break;
                 case 5:
@@ -22777,7 +22810,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTargetEnergyRequest", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetEnergyRequest", 26);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22796,7 +22829,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTargetEnergyRequest>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetEnergyRequest>", 28);
                     }
                     break;
                 case 1:
@@ -22808,7 +22841,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22827,7 +22860,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumEnergyRequest>", 29);
                     }
                     break;
                 case 2:
@@ -22839,7 +22872,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22858,7 +22891,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumEnergyRequest>", 29);
                     }
                     break;
                 case 3:
@@ -22870,7 +22903,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyOffer", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVEnergyOffer", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVEnergyOfferType(stream, &Scheduled_SEReqControlModeType->EVEnergyOffer, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22889,7 +22922,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyOffer>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVEnergyOffer>", 20);
                     }
                     break;
                 case 4:
@@ -22919,7 +22952,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22938,7 +22971,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumEnergyRequest>", 29);
                     }
                     break;
                 case 1:
@@ -22950,7 +22983,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -22969,7 +23002,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumEnergyRequest>", 29);
                     }
                     break;
                 case 2:
@@ -22981,7 +23014,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyOffer", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVEnergyOffer", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVEnergyOfferType(stream, &Scheduled_SEReqControlModeType->EVEnergyOffer, xmlOut, xmlOut_size, xmlOut_pos);
@@ -23000,7 +23033,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyOffer>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVEnergyOffer>", 20);
                     }
                     break;
                 case 3:
@@ -23030,7 +23063,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinimumEnergyRequest", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMinimumEnergyRequest", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
@@ -23049,7 +23082,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinimumEnergyRequest>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMinimumEnergyRequest>", 29);
                     }
                     break;
                 case 1:
@@ -23061,7 +23094,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyOffer", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVEnergyOffer", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVEnergyOfferType(stream, &Scheduled_SEReqControlModeType->EVEnergyOffer, xmlOut, xmlOut_size, xmlOut_pos);
@@ -23080,7 +23113,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyOffer>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVEnergyOffer>", 20);
                     }
                     break;
                 case 2:
@@ -23110,7 +23143,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyOffer", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVEnergyOffer", 18);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVEnergyOfferType(stream, &Scheduled_SEReqControlModeType->EVEnergyOffer, xmlOut, xmlOut_size, xmlOut_pos);
@@ -23129,7 +23162,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyOffer>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVEnergyOffer>", 20);
                     }
                     break;
                 case 1:
@@ -23205,7 +23238,7 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ScheduleTuple", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ScheduleTuple", 18);
                         (void)xml_tag_start;
                     // decode: element array
                     if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < iso20_ScheduleTupleType_3_ARRAY_SIZE)
@@ -23228,7 +23261,7 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ScheduleTuple>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ScheduleTuple>", 20);
                     }
                     break;
                 default:
@@ -23253,7 +23286,7 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ScheduleTuple", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ScheduleTuple", 18);
                         (void)xml_tag_start;
                     // decode: element array
                     if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < iso20_ScheduleTupleType_3_ARRAY_SIZE)
@@ -23284,7 +23317,7 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ScheduleTuple>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ScheduleTuple>", 20);
                     }
                     break;
                 case 1:
@@ -23360,7 +23393,7 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &SelectedServiceType->ServiceID);
@@ -23381,7 +23414,7 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -23406,7 +23439,7 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSetID", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParameterSetID", 19);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &SelectedServiceType->ParameterSetID);
@@ -23427,7 +23460,7 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSetID>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParameterSetID>", 21);
                     }
                     break;
                 default:
@@ -23498,7 +23531,7 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedService", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedService", 20);
                         (void)xml_tag_start;
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < iso20_SelectedServiceType_16_ARRAY_SIZE)
@@ -23521,7 +23554,7 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedService>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedService>", 22);
                     }
                     break;
                 default:
@@ -23546,7 +23579,7 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedService", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedService", 20);
                         (void)xml_tag_start;
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < iso20_SelectedServiceType_16_ARRAY_SIZE)
@@ -23577,7 +23610,7 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedService>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedService>", 22);
                     }
                     break;
                 case 1:
@@ -23653,7 +23686,7 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSet", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParameterSet", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < iso20_ParameterSetType_4_ARRAY_SIZE)
@@ -23676,7 +23709,7 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSet>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParameterSet>", 19);
                     }
                     break;
                 default:
@@ -23701,7 +23734,7 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSet", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParameterSet", 17);
                         (void)xml_tag_start;
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < iso20_ParameterSetType_4_ARRAY_SIZE)
@@ -23732,7 +23765,7 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSet>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParameterSet>", 19);
                     }
                     break;
                 case 1:
@@ -23802,7 +23835,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                 case 0:
                     // Event: START (Id, ID (NCName)); next=247
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Id.charactersLen);
                     if (error == 0)
@@ -23815,7 +23848,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Id.characters, SignaturePropertyType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Id.characters, SignaturePropertyType->Id.charactersLen);
                             }
                         }
                         else
@@ -23831,7 +23864,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                 case 1:
                     // Event: START (Target, anyURI (anyURI)); next=248
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Target=\"", 13);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Target=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -23844,7 +23877,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Target.characters, SignaturePropertyType->Target.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Target.characters, SignaturePropertyType->Target.charactersLen);
                             }
                         }
                         else
@@ -23872,7 +23905,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                 case 0:
                     // Event: START (Target, anyURI (anyURI)); next=248
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Target=\"", 13);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Target=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -23885,7 +23918,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Target.characters, SignaturePropertyType->Target.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertyType->Target.characters, SignaturePropertyType->Target.charactersLen);
                             }
                         }
                         else
@@ -24036,7 +24069,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                 case 0:
                     // Event: START (Id, ID (NCName)); next=250
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedInstallationDataType->Id.charactersLen);
                     if (error == 0)
@@ -24049,7 +24082,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedInstallationDataType->Id.characters, SignedInstallationDataType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignedInstallationDataType->Id.characters, SignedInstallationDataType->Id.charactersLen);
                             }
                         }
                         else
@@ -24083,7 +24116,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ContractCertificateChain", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractCertificateChain", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ContractCertificateChainType(stream, &SignedInstallationDataType->ContractCertificateChain, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24101,7 +24134,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ContractCertificateChain>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractCertificateChain>", 31);
                     }
                     break;
                 default:
@@ -24126,7 +24159,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ECDHCurve", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ECDHCurve", 14);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -24142,8 +24175,8 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "SECP521", 7); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "X448", 4); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "SECP521", 7); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "X448", 4); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -24182,7 +24215,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ECDHCurve>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ECDHCurve>", 16);
                     }
                     break;
                 default:
@@ -24207,7 +24240,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DHPublicKey", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DHPublicKey", 16);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedInstallationDataType->DHPublicKey.bytesLen, &SignedInstallationDataType->DHPublicKey.bytes[0], iso20_dhPublicKeyType_BYTES_SIZE);
@@ -24258,7 +24291,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DHPublicKey>", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DHPublicKey>", 18);
                     }
                     break;
                 default:
@@ -24283,7 +24316,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SECP521_EncryptedPrivateKey", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SECP521_EncryptedPrivateKey", 32);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedInstallationDataType->SECP521_EncryptedPrivateKey.bytesLen, &SignedInstallationDataType->SECP521_EncryptedPrivateKey.bytes[0], iso20_secp521_EncryptedPrivateKeyType_BYTES_SIZE);
@@ -24335,7 +24368,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SECP521_EncryptedPrivateKey>", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SECP521_EncryptedPrivateKey>", 34);
                     }
                     break;
                 case 1:
@@ -24347,7 +24380,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:X448_EncryptedPrivateKey", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:X448_EncryptedPrivateKey", 29);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedInstallationDataType->X448_EncryptedPrivateKey.bytesLen, &SignedInstallationDataType->X448_EncryptedPrivateKey.bytes[0], iso20_x448_EncryptedPrivateKeyType_BYTES_SIZE);
@@ -24399,7 +24432,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:X448_EncryptedPrivateKey>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:X448_EncryptedPrivateKey>", 31);
                     }
                     break;
                 case 2:
@@ -24411,7 +24444,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TPM_EncryptedPrivateKey", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TPM_EncryptedPrivateKey", 28);
                         (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedInstallationDataType->TPM_EncryptedPrivateKey.bytesLen, &SignedInstallationDataType->TPM_EncryptedPrivateKey.bytes[0], iso20_tpm_EncryptedPrivateKeyType_BYTES_SIZE);
@@ -24463,7 +24496,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TPM_EncryptedPrivateKey>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TPM_EncryptedPrivateKey>", 30);
                     }
                     break;
                 default:
@@ -24528,7 +24561,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                 case 0:
                     // Event: START (Id, ID (NCName)); next=255
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns3:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedMeteringDataType->Id.charactersLen);
                     if (error == 0)
@@ -24541,7 +24574,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignedMeteringDataType->Id.characters, SignedMeteringDataType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignedMeteringDataType->Id.characters, SignedMeteringDataType->Id.charactersLen);
                             }
                         }
                         else
@@ -24575,7 +24608,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SessionID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionID", 14);
                         (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &SignedMeteringDataType->SessionID.bytesLen, &SignedMeteringDataType->SessionID.bytes[0], iso20_sessionIDType_BYTES_SIZE);
@@ -24604,7 +24637,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SessionID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionID>", 16);
                     }
                     break;
                 default:
@@ -24629,7 +24662,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterInfo", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeterInfo", 14);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MeterInfoType(stream, &SignedMeteringDataType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24647,7 +24680,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterInfo>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeterInfo>", 16);
                     }
                     break;
                 default:
@@ -24672,7 +24705,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Receipt", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Receipt", 12);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ReceiptType(stream, &SignedMeteringDataType->Receipt, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24691,7 +24724,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Receipt>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Receipt>", 14);
                     }
                     break;
                 case 1:
@@ -24703,7 +24736,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_SMDTControlMode", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_SMDTControlMode", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_SMDTControlModeType(stream, &SignedMeteringDataType->Dynamic_SMDTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24722,7 +24755,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_SMDTControlMode>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_SMDTControlMode>", 30);
                     }
                     break;
                 case 2:
@@ -24734,7 +24767,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_SMDTControlMode", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_SMDTControlMode", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_SMDTControlModeType(stream, &SignedMeteringDataType->Scheduled_SMDTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24753,7 +24786,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_SMDTControlMode>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_SMDTControlMode>", 32);
                     }
                     break;
                 default:
@@ -24778,7 +24811,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_SMDTControlMode", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_SMDTControlMode", 28);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_SMDTControlModeType(stream, &SignedMeteringDataType->Dynamic_SMDTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24797,7 +24830,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_SMDTControlMode>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_SMDTControlMode>", 30);
                     }
                     break;
                 case 1:
@@ -24809,7 +24842,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_SMDTControlMode", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_SMDTControlMode", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_SMDTControlModeType(stream, &SignedMeteringDataType->Scheduled_SMDTControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -24828,7 +24861,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_SMDTControlMode>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_SMDTControlMode>", 32);
                     }
                     break;
                 default:
@@ -24899,19 +24932,29 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short array
                     if (ServiceIDListType->ServiceID.arrayLen < iso20_serviceIDType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_uint16(stream, &ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen++]);
+                        error = decode_exi_type_uint16(stream, &ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen]);
+                        if (error == 0)
+                        {
+                            // XML: emit value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen]); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            ServiceIDListType->ServiceID.arrayLen++;
+                        }
                     }
                     else
                     {
                         // static array not large enough, only iso20_serviceIDType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 260;
+                    if (error == 0)
+                    {
+                        grammar_id = 260;
+                    }
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -24922,7 +24965,7 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -24947,19 +24990,29 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short array
                     if (ServiceIDListType->ServiceID.arrayLen < iso20_serviceIDType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_uint16(stream, &ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen++]);
+                        error = decode_exi_type_uint16(stream, &ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen]);
+                        if (error == 0)
+                        {
+                            // XML: emit value
+                            xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
+                            { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen]); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            ServiceIDListType->ServiceID.arrayLen++;
+                        }
                     }
                     else
                     {
                         // static array not large enough, only iso20_serviceIDType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 260;
+                    if (error == 0)
+                    {
+                        grammar_id = 260;
+                    }
                         // XML: close tag
                         {
                             int xml_closed = 0;
@@ -24970,7 +25023,7 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 case 1:
@@ -25046,7 +25099,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25064,7 +25117,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -25089,7 +25142,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedAuthorizationService", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedAuthorizationService", 33);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -25105,8 +25158,8 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -25145,7 +25198,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedAuthorizationService>", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedAuthorizationService>", 35);
                     }
                     break;
                 default:
@@ -25170,7 +25223,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EIM_AReqAuthorizationMode", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EIM_AReqAuthorizationMode", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EIM_AReqAuthorizationModeType(stream, &AuthorizationReqType->EIM_AReqAuthorizationMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25189,7 +25242,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EIM_AReqAuthorizationMode>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EIM_AReqAuthorizationMode>", 32);
                     }
                     break;
                 case 1:
@@ -25201,7 +25254,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PnC_AReqAuthorizationMode", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PnC_AReqAuthorizationMode", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PnC_AReqAuthorizationModeType(stream, &AuthorizationReqType->PnC_AReqAuthorizationMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25220,7 +25273,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PnC_AReqAuthorizationMode>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PnC_AReqAuthorizationMode>", 32);
                     }
                     break;
                 default:
@@ -25291,7 +25344,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25309,7 +25362,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -25334,7 +25387,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -25350,46 +25403,46 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -25428,7 +25481,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -25453,7 +25506,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEProcessing", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -25469,9 +25522,9 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -25510,7 +25563,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEProcessing>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -25581,7 +25634,7 @@ static int decode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationSetupReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25599,7 +25652,7 @@ static int decode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -25670,7 +25723,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationSetupResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -25688,7 +25741,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -25713,7 +25766,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -25729,46 +25782,46 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -25807,7 +25860,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -25832,7 +25885,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AuthorizationServices", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AuthorizationServices", 26);
                         (void)xml_tag_start;
                     // decode: enum array
                     if (AuthorizationSetupResType->AuthorizationServices.arrayLen < iso20_authorizationType_2_ARRAY_SIZE)
@@ -25851,8 +25904,8 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                                     // XML: emit value
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                     switch (value) {
-                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
-                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
+                                    case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
+                                    case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
                                     default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                     }
                                 }
@@ -25895,7 +25948,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AuthorizationServices>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AuthorizationServices>", 28);
                     }
                     break;
                 default:
@@ -25920,7 +25973,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AuthorizationServices", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AuthorizationServices", 26);
                         (void)xml_tag_start;
                     // decode: enum array
                     if (AuthorizationSetupResType->AuthorizationServices.arrayLen < iso20_authorizationType_2_ARRAY_SIZE)
@@ -25939,8 +25992,8 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                                     // XML: emit value
                                     xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                     switch (value) {
-                                    case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
-                                    case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
+                                    case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "EIM", 3); break;
+                                    case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "PnC", 3); break;
                                     default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                     }
                                 }
@@ -25983,7 +26036,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AuthorizationServices>", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AuthorizationServices>", 28);
                     }
                     break;
                 case 1:
@@ -25995,7 +26048,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CertificateInstallationService", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateInstallationService", 35);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26047,7 +26100,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CertificateInstallationService>", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateInstallationService>", 37);
                     }
                     break;
                 default:
@@ -26072,7 +26125,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CertificateInstallationService", 35);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateInstallationService", 35);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26124,7 +26177,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CertificateInstallationService>", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateInstallationService>", 37);
                     }
                     break;
                 default:
@@ -26149,7 +26202,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EIM_ASResAuthorizationMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EIM_ASResAuthorizationMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EIM_ASResAuthorizationModeType(stream, &AuthorizationSetupResType->EIM_ASResAuthorizationMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26168,7 +26221,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EIM_ASResAuthorizationMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EIM_ASResAuthorizationMode>", 33);
                     }
                     break;
                 case 1:
@@ -26180,7 +26233,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PnC_ASResAuthorizationMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PnC_ASResAuthorizationMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_PnC_ASResAuthorizationModeType(stream, &AuthorizationSetupResType->PnC_ASResAuthorizationMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26199,7 +26252,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PnC_ASResAuthorizationMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PnC_ASResAuthorizationMode>", 33);
                     }
                     break;
                 default:
@@ -26308,7 +26361,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &CertificateInstallationReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26326,7 +26379,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -26351,7 +26404,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:OEMProvisioningCertificateChain", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OEMProvisioningCertificateChain", 36);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SignedCertificateChainType(stream, &CertificateInstallationReqType->OEMProvisioningCertificateChain, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26369,7 +26422,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:OEMProvisioningCertificateChain>", 38);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OEMProvisioningCertificateChain>", 38);
                     }
                     break;
                 default:
@@ -26394,7 +26447,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ListOfRootCertificateIDs", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ListOfRootCertificateIDs", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ListOfRootCertificateIDsType(stream, &CertificateInstallationReqType->ListOfRootCertificateIDs, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26412,7 +26465,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ListOfRootCertificateIDs>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ListOfRootCertificateIDs>", 31);
                     }
                     break;
                 default:
@@ -26437,7 +26490,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MaximumContractCertificateChains", 37);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MaximumContractCertificateChains", 37);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26489,7 +26542,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MaximumContractCertificateChains>", 39);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MaximumContractCertificateChains>", 39);
                     }
                     break;
                 default:
@@ -26514,7 +26567,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PrioritizedEMAIDs", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PrioritizedEMAIDs", 22);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EMAIDListType(stream, &CertificateInstallationReqType->PrioritizedEMAIDs, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26533,7 +26586,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PrioritizedEMAIDs>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PrioritizedEMAIDs>", 24);
                     }
                     break;
                 case 1:
@@ -26609,7 +26662,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &CertificateInstallationResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26627,7 +26680,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -26652,7 +26705,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26668,46 +26721,46 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -26746,7 +26799,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -26771,7 +26824,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEProcessing", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26787,9 +26840,9 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -26828,7 +26881,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEProcessing>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -26853,7 +26906,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CPSCertificateChain", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CPSCertificateChain", 24);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_CertificateChainType(stream, &CertificateInstallationResType->CPSCertificateChain, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26871,7 +26924,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CPSCertificateChain>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CPSCertificateChain>", 26);
                     }
                     break;
                 default:
@@ -26896,7 +26949,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SignedInstallationData", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SignedInstallationData", 27);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SignedInstallationDataType(stream, &CertificateInstallationResType->SignedInstallationData, xmlOut, xmlOut_size, xmlOut_pos);
@@ -26914,7 +26967,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SignedInstallationData>", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SignedInstallationData>", 29);
                     }
                     break;
                 default:
@@ -26939,7 +26992,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RemainingContractCertificateChains", 39);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RemainingContractCertificateChains", 39);
                         (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -26991,7 +27044,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RemainingContractCertificateChains>", 41);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RemainingContractCertificateChains>", 41);
                     }
                     break;
                 default:
@@ -27056,7 +27109,7 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                 case 0:
                     // Event: START (Id, ID (NCName)); next=287
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ManifestType->Id.charactersLen);
                     if (error == 0)
@@ -27069,7 +27122,7 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, ManifestType->Id.characters, ManifestType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, ManifestType->Id.characters, ManifestType->Id.charactersLen);
                             }
                         }
                         else
@@ -27339,7 +27392,7 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &MeteringConfirmationReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -27357,7 +27410,7 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -27382,7 +27435,7 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SignedMeteringData", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SignedMeteringData", 23);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SignedMeteringDataType(stream, &MeteringConfirmationReqType->SignedMeteringData, xmlOut, xmlOut_size, xmlOut_pos);
@@ -27400,7 +27453,7 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SignedMeteringData>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SignedMeteringData>", 25);
                     }
                     break;
                 default:
@@ -27471,7 +27524,7 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &MeteringConfirmationResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -27489,7 +27542,7 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -27514,7 +27567,7 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -27530,46 +27583,46 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -27608,7 +27661,7 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -27679,7 +27732,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &PowerDeliveryReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -27697,7 +27750,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -27722,7 +27775,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVProcessing", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVProcessing", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -27738,9 +27791,9 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -27779,7 +27832,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVProcessing>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVProcessing>", 19);
                     }
                     break;
                 default:
@@ -27804,7 +27857,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargeProgress", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargeProgress", 19);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -27820,10 +27873,10 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Start", 5); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Stop", 4); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Standby", 7); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ScheduleRenegotiation", 21); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Start", 5); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Stop", 4); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Standby", 7); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "ScheduleRenegotiation", 21); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -27862,7 +27915,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargeProgress>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargeProgress>", 21);
                     }
                     break;
                 default:
@@ -27887,7 +27940,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerProfile", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVPowerProfile", 19);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVPowerProfileType(stream, &PowerDeliveryReqType->EVPowerProfile, xmlOut, xmlOut_size, xmlOut_pos);
@@ -27906,7 +27959,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerProfile>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVPowerProfile>", 21);
                     }
                     break;
                 case 1:
@@ -27918,7 +27971,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_ChannelSelection", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BPT_ChannelSelection", 25);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -27935,8 +27988,8 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Charge", 6); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Discharge", 9); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Charge", 6); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Discharge", 9); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -27975,7 +28028,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_ChannelSelection>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BPT_ChannelSelection>", 27);
                     }
                     break;
                 case 2:
@@ -28005,7 +28058,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BPT_ChannelSelection", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BPT_ChannelSelection", 25);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28022,8 +28075,8 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Charge", 6); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Discharge", 9); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Charge", 6); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Discharge", 9); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -28062,7 +28115,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BPT_ChannelSelection>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BPT_ChannelSelection>", 27);
                     }
                     break;
                 case 1:
@@ -28138,7 +28191,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &PowerDeliveryResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28156,7 +28209,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -28181,7 +28234,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28197,46 +28250,46 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -28275,7 +28328,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -28300,7 +28353,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEStatus", 15);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEStatus", 15);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_EVSEStatusType(stream, &PowerDeliveryResType->EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28319,7 +28372,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEStatus>", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEStatus>", 17);
                     }
                     break;
                 case 1:
@@ -28395,7 +28448,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ScheduleExchangeReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28413,7 +28466,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -28438,7 +28491,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MaximumSupportingPoints", 28);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MaximumSupportingPoints", 28);
                         (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28491,7 +28544,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MaximumSupportingPoints>", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MaximumSupportingPoints>", 30);
                     }
                     break;
                 default:
@@ -28516,7 +28569,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_SEReqControlMode", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_SEReqControlMode", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_SEReqControlModeType(stream, &ScheduleExchangeReqType->Dynamic_SEReqControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28535,7 +28588,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_SEReqControlMode>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_SEReqControlMode>", 31);
                     }
                     break;
                 case 1:
@@ -28547,7 +28600,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_SEReqControlMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_SEReqControlMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_SEReqControlModeType(stream, &ScheduleExchangeReqType->Scheduled_SEReqControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28566,7 +28619,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_SEReqControlMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_SEReqControlMode>", 33);
                     }
                     break;
                 default:
@@ -28637,7 +28690,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ScheduleExchangeResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28655,7 +28708,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -28680,7 +28733,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28696,46 +28749,46 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -28774,7 +28827,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -28799,7 +28852,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEProcessing", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28815,9 +28868,9 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Finished", 8); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing", 7); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Ongoing_WaitingForCustomerInteraction", 37); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -28856,7 +28909,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEProcessing>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -28881,7 +28934,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:GoToPause", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GoToPause", 14);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -28934,7 +28987,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:GoToPause>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GoToPause>", 16);
                     }
                     break;
                 case 1:
@@ -28946,7 +28999,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_SEResControlMode", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_SEResControlMode", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_SEResControlModeType(stream, &ScheduleExchangeResType->Dynamic_SEResControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28965,7 +29018,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_SEResControlMode>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_SEResControlMode>", 31);
                     }
                     break;
                 case 2:
@@ -28977,7 +29030,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_SEResControlMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_SEResControlMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_SEResControlModeType(stream, &ScheduleExchangeResType->Scheduled_SEResControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -28996,7 +29049,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_SEResControlMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_SEResControlMode>", 33);
                     }
                     break;
                 default:
@@ -29021,7 +29074,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Dynamic_SEResControlMode", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Dynamic_SEResControlMode", 29);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Dynamic_SEResControlModeType(stream, &ScheduleExchangeResType->Dynamic_SEResControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29040,7 +29093,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Dynamic_SEResControlMode>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Dynamic_SEResControlMode>", 31);
                     }
                     break;
                 case 1:
@@ -29052,7 +29105,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Scheduled_SEResControlMode", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:Scheduled_SEResControlMode", 31);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_Scheduled_SEResControlModeType(stream, &ScheduleExchangeResType->Scheduled_SEResControlMode, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29071,7 +29124,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Scheduled_SEResControlMode>", 33);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:Scheduled_SEResControlMode>", 33);
                     }
                     break;
                 default:
@@ -29142,7 +29195,7 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDetailReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29160,7 +29213,7 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -29185,7 +29238,7 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceDetailReqType->ServiceID);
@@ -29206,7 +29259,7 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -29277,7 +29330,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDetailResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29295,7 +29348,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -29320,7 +29373,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -29336,46 +29389,46 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -29414,7 +29467,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -29439,7 +29492,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
                         (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceDetailResType->ServiceID);
@@ -29460,7 +29513,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -29485,7 +29538,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceParameterList", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceParameterList", 25);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ServiceParameterListType(stream, &ServiceDetailResType->ServiceParameterList, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29503,7 +29556,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceParameterList>", 27);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceParameterList>", 27);
                     }
                     break;
                 default:
@@ -29574,7 +29627,7 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDiscoveryReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29592,7 +29645,7 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -29617,7 +29670,7 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SupportedServiceIDs", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SupportedServiceIDs", 24);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ServiceIDListType(stream, &ServiceDiscoveryReqType->SupportedServiceIDs, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29636,7 +29689,7 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SupportedServiceIDs>", 26);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SupportedServiceIDs>", 26);
                     }
                     break;
                 case 1:
@@ -29712,7 +29765,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDiscoveryResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29730,7 +29783,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -29755,7 +29808,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -29771,46 +29824,46 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -29849,7 +29902,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -29874,7 +29927,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceRenegotiationSupported", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceRenegotiationSupported", 34);
                         (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -29926,7 +29979,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceRenegotiationSupported>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceRenegotiationSupported>", 36);
                     }
                     break;
                 default:
@@ -29951,7 +30004,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EnergyTransferServiceList", 30);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EnergyTransferServiceList", 30);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ServiceListType(stream, &ServiceDiscoveryResType->EnergyTransferServiceList, xmlOut, xmlOut_size, xmlOut_pos);
@@ -29969,7 +30022,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EnergyTransferServiceList>", 32);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EnergyTransferServiceList>", 32);
                     }
                     break;
                 default:
@@ -29994,7 +30047,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:VASList", 12);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:VASList", 12);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_ServiceListType(stream, &ServiceDiscoveryResType->VASList, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30013,7 +30066,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:VASList>", 14);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:VASList>", 14);
                     }
                     break;
                 case 1:
@@ -30089,7 +30142,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceSelectionReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30107,7 +30160,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -30132,7 +30185,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedEnergyTransferService", 34);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedEnergyTransferService", 34);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SelectedServiceType(stream, &ServiceSelectionReqType->SelectedEnergyTransferService, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30150,7 +30203,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedEnergyTransferService>", 36);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedEnergyTransferService>", 36);
                     }
                     break;
                 default:
@@ -30175,7 +30228,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedVASList", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedVASList", 20);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_SelectedServiceListType(stream, &ServiceSelectionReqType->SelectedVASList, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30194,7 +30247,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedVASList>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedVASList>", 22);
                     }
                     break;
                 case 1:
@@ -30270,7 +30323,7 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceSelectionResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30288,7 +30341,7 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -30313,7 +30366,7 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -30329,46 +30382,46 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -30407,7 +30460,7 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -30478,7 +30531,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionSetupReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30496,7 +30549,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -30521,7 +30574,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVCCID", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVCCID", 11);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -30541,7 +30594,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupReqType->EVCCID.characters, SessionSetupReqType->EVCCID.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupReqType->EVCCID.characters, SessionSetupReqType->EVCCID.charactersLen);
                                     }
                                 }
                                 else
@@ -30585,7 +30638,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVCCID>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVCCID>", 13);
                     }
                     break;
                 default:
@@ -30656,7 +30709,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionSetupResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30674,7 +30727,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -30699,7 +30752,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -30715,46 +30768,46 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -30793,7 +30846,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -30818,7 +30871,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEID", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEID", 11);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -30838,7 +30891,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupResType->EVSEID.characters, SessionSetupResType->EVSEID.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupResType->EVSEID.characters, SessionSetupResType->EVSEID.charactersLen);
                                     }
                                 }
                                 else
@@ -30882,7 +30935,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEID>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEID>", 13);
                     }
                     break;
                 default:
@@ -30953,7 +31006,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionStopReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -30971,7 +31024,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -30996,7 +31049,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingSession", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingSession", 20);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31012,9 +31065,9 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Pause", 5); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Terminate", 9); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "ServiceRenegotiation", 20); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Pause", 5); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Terminate", 9); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "ServiceRenegotiation", 20); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -31053,7 +31106,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingSession>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingSession>", 22);
                     }
                     break;
                 default:
@@ -31078,7 +31131,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTerminationCode", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTerminationCode", 22);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31098,7 +31151,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationCode.characters, SessionStopReqType->EVTerminationCode.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationCode.characters, SessionStopReqType->EVTerminationCode.charactersLen);
                                     }
                                 }
                                 else
@@ -31143,7 +31196,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTerminationCode>", 24);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTerminationCode>", 24);
                     }
                     break;
                 case 1:
@@ -31155,7 +31208,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTerminationExplanation", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTerminationExplanation", 29);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31175,7 +31228,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationExplanation.characters, SessionStopReqType->EVTerminationExplanation.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationExplanation.characters, SessionStopReqType->EVTerminationExplanation.charactersLen);
                                     }
                                 }
                                 else
@@ -31220,7 +31273,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTerminationExplanation>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTerminationExplanation>", 31);
                     }
                     break;
                 case 2:
@@ -31250,7 +31303,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVTerminationExplanation", 29);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTerminationExplanation", 29);
                         (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31270,7 +31323,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                                     {
                                         // XML: emit string value
                                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationExplanation.characters, SessionStopReqType->EVTerminationExplanation.charactersLen);
+                                        xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, SessionStopReqType->EVTerminationExplanation.characters, SessionStopReqType->EVTerminationExplanation.charactersLen);
                                     }
                                 }
                                 else
@@ -31315,7 +31368,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVTerminationExplanation>", 31);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTerminationExplanation>", 31);
                     }
                     break;
                 case 1:
@@ -31391,7 +31444,7 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionStopResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -31409,7 +31462,7 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -31434,7 +31487,7 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31450,46 +31503,46 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -31528,7 +31581,7 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -31593,7 +31646,7 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                 case 0:
                     // Event: START (Id, ID (NCName)); next=340
                     // XML: attribute
-                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " ns2:Id=\"", 9);
+                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, " Id=\"", 5);
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertiesType->Id.charactersLen);
                     if (error == 0)
@@ -31606,7 +31659,7 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                             if (error == 0)
                             {
                                 // XML: emit string value
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertiesType->Id.characters, SignaturePropertiesType->Id.charactersLen);
+                                xml_write_escaped_attr(xmlOut, xmlOut_size, xmlOut_pos, SignaturePropertiesType->Id.characters, SignaturePropertiesType->Id.charactersLen);
                             }
                         }
                         else
@@ -31850,7 +31903,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckInReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -31868,7 +31921,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -31893,7 +31946,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVCheckInStatus", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVCheckInStatus", 20);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31909,9 +31962,9 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "CheckIn", 7); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Processing", 10); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "CheckIn", 7); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Processing", 10); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -31950,7 +32003,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVCheckInStatus>", 22);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVCheckInStatus>", 22);
                     }
                     break;
                 default:
@@ -31975,7 +32028,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParkingMethod", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParkingMethod", 18);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -31991,9 +32044,9 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "AutoParking", 11); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "MVGuideManual", 13); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Manual", 6); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "AutoParking", 11); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "MVGuideManual", 13); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Manual", 6); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -32032,7 +32085,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParkingMethod>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParkingMethod>", 20);
                     }
                     break;
                 default:
@@ -32057,7 +32110,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:VehicleFrame", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:VehicleFrame", 17);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->VehicleFrame);
@@ -32079,7 +32132,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:VehicleFrame>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:VehicleFrame>", 19);
                     }
                     break;
                 case 1:
@@ -32091,7 +32144,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DeviceOffset", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DeviceOffset", 17);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->DeviceOffset);
@@ -32113,7 +32166,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DeviceOffset>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DeviceOffset>", 19);
                     }
                     break;
                 case 2:
@@ -32125,7 +32178,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:VehicleTravel", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:VehicleTravel", 18);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->VehicleTravel);
@@ -32147,7 +32200,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:VehicleTravel>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:VehicleTravel>", 20);
                     }
                     break;
                 case 3:
@@ -32177,7 +32230,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DeviceOffset", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DeviceOffset", 17);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->DeviceOffset);
@@ -32199,7 +32252,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DeviceOffset>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DeviceOffset>", 19);
                     }
                     break;
                 case 1:
@@ -32211,7 +32264,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:VehicleTravel", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:VehicleTravel", 18);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->VehicleTravel);
@@ -32233,7 +32286,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:VehicleTravel>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:VehicleTravel>", 20);
                     }
                     break;
                 case 2:
@@ -32263,7 +32316,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:VehicleTravel", 18);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:VehicleTravel", 18);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->VehicleTravel);
@@ -32285,7 +32338,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:VehicleTravel>", 20);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:VehicleTravel>", 20);
                     }
                     break;
                 case 1:
@@ -32361,7 +32414,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckInResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -32379,7 +32432,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -32404,7 +32457,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -32420,46 +32473,46 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -32498,7 +32551,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -32523,7 +32576,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParkingSpace", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ParkingSpace", 17);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->ParkingSpace);
@@ -32545,7 +32598,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParkingSpace>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ParkingSpace>", 19);
                     }
                     break;
                 case 1:
@@ -32557,7 +32610,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DeviceLocation", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DeviceLocation", 19);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->DeviceLocation);
@@ -32579,7 +32632,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DeviceLocation>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DeviceLocation>", 21);
                     }
                     break;
                 case 2:
@@ -32591,7 +32644,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetDistance", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetDistance", 19);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->TargetDistance);
@@ -32613,7 +32666,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetDistance>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetDistance>", 21);
                     }
                     break;
                 case 3:
@@ -32643,7 +32696,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DeviceLocation", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DeviceLocation", 19);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->DeviceLocation);
@@ -32665,7 +32718,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DeviceLocation>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DeviceLocation>", 21);
                     }
                     break;
                 case 1:
@@ -32677,7 +32730,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetDistance", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetDistance", 19);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->TargetDistance);
@@ -32699,7 +32752,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetDistance>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetDistance>", 21);
                     }
                     break;
                 case 2:
@@ -32729,7 +32782,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TargetDistance", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:TargetDistance", 19);
                         (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->TargetDistance);
@@ -32751,7 +32804,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TargetDistance>", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:TargetDistance>", 21);
                     }
                     break;
                 case 1:
@@ -32827,7 +32880,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckOutReqType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -32845,7 +32898,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -32870,7 +32923,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVCheckOutStatus", 21);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVCheckOutStatus", 21);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -32886,9 +32939,9 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "CheckOut", 8); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Processing", 10); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "CheckOut", 8); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Processing", 10); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -32927,7 +32980,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVCheckOutStatus>", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVCheckOutStatus>", 23);
                     }
                     break;
                 default:
@@ -32952,7 +33005,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:CheckOutTime", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CheckOutTime", 17);
                         (void)xml_tag_start;
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &VehicleCheckOutReqType->CheckOutTime);
@@ -32973,7 +33026,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:CheckOutTime>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CheckOutTime>", 19);
                     }
                     break;
                 default:
@@ -33044,7 +33097,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Header", 11);
                         (void)xml_tag_start;
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckOutResType->Header, xmlOut, xmlOut_size, xmlOut_pos);
@@ -33062,7 +33115,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Header>", 13);
                     }
                     break;
                 default:
@@ -33087,7 +33140,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:ResponseCode", 17);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ResponseCode", 17);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -33103,46 +33156,46 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
-                                case 2: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
-                                case 3: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
-                                case 4: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
-                                case 5: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
-                                case 6: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
-                                case 7: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
-                                case 8: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
-                                case 9: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
-                                case 10: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
-                                case 11: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
-                                case 12: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
-                                case 13: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
-                                case 14: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
-                                case 15: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
-                                case 16: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
-                                case 17: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
-                                case 18: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
-                                case 19: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
-                                case 20: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
-                                case 21: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
-                                case 22: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
-                                case 23: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
-                                case 24: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
-                                case 25: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
-                                case 26: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
-                                case 27: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
-                                case 28: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
-                                case 29: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
-                                case 30: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
-                                case 31: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
-                                case 32: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
-                                case 33: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
-                                case 34: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
-                                case 35: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
-                                case 36: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
-                                case 37: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
-                                case 38: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
-                                case 39: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK", 2); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_CertificateExpiresSoon", 25); break;
+                                case 2: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_NewSessionEstablished", 24); break;
+                                case 3: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_OldSessionJoined", 19); break;
+                                case 4: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "OK_PowerToleranceConfirmed", 26); break;
+                                case 5: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_AuthorizationSelectionInvalid", 37); break;
+                                case 6: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateExpired", 26); break;
+                                case 7: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateNotYetValid", 30); break;
+                                case 8: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateRevoked", 26); break;
+                                case 9: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_CertificateValidationError", 34); break;
+                                case 10: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ChallengeInvalid", 24); break;
+                                case 11: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EIMAuthorizationFailure", 31); break;
+                                case 12: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_eMSPUnknown", 19); break;
+                                case 13: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_EVPowerProfileViolation", 31); break;
+                                case 14: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_GeneralPnCAuthorizationError", 36); break;
+                                case 15: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoCertificateAvailable", 30); break;
+                                case 16: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_NoContractMatchingPCIDFound", 35); break;
+                                case 17: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_PowerToleranceNotConfirmed", 34); break;
+                                case 18: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_ScheduleRenegotiationFailed", 35); break;
+                                case 19: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_StandbyNotAllowed", 25); break;
+                                case 20: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "WARNING_WPT", 11); break;
+                                case 21: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED", 6); break;
+                                case 22: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_AssociationError", 23); break;
+                                case 23: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ContactorError", 21); break;
+                                case 24: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileInvalid", 28); break;
+                                case 25: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_EVPowerProfileViolation", 30); break;
+                                case 26: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_MeteringSignatureNotValid", 32); break;
+                                case 27: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoEnergyTransferServiceSelected", 38); break;
+                                case 28: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_NoServiceRenegotiationSupported", 38); break;
+                                case 29: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PauseNotAllowed", 22); break;
+                                case 30: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerDeliveryNotApplied", 30); break;
+                                case 31: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_PowerToleranceNotConfirmed", 33); break;
+                                case 32: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleRenegotiation", 28); break;
+                                case 33: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ScheduleSelectionInvalid", 31); break;
+                                case 34: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SequenceError", 20); break;
+                                case 35: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceIDInvalid", 23); break;
+                                case 36: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_ServiceSelectionInvalid", 30); break;
+                                case 37: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_SignatureError", 21); break;
+                                case 38: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_UnknownSession", 21); break;
+                                case 39: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "FAILED_WrongChargeParameter", 27); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -33181,7 +33234,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:ResponseCode>", 19);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -33206,7 +33259,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                     }
                     {
                         size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSECheckOutStatus", 23);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSECheckOutStatus", 23);
                         (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
@@ -33222,8 +33275,8 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                                 // XML: emit value
                                 xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
                                 switch (value) {
-                                case 0: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Scheduled", 9); break;
-                                case 1: xml_write(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
+                                case 0: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Scheduled", 9); break;
+                                case 1: xml_write_escaped_text(xmlOut, xmlOut_size, xmlOut_pos, "Completed", 9); break;
                                 default: { char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%u", (unsigned int)value); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); } break;
                                 }
                             }
@@ -33262,7 +33315,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                             }
                             if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
                         }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSECheckOutStatus>", 25);
+                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSECheckOutStatus>", 25);
                     }
                     break;
                 default:
@@ -33308,7 +33361,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
     uint32_t eventCode;
     int error = exi_header_read_and_check(stream);
 
-    size_t xmlOut_pos = strlen(xmlOut);
+    size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
 
     if (error == 0)
     {
@@ -33324,73 +33377,73 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
             {
             case 0:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:AuthorizationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:AuthorizationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_AuthorizationReqType(stream, &exiDoc->AuthorizationReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->AuthorizationReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:AuthorizationReq>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:AuthorizationReq>", 23);
                 }
                 break;
             case 1:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:AuthorizationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:AuthorizationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_AuthorizationResType(stream, &exiDoc->AuthorizationRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->AuthorizationRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:AuthorizationRes>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:AuthorizationRes>", 23);
                 }
                 break;
             case 2:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:AuthorizationSetupReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 222);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:AuthorizationSetupReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 177);
                 error = decode_iso20_AuthorizationSetupReqType(stream, &exiDoc->AuthorizationSetupReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->AuthorizationSetupReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:AuthorizationSetupReq>", 28);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:AuthorizationSetupReq>", 28);
                 }
                 break;
             case 3:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:AuthorizationSetupRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 222);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:AuthorizationSetupRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 177);
                 error = decode_iso20_AuthorizationSetupResType(stream, &exiDoc->AuthorizationSetupRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->AuthorizationSetupRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:AuthorizationSetupRes>", 28);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:AuthorizationSetupRes>", 28);
                 }
                 break;
             case 4:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns4:CLReqControlMode xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:CLReqControlMode xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_CLReqControlModeType(stream, &exiDoc->CLReqControlMode, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->CLReqControlMode_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns4:CLReqControlMode>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:CLReqControlMode>", 23);
                 }
                 break;
             case 5:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns4:CLResControlMode xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:CLResControlMode xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_CLResControlModeType(stream, &exiDoc->CLResControlMode, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->CLResControlMode_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns4:CLResControlMode>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:CLResControlMode>", 23);
                 }
                 break;
             case 6:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:CanonicalizationMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 223);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:CanonicalizationMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 178);
                 error = decode_iso20_CanonicalizationMethodType(stream, &exiDoc->CanonicalizationMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->CanonicalizationMethod_isUsed = 1u;
                 // XML: close tag
@@ -33401,29 +33454,29 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 7:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:CertificateInstallationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 227);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:CertificateInstallationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 182);
                 error = decode_iso20_CertificateInstallationReqType(stream, &exiDoc->CertificateInstallationReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->CertificateInstallationReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:CertificateInstallationReq>", 33);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:CertificateInstallationReq>", 33);
                 }
                 break;
             case 8:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:CertificateInstallationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 227);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:CertificateInstallationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 182);
                 error = decode_iso20_CertificateInstallationResType(stream, &exiDoc->CertificateInstallationRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->CertificateInstallationRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:CertificateInstallationRes>", 33);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:CertificateInstallationRes>", 33);
                 }
                 break;
             case 9:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 212);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 167);
                 error = decode_iso20_DSAKeyValueType(stream, &exiDoc->DSAKeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->DSAKeyValue_isUsed = 1u;
                 // XML: close tag
@@ -33434,7 +33487,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 10:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DigestMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 213);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DigestMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 168);
                 error = decode_iso20_DigestMethodType(stream, &exiDoc->DigestMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->DigestMethod_isUsed = 1u;
                 // XML: close tag
@@ -33448,7 +33501,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 12:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 208);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 163);
                 error = decode_iso20_KeyInfoType(stream, &exiDoc->KeyInfo, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->KeyInfo_isUsed = 1u;
                 // XML: close tag
@@ -33462,7 +33515,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 14:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 209);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_KeyValueType(stream, &exiDoc->KeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->KeyValue_isUsed = 1u;
                 // XML: close tag
@@ -33473,7 +33526,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 15:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Manifest xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 209);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Manifest xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_ManifestType(stream, &exiDoc->Manifest, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Manifest_isUsed = 1u;
                 // XML: close tag
@@ -33484,24 +33537,24 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 16:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:MeteringConfirmationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 224);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:MeteringConfirmationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 179);
                 error = decode_iso20_MeteringConfirmationReqType(stream, &exiDoc->MeteringConfirmationReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->MeteringConfirmationReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:MeteringConfirmationReq>", 30);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:MeteringConfirmationReq>", 30);
                 }
                 break;
             case 17:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:MeteringConfirmationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 224);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:MeteringConfirmationRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 179);
                 error = decode_iso20_MeteringConfirmationResType(stream, &exiDoc->MeteringConfirmationRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->MeteringConfirmationRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:MeteringConfirmationRes>", 30);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:MeteringConfirmationRes>", 30);
                 }
                 break;
             case 18:
@@ -33509,7 +33562,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 19:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Object xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 207);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Object xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 162);
                 error = decode_iso20_ObjectType(stream, &exiDoc->Object, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Object_isUsed = 1u;
                 // XML: close tag
@@ -33520,7 +33573,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 20:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:PGPData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 208);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:PGPData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 163);
                 error = decode_iso20_PGPDataType(stream, &exiDoc->PGPData, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->PGPData_isUsed = 1u;
                 // XML: close tag
@@ -33531,29 +33584,29 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 21:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:PowerDeliveryReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:PowerDeliveryReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_PowerDeliveryReqType(stream, &exiDoc->PowerDeliveryReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->PowerDeliveryReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:PowerDeliveryReq>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:PowerDeliveryReq>", 23);
                 }
                 break;
             case 22:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:PowerDeliveryRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:PowerDeliveryRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_PowerDeliveryResType(stream, &exiDoc->PowerDeliveryRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->PowerDeliveryRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:PowerDeliveryRes>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:PowerDeliveryRes>", 23);
                 }
                 break;
             case 23:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 212);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 167);
                 error = decode_iso20_RSAKeyValueType(stream, &exiDoc->RSAKeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->RSAKeyValue_isUsed = 1u;
                 // XML: close tag
@@ -33564,7 +33617,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 24:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Reference xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 210);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Reference xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_ReferenceType(stream, &exiDoc->Reference, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Reference_isUsed = 1u;
                 // XML: close tag
@@ -33575,7 +33628,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 25:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RetrievalMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 216);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RetrievalMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_RetrievalMethodType(stream, &exiDoc->RetrievalMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->RetrievalMethod_isUsed = 1u;
                 // XML: close tag
@@ -33586,7 +33639,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 26:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SPKIData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 209);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SPKIData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_SPKIDataType(stream, &exiDoc->SPKIData, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SPKIData_isUsed = 1u;
                 // XML: close tag
@@ -33597,139 +33650,139 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 27:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ScheduleExchangeReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ScheduleExchangeReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ScheduleExchangeReqType(stream, &exiDoc->ScheduleExchangeReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ScheduleExchangeReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ScheduleExchangeReq>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ScheduleExchangeReq>", 26);
                 }
                 break;
             case 28:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ScheduleExchangeRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ScheduleExchangeRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ScheduleExchangeResType(stream, &exiDoc->ScheduleExchangeRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ScheduleExchangeRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ScheduleExchangeRes>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ScheduleExchangeRes>", 26);
                 }
                 break;
             case 29:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceDetailReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceDetailReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_ServiceDetailReqType(stream, &exiDoc->ServiceDetailReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceDetailReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceDetailReq>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceDetailReq>", 23);
                 }
                 break;
             case 30:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceDetailRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 217);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceDetailRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_ServiceDetailResType(stream, &exiDoc->ServiceDetailRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceDetailRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceDetailRes>", 23);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceDetailRes>", 23);
                 }
                 break;
             case 31:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceDiscoveryReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceDiscoveryReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ServiceDiscoveryReqType(stream, &exiDoc->ServiceDiscoveryReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceDiscoveryReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceDiscoveryReq>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceDiscoveryReq>", 26);
                 }
                 break;
             case 32:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceDiscoveryRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceDiscoveryRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ServiceDiscoveryResType(stream, &exiDoc->ServiceDiscoveryRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceDiscoveryRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceDiscoveryRes>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceDiscoveryRes>", 26);
                 }
                 break;
             case 33:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceSelectionReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceSelectionReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ServiceSelectionReqType(stream, &exiDoc->ServiceSelectionReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceSelectionReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceSelectionReq>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceSelectionReq>", 26);
                 }
                 break;
             case 34:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:ServiceSelectionRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:ServiceSelectionRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_ServiceSelectionResType(stream, &exiDoc->ServiceSelectionRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->ServiceSelectionRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:ServiceSelectionRes>", 26);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:ServiceSelectionRes>", 26);
                 }
                 break;
             case 35:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SessionSetupReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 216);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SessionSetupReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_SessionSetupReqType(stream, &exiDoc->SessionSetupReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SessionSetupReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SessionSetupReq>", 22);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SessionSetupReq>", 22);
                 }
                 break;
             case 36:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SessionSetupRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 216);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SessionSetupRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_SessionSetupResType(stream, &exiDoc->SessionSetupRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SessionSetupRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SessionSetupRes>", 22);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SessionSetupRes>", 22);
                 }
                 break;
             case 37:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SessionStopReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 215);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SessionStopReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 170);
                 error = decode_iso20_SessionStopReqType(stream, &exiDoc->SessionStopReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SessionStopReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SessionStopReq>", 21);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SessionStopReq>", 21);
                 }
                 break;
             case 38:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SessionStopRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 215);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SessionStopRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 170);
                 error = decode_iso20_SessionStopResType(stream, &exiDoc->SessionStopRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SessionStopRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SessionStopRes>", 21);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SessionStopRes>", 21);
                 }
                 break;
             case 39:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 216);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_SignatureMethodType(stream, &exiDoc->SignatureMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignatureMethod_isUsed = 1u;
                 // XML: close tag
@@ -33740,7 +33793,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 40:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperties xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 220);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperties xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_SignaturePropertiesType(stream, &exiDoc->SignatureProperties, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignatureProperties_isUsed = 1u;
                 // XML: close tag
@@ -33751,7 +33804,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 41:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperty xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 218);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperty xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 173);
                 error = decode_iso20_SignaturePropertyType(stream, &exiDoc->SignatureProperty, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignatureProperty_isUsed = 1u;
                 // XML: close tag
@@ -33762,7 +33815,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 42:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Signature xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 210);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Signature xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_SignatureType(stream, &exiDoc->Signature, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Signature_isUsed = 1u;
                 // XML: close tag
@@ -33773,7 +33826,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 43:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 215);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 170);
                 error = decode_iso20_SignatureValueType(stream, &exiDoc->SignatureValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignatureValue_isUsed = 1u;
                 // XML: close tag
@@ -33784,7 +33837,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 44:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignedInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 211);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignedInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 166);
                 error = decode_iso20_SignedInfoType(stream, &exiDoc->SignedInfo, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignedInfo_isUsed = 1u;
                 // XML: close tag
@@ -33795,29 +33848,29 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 45:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SignedInstallationData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 223);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SignedInstallationData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 178);
                 error = decode_iso20_SignedInstallationDataType(stream, &exiDoc->SignedInstallationData, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignedInstallationData_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SignedInstallationData>", 29);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SignedInstallationData>", 29);
                 }
                 break;
             case 46:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SignedMeteringData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 219);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SignedMeteringData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 174);
                 error = decode_iso20_SignedMeteringDataType(stream, &exiDoc->SignedMeteringData, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->SignedMeteringData_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SignedMeteringData>", 25);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SignedMeteringData>", 25);
                 }
                 break;
             case 47:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transform xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 210);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transform xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_TransformType(stream, &exiDoc->Transform, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Transform_isUsed = 1u;
                 // XML: close tag
@@ -33828,7 +33881,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 48:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transforms xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 211);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transforms xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 166);
                 error = decode_iso20_TransformsType(stream, &exiDoc->Transforms, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->Transforms_isUsed = 1u;
                 // XML: close tag
@@ -33839,51 +33892,51 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
                 break;
             case 49:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:VehicleCheckInReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 218);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:VehicleCheckInReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 173);
                 error = decode_iso20_VehicleCheckInReqType(stream, &exiDoc->VehicleCheckInReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->VehicleCheckInReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:VehicleCheckInReq>", 24);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:VehicleCheckInReq>", 24);
                 }
                 break;
             case 50:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:VehicleCheckInRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 218);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:VehicleCheckInRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 173);
                 error = decode_iso20_VehicleCheckInResType(stream, &exiDoc->VehicleCheckInRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->VehicleCheckInRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:VehicleCheckInRes>", 24);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:VehicleCheckInRes>", 24);
                 }
                 break;
             case 51:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:VehicleCheckOutReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 219);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:VehicleCheckOutReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 174);
                 error = decode_iso20_VehicleCheckOutReqType(stream, &exiDoc->VehicleCheckOutReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->VehicleCheckOutReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:VehicleCheckOutReq>", 25);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:VehicleCheckOutReq>", 25);
                 }
                 break;
             case 52:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:VehicleCheckOutRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 219);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:VehicleCheckOutRes xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 174);
                 error = decode_iso20_VehicleCheckOutResType(stream, &exiDoc->VehicleCheckOutRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->VehicleCheckOutRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:VehicleCheckOutRes>", 25);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:VehicleCheckOutRes>", 25);
                 }
                 break;
             case 53:
                 // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:X509Data xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"http://www.w3.org/2001/XMLSchema\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns4=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 209);
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:X509Data xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_X509DataType(stream, &exiDoc->X509Data, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->X509Data_isUsed = 1u;
                 // XML: close tag
@@ -33907,7 +33960,7 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
     uint32_t eventCode;
     int error = exi_header_read_and_check(stream);
 
-    size_t xmlOut_pos = strlen(xmlOut);
+    size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
 
     if (error == EXI_ERROR__NO_ERROR)
     {
@@ -33921,14 +33974,14 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
             {
             case 0:
                 // AbsolutePriceSchedule (urn:iso:std:iso:15118:-20:CommonMessages)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:AbsolutePriceSchedule>", 27);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:AbsolutePriceSchedule xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 177);
                 error = decode_iso20_AbsolutePriceScheduleType(stream, &exiFrag->AbsolutePriceSchedule, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->AbsolutePriceSchedule_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:AbsolutePriceSchedule>", 28);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:AbsolutePriceSchedule>", 28);
                 }
                 break;
             case 1:
@@ -34011,14 +34064,14 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
                 break;
             case 27:
                 // CertificateInstallationReq (urn:iso:std:iso:15118:-20:CommonMessages)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:CertificateInstallationReq>", 32);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:CertificateInstallationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 182);
                 error = decode_iso20_CertificateInstallationReqType(stream, &exiFrag->CertificateInstallationReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->CertificateInstallationReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:CertificateInstallationReq>", 33);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:CertificateInstallationReq>", 33);
                 }
                 break;
             case 28:
@@ -34296,14 +34349,14 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
                 break;
             case 119:
                 // MeteringConfirmationReq (urn:iso:std:iso:15118:-20:CommonMessages)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:MeteringConfirmationReq>", 29);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:MeteringConfirmationReq xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 179);
                 error = decode_iso20_MeteringConfirmationReqType(stream, &exiFrag->MeteringConfirmationReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->MeteringConfirmationReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:MeteringConfirmationReq>", 30);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:MeteringConfirmationReq>", 30);
                 }
                 break;
             case 120:
@@ -34401,14 +34454,14 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
                 break;
             case 151:
                 // PnC_AReqAuthorizationMode (urn:iso:std:iso:15118:-20:CommonMessages)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:PnC_AReqAuthorizationMode>", 31);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:PnC_AReqAuthorizationMode xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 181);
                 error = decode_iso20_PnC_AReqAuthorizationModeType(stream, &exiFrag->PnC_AReqAuthorizationMode, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->PnC_AReqAuthorizationMode_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:PnC_AReqAuthorizationMode>", 32);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:PnC_AReqAuthorizationMode>", 32);
                 }
                 break;
             case 152:
@@ -34647,8 +34700,8 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
                 break;
             case 230:
                 // SignedInfo (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignedInfo>", 16);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignedInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 166);
                 error = decode_iso20_SignedInfoType(stream, &exiFrag->SignedInfo, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->SignedInfo_isUsed = 1u;
                 // XML: close tag
@@ -34659,14 +34712,14 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
                 break;
             case 231:
                 // SignedInstallationData (urn:iso:std:iso:15118:-20:CommonMessages)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns3:SignedInstallationData>", 28);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns2:SignedInstallationData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 178);
                 error = decode_iso20_SignedInstallationDataType(stream, &exiFrag->SignedInstallationData, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiFrag->SignedInstallationData_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns3:SignedInstallationData>", 29);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns2:SignedInstallationData>", 29);
                 }
                 break;
             case 232:
@@ -34844,7 +34897,7 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
     uint32_t eventCode;
     int error = exi_header_read_and_check(stream);
 
-    size_t xmlOut_pos = strlen(xmlOut);
+    size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
 
     if (error == EXI_ERROR__NO_ERROR)
     {
@@ -34858,38 +34911,38 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
             {
             case 0:
                 // CanonicalizationMethod (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod>", 60);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:CanonicalizationMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 178);
                 error = decode_iso20_CanonicalizationMethodType(stream, &xmldsigFrag->CanonicalizationMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->CanonicalizationMethod_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod>", 61);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
                 }
                 break;
             case 1:
                 // DSAKeyValue (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}DSAKeyValue>", 49);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 167);
                 error = decode_iso20_DSAKeyValueType(stream, &xmldsigFrag->DSAKeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->DSAKeyValue_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}DSAKeyValue>", 50);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:DSAKeyValue>", 18);
                 }
                 break;
             case 2:
                 // DigestMethod (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}DigestMethod>", 50);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:DigestMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 168);
                 error = decode_iso20_DigestMethodType(stream, &xmldsigFrag->DigestMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->DigestMethod_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}DigestMethod>", 51);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:DigestMethod>", 19);
                 }
                 break;
             case 3:
@@ -34909,14 +34962,14 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 8:
                 // KeyInfo (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}KeyInfo>", 45);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 163);
                 error = decode_iso20_KeyInfoType(stream, &xmldsigFrag->KeyInfo, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->KeyInfo_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}KeyInfo>", 46);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:KeyInfo>", 14);
                 }
                 break;
             case 9:
@@ -34924,26 +34977,26 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 10:
                 // KeyValue (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}KeyValue>", 46);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:KeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_KeyValueType(stream, &xmldsigFrag->KeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->KeyValue_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}KeyValue>", 47);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:KeyValue>", 15);
                 }
                 break;
             case 11:
                 // Manifest (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Manifest>", 46);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Manifest xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_ManifestType(stream, &xmldsigFrag->Manifest, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Manifest_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Manifest>", 47);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Manifest>", 15);
                 }
                 break;
             case 12:
@@ -34954,14 +35007,14 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 14:
                 // Object (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Object>", 44);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Object xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 162);
                 error = decode_iso20_ObjectType(stream, &xmldsigFrag->Object, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Object_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Object>", 45);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Object>", 13);
                 }
                 break;
             case 15:
@@ -34969,14 +35022,14 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 16:
                 // PGPData (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}PGPData>", 45);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:PGPData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 163);
                 error = decode_iso20_PGPDataType(stream, &xmldsigFrag->PGPData, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->PGPData_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}PGPData>", 46);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:PGPData>", 14);
                 }
                 break;
             case 17:
@@ -34993,50 +35046,50 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 21:
                 // RSAKeyValue (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}RSAKeyValue>", 49);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RSAKeyValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 167);
                 error = decode_iso20_RSAKeyValueType(stream, &xmldsigFrag->RSAKeyValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->RSAKeyValue_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}RSAKeyValue>", 50);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:RSAKeyValue>", 18);
                 }
                 break;
             case 22:
                 // Reference (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Reference>", 47);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Reference xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_ReferenceType(stream, &xmldsigFrag->Reference, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Reference_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Reference>", 48);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Reference>", 16);
                 }
                 break;
             case 23:
                 // RetrievalMethod (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}RetrievalMethod>", 53);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:RetrievalMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_RetrievalMethodType(stream, &xmldsigFrag->RetrievalMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->RetrievalMethod_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}RetrievalMethod>", 54);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:RetrievalMethod>", 22);
                 }
                 break;
             case 24:
                 // SPKIData (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SPKIData>", 46);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SPKIData xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_SPKIDataType(stream, &xmldsigFrag->SPKIData, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SPKIData_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SPKIData>", 47);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SPKIData>", 15);
                 }
                 break;
             case 25:
@@ -35047,98 +35100,98 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 27:
                 // Signature (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Signature>", 47);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Signature xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_SignatureType(stream, &xmldsigFrag->Signature, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Signature_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Signature>", 48);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Signature>", 16);
                 }
                 break;
             case 28:
                 // SignatureMethod (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SignatureMethod>", 53);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureMethod xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 171);
                 error = decode_iso20_SignatureMethodType(stream, &xmldsigFrag->SignatureMethod, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SignatureMethod_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SignatureMethod>", 54);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SignatureMethod>", 22);
                 }
                 break;
             case 29:
                 // SignatureProperties (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SignatureProperties>", 57);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperties xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 175);
                 error = decode_iso20_SignaturePropertiesType(stream, &xmldsigFrag->SignatureProperties, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SignatureProperties_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SignatureProperties>", 58);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SignatureProperties>", 26);
                 }
                 break;
             case 30:
                 // SignatureProperty (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SignatureProperty>", 55);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureProperty xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 173);
                 error = decode_iso20_SignaturePropertyType(stream, &xmldsigFrag->SignatureProperty, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SignatureProperty_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SignatureProperty>", 56);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SignatureProperty>", 24);
                 }
                 break;
             case 31:
                 // SignatureValue (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SignatureValue>", 52);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignatureValue xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 170);
                 error = decode_iso20_SignatureValueType(stream, &xmldsigFrag->SignatureValue, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SignatureValue_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SignatureValue>", 53);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SignatureValue>", 21);
                 }
                 break;
             case 32:
                 // SignedInfo (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}SignedInfo>", 48);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:SignedInfo xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 166);
                 error = decode_iso20_SignedInfoType(stream, &xmldsigFrag->SignedInfo, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->SignedInfo_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}SignedInfo>", 49);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:SignedInfo>", 17);
                 }
                 break;
             case 33:
                 // Transform (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Transform>", 47);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transform xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 165);
                 error = decode_iso20_TransformType(stream, &xmldsigFrag->Transform, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Transform_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Transform>", 48);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Transform>", 16);
                 }
                 break;
             case 34:
                 // Transforms (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}Transforms>", 48);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:Transforms xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 166);
                 error = decode_iso20_TransformsType(stream, &xmldsigFrag->Transforms, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->Transforms_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}Transforms>", 49);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:Transforms>", 17);
                 }
                 break;
             case 35:
@@ -35149,14 +35202,14 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 37:
                 // X509Data (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}X509Data>", 46);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:X509Data xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 164);
                 error = decode_iso20_X509DataType(stream, &xmldsigFrag->X509Data, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->X509Data_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}X509Data>", 47);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:X509Data>", 15);
                 }
                 break;
             case 38:
@@ -35164,14 +35217,14 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
                 break;
             case 39:
                 // X509IssuerSerial (http://www.w3.org/2000/09/xmldsig#)
-                // XML: open tag
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<{http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial>", 54);
+                // XML: open tag with xmlns declarations
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:X509IssuerSerial xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:iso:std:iso:15118:-20:CommonMessages\" xmlns:ns3=\"urn:iso:std:iso:15118:-20:CommonTypes\">", 172);
                 error = decode_iso20_X509IssuerSerialType(stream, &xmldsigFrag->X509IssuerSerial, xmlOut, xmlOut_size, &xmlOut_pos);
                 xmldsigFrag->X509IssuerSerial_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</{http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial>", 55);
+                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:X509IssuerSerial>", 23);
                 }
                 break;
             case 40:

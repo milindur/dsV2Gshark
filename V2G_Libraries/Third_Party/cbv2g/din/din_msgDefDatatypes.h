@@ -169,38 +169,6 @@ typedef enum {
     din_costKindType_CarbonDioxideEmission = 2
 } din_costKindType;
 
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVErrorCode; type={urn:din:70121:2012:MsgDataTypes}DC_EVErrorCodeType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_DC_EVErrorCodeType_NO_ERROR = 0,
-    din_DC_EVErrorCodeType_FAILED_RESSTemperatureInhibit = 1,
-    din_DC_EVErrorCodeType_FAILED_EVShiftPosition = 2,
-    din_DC_EVErrorCodeType_FAILED_ChargerConnectorLockFault = 3,
-    din_DC_EVErrorCodeType_FAILED_EVRESSMalfunction = 4,
-    din_DC_EVErrorCodeType_FAILED_ChargingCurrentdifferential = 5,
-    din_DC_EVErrorCodeType_FAILED_ChargingVoltageOutOfRange = 6,
-    din_DC_EVErrorCodeType_Reserved_A = 7,
-    din_DC_EVErrorCodeType_Reserved_B = 8,
-    din_DC_EVErrorCodeType_Reserved_C = 9,
-    din_DC_EVErrorCodeType_FAILED_ChargingSystemIncompatibility = 10,
-    din_DC_EVErrorCodeType_NoData = 11
-} din_DC_EVErrorCodeType;
-
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}Unit; type={urn:din:70121:2012:MsgDataTypes}unitSymbolType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_unitSymbolType_h = 0,
-    din_unitSymbolType_m = 1,
-    din_unitSymbolType_s = 2,
-    din_unitSymbolType_A = 3,
-    din_unitSymbolType_Ah = 4,
-    din_unitSymbolType_V = 5,
-    din_unitSymbolType_VA = 6,
-    din_unitSymbolType_W = 7,
-    din_unitSymbolType_W_s = 8,
-    din_unitSymbolType_Wh = 9
-} din_unitSymbolType;
-
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSEIsolationStatus; type={urn:din:70121:2012:MsgDataTypes}isolationLevelType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
@@ -209,14 +177,6 @@ typedef enum {
     din_isolationLevelType_Warning = 2,
     din_isolationLevelType_Fault = 3
 } din_isolationLevelType;
-
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSENotification; type={urn:din:70121:2012:MsgDataTypes}EVSENotificationType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_EVSENotificationType_None = 0,
-    din_EVSENotificationType_StopCharging = 1,
-    din_EVSENotificationType_ReNegotiation = 2
-} din_EVSENotificationType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSEStatusCode; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -235,6 +195,46 @@ typedef enum {
     din_DC_EVSEStatusCodeType_Reserved_C = 11
 } din_DC_EVSEStatusCodeType;
 
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}Unit; type={urn:din:70121:2012:MsgDataTypes}unitSymbolType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_unitSymbolType_h = 0,
+    din_unitSymbolType_m = 1,
+    din_unitSymbolType_s = 2,
+    din_unitSymbolType_A = 3,
+    din_unitSymbolType_Ah = 4,
+    din_unitSymbolType_V = 5,
+    din_unitSymbolType_VA = 6,
+    din_unitSymbolType_W = 7,
+    din_unitSymbolType_W_s = 8,
+    din_unitSymbolType_Wh = 9
+} din_unitSymbolType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVErrorCode; type={urn:din:70121:2012:MsgDataTypes}DC_EVErrorCodeType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_DC_EVErrorCodeType_NO_ERROR = 0,
+    din_DC_EVErrorCodeType_FAILED_RESSTemperatureInhibit = 1,
+    din_DC_EVErrorCodeType_FAILED_EVShiftPosition = 2,
+    din_DC_EVErrorCodeType_FAILED_ChargerConnectorLockFault = 3,
+    din_DC_EVErrorCodeType_FAILED_EVRESSMalfunction = 4,
+    din_DC_EVErrorCodeType_FAILED_ChargingCurrentdifferential = 5,
+    din_DC_EVErrorCodeType_FAILED_ChargingVoltageOutOfRange = 6,
+    din_DC_EVErrorCodeType_Reserved_A = 7,
+    din_DC_EVErrorCodeType_Reserved_B = 8,
+    din_DC_EVErrorCodeType_Reserved_C = 9,
+    din_DC_EVErrorCodeType_FAILED_ChargingSystemIncompatibility = 10,
+    din_DC_EVErrorCodeType_NoData = 11
+} din_DC_EVErrorCodeType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSENotification; type={urn:din:70121:2012:MsgDataTypes}EVSENotificationType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_EVSENotificationType_None = 0,
+    din_EVSENotificationType_StopCharging = 1,
+    din_EVSENotificationType_ReNegotiation = 2
+} din_EVSENotificationType;
+
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EnergyTransferType; type={urn:din:70121:2012:MsgDataTypes}EVSESupportedEnergyTransferType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
@@ -249,6 +249,13 @@ typedef enum {
     din_EVSESupportedEnergyTransferType_AC_single_phase_three_phase_core_DC_extended = 8,
     din_EVSESupportedEnergyTransferType_AC_core3p_DC_extended = 9
 } din_EVSESupportedEnergyTransferType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}PaymentOption; type={urn:din:70121:2012:MsgDataTypes}paymentOptionType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_paymentOptionType_Contract = 0,
+    din_paymentOptionType_ExternalPayment = 1
+} din_paymentOptionType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVRequestedEnergyTransferType; type={urn:din:70121:2012:MsgDataTypes}EVRequestedEnergyTransferType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -303,13 +310,6 @@ typedef enum {
     din_responseCodeType_FAILED_MeteringSignatureNotValid = 21,
     din_responseCodeType_FAILED_WrongEnergyTransferType = 22
 } din_responseCodeType;
-
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}SelectedPaymentOption; type={urn:din:70121:2012:MsgDataTypes}paymentOptionType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_paymentOptionType_Contract = 0,
-    din_paymentOptionType_ExternalPayment = 1
-} din_paymentOptionType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}ServiceCategory; type={urn:din:70121:2012:MsgDataTypes}serviceCategoryType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -608,46 +608,23 @@ struct din_CanonicalizationMethodType {
 
 };
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVStatusType; base type=EVStatusType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: EVReady, boolean (1, 1); EVCabinConditioning, boolean (0, 1); EVRESSConditioning, boolean (0, 1); EVErrorCode, DC_EVErrorCodeType (1, 1); EVRESSSOC, percentValueType (1, 1);
-struct din_DC_EVStatusType {
-    // EVReady, boolean
-    int EVReady;
-    // EVCabinConditioning, boolean
-    int EVCabinConditioning;
-    unsigned int EVCabinConditioning_isUsed:1;
-    // EVRESSConditioning, boolean
-    int EVRESSConditioning;
-    unsigned int EVRESSConditioning_isUsed:1;
-    // EVErrorCode, DC_EVErrorCodeType (base: string)
-    din_DC_EVErrorCodeType EVErrorCode;
-    // EVRESSSOC, percentValueType (base: byte)
-    int8_t EVRESSSOC;
+// Particle: EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
+struct din_DC_EVSEStatusType {
+    // EVSEIsolationStatus, isolationLevelType (base: string)
+    din_isolationLevelType EVSEIsolationStatus;
+    unsigned int EVSEIsolationStatus_isUsed:1;
+    // EVSEStatusCode, DC_EVSEStatusCodeType (base: string)
+    din_DC_EVSEStatusCodeType EVSEStatusCode;
+    // NotificationMaxDelay, unsignedInt (base: unsignedLong)
+    uint32_t NotificationMaxDelay;
+    // EVSENotification, EVSENotificationType (base: string)
+    din_EVSENotificationType EVSENotification;
 
 };
 
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyValue; type={http://www.w3.org/2000/09/xmldsig#}KeyValueType; base type=; content type=mixed;
-//          abstract=False; final=False; choice=True;
-// Particle: DSAKeyValue, DSAKeyValueType (0, 1); RSAKeyValue, RSAKeyValueType (0, 1); ANY, anyType (0, 1);
-struct din_KeyValueType {
-    // DSAKeyValue, DSAKeyValueType
-    struct din_DSAKeyValueType DSAKeyValue;
-    unsigned int DSAKeyValue_isUsed:1;
-    // RSAKeyValue, RSAKeyValueType
-    struct din_RSAKeyValueType RSAKeyValue;
-    unsigned int RSAKeyValue_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}MeterReading; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVSEMaximumCurrentLimit; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (0, 1); Value, short (1, 1);
 struct din_PhysicalValueType {
@@ -693,6 +670,26 @@ struct din_ParameterType {
         uint16_t charactersLen;
     } stringValue;
     unsigned int stringValue_isUsed:1;
+
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyValue; type={http://www.w3.org/2000/09/xmldsig#}KeyValueType; base type=; content type=mixed;
+//          abstract=False; final=False; choice=True;
+// Particle: DSAKeyValue, DSAKeyValueType (0, 1); RSAKeyValue, RSAKeyValueType (0, 1); ANY, anyType (0, 1);
+struct din_KeyValueType {
+    // DSAKeyValue, DSAKeyValueType
+    struct din_DSAKeyValueType DSAKeyValue;
+    unsigned int DSAKeyValue_isUsed:1;
+    // RSAKeyValue, RSAKeyValueType
+    struct din_RSAKeyValueType RSAKeyValue;
+    unsigned int RSAKeyValue_isUsed:1;
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
+
 
 };
 
@@ -1078,6 +1075,53 @@ struct din_CertificateChainType {
 
 };
 
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DC_EVSEStatus, DC_EVSEStatusType (1, 1); EVSEMaximumCurrentLimit, PhysicalValueType (1, 1); EVSEMaximumPowerLimit, PhysicalValueType (0, 1); EVSEMaximumVoltageLimit, PhysicalValueType (1, 1); EVSEMinimumCurrentLimit, PhysicalValueType (1, 1); EVSEMinimumVoltageLimit, PhysicalValueType (1, 1); EVSECurrentRegulationTolerance, PhysicalValueType (0, 1); EVSEPeakCurrentRipple, PhysicalValueType (1, 1); EVSEEnergyToBeDelivered, PhysicalValueType (0, 1);
+struct din_DC_EVSEChargeParameterType {
+    // DC_EVSEStatus, DC_EVSEStatusType (base: EVSEStatusType)
+    struct din_DC_EVSEStatusType DC_EVSEStatus;
+    // EVSEMaximumCurrentLimit, PhysicalValueType
+    struct din_PhysicalValueType EVSEMaximumCurrentLimit;
+    // EVSEMaximumPowerLimit, PhysicalValueType
+    struct din_PhysicalValueType EVSEMaximumPowerLimit;
+    unsigned int EVSEMaximumPowerLimit_isUsed:1;
+    // EVSEMaximumVoltageLimit, PhysicalValueType
+    struct din_PhysicalValueType EVSEMaximumVoltageLimit;
+    // EVSEMinimumCurrentLimit, PhysicalValueType
+    struct din_PhysicalValueType EVSEMinimumCurrentLimit;
+    // EVSEMinimumVoltageLimit, PhysicalValueType
+    struct din_PhysicalValueType EVSEMinimumVoltageLimit;
+    // EVSECurrentRegulationTolerance, PhysicalValueType
+    struct din_PhysicalValueType EVSECurrentRegulationTolerance;
+    unsigned int EVSECurrentRegulationTolerance_isUsed:1;
+    // EVSEPeakCurrentRipple, PhysicalValueType
+    struct din_PhysicalValueType EVSEPeakCurrentRipple;
+    // EVSEEnergyToBeDelivered, PhysicalValueType
+    struct din_PhysicalValueType EVSEEnergyToBeDelivered;
+    unsigned int EVSEEnergyToBeDelivered_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVStatusType; base type=EVStatusType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: EVReady, boolean (1, 1); EVCabinConditioning, boolean (0, 1); EVRESSConditioning, boolean (0, 1); EVErrorCode, DC_EVErrorCodeType (1, 1); EVRESSSOC, percentValueType (1, 1);
+struct din_DC_EVStatusType {
+    // EVReady, boolean
+    int EVReady;
+    // EVCabinConditioning, boolean
+    int EVCabinConditioning;
+    unsigned int EVCabinConditioning_isUsed:1;
+    // EVRESSConditioning, boolean
+    int EVRESSConditioning;
+    unsigned int EVRESSConditioning_isUsed:1;
+    // EVErrorCode, DC_EVErrorCodeType (base: string)
+    din_DC_EVErrorCodeType EVErrorCode;
+    // EVRESSSOC, percentValueType (base: byte)
+    int8_t EVRESSSOC;
+
+};
+
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: DC_EVStatus, DC_EVStatusType (1, 1); EVMaximumCurrentLimit, PhysicalValueType (1, 1); EVMaximumPowerLimit, PhysicalValueType (0, 1); EVMaximumVoltageLimit, PhysicalValueType (1, 1); EVEnergyCapacity, PhysicalValueType (0, 1); EVEnergyRequest, PhysicalValueType (0, 1); FullSOC, percentValueType (0, 1); BulkSOC, percentValueType (0, 1);
@@ -1117,50 +1161,6 @@ struct din_DC_EVPowerDeliveryParameterType {
     unsigned int BulkChargingComplete_isUsed:1;
     // ChargingComplete, boolean
     int ChargingComplete;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
-struct din_DC_EVSEStatusType {
-    // EVSEIsolationStatus, isolationLevelType (base: string)
-    din_isolationLevelType EVSEIsolationStatus;
-    unsigned int EVSEIsolationStatus_isUsed:1;
-    // EVSEStatusCode, DC_EVSEStatusCodeType (base: string)
-    din_DC_EVSEStatusCodeType EVSEStatusCode;
-    // NotificationMaxDelay, unsignedInt (base: unsignedLong)
-    uint32_t NotificationMaxDelay;
-    // EVSENotification, EVSENotificationType (base: string)
-    din_EVSENotificationType EVSENotification;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEChargeParameterType; base type=EVSEChargeParameterType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DC_EVSEStatus, DC_EVSEStatusType (1, 1); EVSEMaximumCurrentLimit, PhysicalValueType (1, 1); EVSEMaximumPowerLimit, PhysicalValueType (0, 1); EVSEMaximumVoltageLimit, PhysicalValueType (1, 1); EVSEMinimumCurrentLimit, PhysicalValueType (1, 1); EVSEMinimumVoltageLimit, PhysicalValueType (1, 1); EVSECurrentRegulationTolerance, PhysicalValueType (0, 1); EVSEPeakCurrentRipple, PhysicalValueType (1, 1); EVSEEnergyToBeDelivered, PhysicalValueType (0, 1);
-struct din_DC_EVSEChargeParameterType {
-    // DC_EVSEStatus, DC_EVSEStatusType (base: EVSEStatusType)
-    struct din_DC_EVSEStatusType DC_EVSEStatus;
-    // EVSEMaximumCurrentLimit, PhysicalValueType
-    struct din_PhysicalValueType EVSEMaximumCurrentLimit;
-    // EVSEMaximumPowerLimit, PhysicalValueType
-    struct din_PhysicalValueType EVSEMaximumPowerLimit;
-    unsigned int EVSEMaximumPowerLimit_isUsed:1;
-    // EVSEMaximumVoltageLimit, PhysicalValueType
-    struct din_PhysicalValueType EVSEMaximumVoltageLimit;
-    // EVSEMinimumCurrentLimit, PhysicalValueType
-    struct din_PhysicalValueType EVSEMinimumCurrentLimit;
-    // EVSEMinimumVoltageLimit, PhysicalValueType
-    struct din_PhysicalValueType EVSEMinimumVoltageLimit;
-    // EVSECurrentRegulationTolerance, PhysicalValueType
-    struct din_PhysicalValueType EVSECurrentRegulationTolerance;
-    unsigned int EVSECurrentRegulationTolerance_isUsed:1;
-    // EVSEPeakCurrentRipple, PhysicalValueType
-    struct din_PhysicalValueType EVSEPeakCurrentRipple;
-    // EVSEEnergyToBeDelivered, PhysicalValueType
-    struct din_PhysicalValueType EVSEEnergyToBeDelivered;
-    unsigned int EVSEEnergyToBeDelivered_isUsed:1;
 
 };
 

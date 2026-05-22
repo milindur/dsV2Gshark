@@ -53,8 +53,8 @@ static int encode_iso20_ac_der_ConstantPowerFactorType(exi_bitstream_t* stream, 
 static int encode_iso20_ac_der_ConstantVarType(exi_bitstream_t* stream, const struct iso20_ac_der_ConstantVarType* ConstantVarType);
 static int encode_iso20_ac_der_DeadBandType(exi_bitstream_t* stream, const struct iso20_ac_der_DeadBandType* DeadBandType);
 static int encode_iso20_ac_der_FrequencyWattCurveType(exi_bitstream_t* stream, const struct iso20_ac_der_FrequencyWattCurveType* FrequencyWattCurveType);
-static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_EU_FrequencyDroopSettingsType* EU_FrequencyDroopSettingsType);
 static int encode_iso20_ac_der_US_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_US_FrequencyDroopSettingsType* US_FrequencyDroopSettingsType);
+static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_EU_FrequencyDroopSettingsType* EU_FrequencyDroopSettingsType);
 static int encode_iso20_ac_der_DERCurveType(exi_bitstream_t* stream, const struct iso20_ac_der_DERCurveType* DERCurveType);
 static int encode_iso20_ac_der_LimitMaxDischargePowerType(exi_bitstream_t* stream, const struct iso20_ac_der_LimitMaxDischargePowerType* LimitMaxDischargePowerType);
 static int encode_iso20_ac_der_EU_FrequencyDroopType(exi_bitstream_t* stream, const struct iso20_ac_der_EU_FrequencyDroopType* EU_FrequencyDroopType);
@@ -4412,10 +4412,10 @@ static int encode_iso20_ac_der_FrequencyWattCurveType(exi_bitstream_t* stream, c
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}EU_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}US_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Fstart, RationalNumberType (1, 1); s, RationalNumberType (1, 1); DeactivationTime, RationalNumberType (0, 1); IntentionalDelayPowerControl, RationalNumberType (0, 1); PowerReference, powerReferenceType (1, 1); HysteresisControl, HysteresisControlType (0, 1); MaxReactionTime, RationalNumberType (0, 1);
-static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_EU_FrequencyDroopSettingsType* EU_FrequencyDroopSettingsType) {
+// Particle: db, RationalNumberType (1, 1); k, RationalNumberType (1, 1); PowerReference, powerReferenceType (1, 1); OpenLoopResponseTime, RationalNumberType (0, 1);
+static int encode_iso20_ac_der_US_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_US_FrequencyDroopSettingsType* US_FrequencyDroopSettingsType) {
     int grammar_id = 83;
     int done = 0;
     int error = 0;
@@ -4425,12 +4425,12 @@ static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* st
         switch (grammar_id)
         {
         case 83:
-            // Grammar: ID=83; read/write bits=1; START (Fstart)
+            // Grammar: ID=83; read/write bits=1; START (db)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (RationalNumberType); next=84
-                error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->Fstart);
+                error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->db);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 84;
@@ -4438,12 +4438,12 @@ static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* st
             }
             break;
         case 84:
-            // Grammar: ID=84; read/write bits=1; START (s)
+            // Grammar: ID=84; read/write bits=1; START (k)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
                 // Event: START (RationalNumberType); next=85
-                error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->s);
+                error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->k);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     grammar_id = 85;
@@ -4451,164 +4451,36 @@ static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* st
             }
             break;
         case 85:
-            // Grammar: ID=85; read/write bits=2; START (DeactivationTime), START (IntentionalDelayPowerControl), START (PowerReference)
-            if (EU_FrequencyDroopSettingsType->DeactivationTime_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (DeactivationTime, RationalNumberType); next=86
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->DeactivationTime);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 86;
-                    }
-                }
-            }
-            else if (EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (IntentionalDelayPowerControl, RationalNumberType); next=87
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 87;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (PowerReference, string); next=88
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 88;
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        case 86:
-            // Grammar: ID=86; read/write bits=2; START (IntentionalDelayPowerControl), START (PowerReference)
-            if (EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (IntentionalDelayPowerControl, RationalNumberType); next=87
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 87;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (PowerReference, string); next=88
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 88;
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; START (PowerReference)
+            // Grammar: ID=85; read/write bits=1; START (PowerReference)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=88
+                // Event: START (string); next=86
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, US_FrequencyDroopSettingsType->PowerReference);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 88;
+                            grammar_id = 86;
                         }
                     }
                 }
             }
             break;
-        case 88:
-            // Grammar: ID=88; read/write bits=2; START (HysteresisControl), START (MaxReactionTime), END Element
-            if (EU_FrequencyDroopSettingsType->HysteresisControl_isUsed == 1u)
+        case 86:
+            // Grammar: ID=86; read/write bits=2; START (OpenLoopResponseTime), END Element
+            if (US_FrequencyDroopSettingsType->OpenLoopResponseTime_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (HysteresisControl, HysteresisControlType); next=89
-                    error = encode_iso20_ac_der_HysteresisControlType(stream, &EU_FrequencyDroopSettingsType->HysteresisControl);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 89;
-                    }
-                }
-            }
-            else if (EU_FrequencyDroopSettingsType->MaxReactionTime_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (MaxReactionTime, RationalNumberType); next=2
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->MaxReactionTime);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 89:
-            // Grammar: ID=89; read/write bits=2; START (MaxReactionTime), END Element
-            if (EU_FrequencyDroopSettingsType->MaxReactionTime_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (MaxReactionTime, RationalNumberType); next=2
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->MaxReactionTime);
+                    // Event: START (OpenLoopResponseTime, RationalNumberType); next=2
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->OpenLoopResponseTime);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
@@ -4649,11 +4521,11 @@ static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* st
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}US_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}OverFrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}EU_FrequencyDroopSettingsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: db, RationalNumberType (1, 1); k, RationalNumberType (1, 1); PowerReference, powerReferenceType (1, 1); OpenLoopResponseTime, RationalNumberType (0, 1);
-static int encode_iso20_ac_der_US_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_US_FrequencyDroopSettingsType* US_FrequencyDroopSettingsType) {
-    int grammar_id = 90;
+// Particle: Fstart, RationalNumberType (1, 1); s, RationalNumberType (1, 1); DeactivationTime, RationalNumberType (0, 1); IntentionalDelayPowerControl, RationalNumberType (0, 1); PowerReference, powerReferenceType (1, 1); HysteresisControl, HysteresisControlType (0, 1); MaxReactionTime, RationalNumberType (0, 1);
+static int encode_iso20_ac_der_EU_FrequencyDroopSettingsType(exi_bitstream_t* stream, const struct iso20_ac_der_EU_FrequencyDroopSettingsType* EU_FrequencyDroopSettingsType) {
+    int grammar_id = 87;
     int done = 0;
     int error = 0;
 
@@ -4661,63 +4533,191 @@ static int encode_iso20_ac_der_US_FrequencyDroopSettingsType(exi_bitstream_t* st
     {
         switch (grammar_id)
         {
-        case 90:
-            // Grammar: ID=90; read/write bits=1; START (db)
+        case 87:
+            // Grammar: ID=87; read/write bits=1; START (Fstart)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=91
-                error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->db);
+                // Event: START (RationalNumberType); next=88
+                error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->Fstart);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 91;
+                    grammar_id = 88;
+                }
+            }
+            break;
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (s)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=89
+                error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->s);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 89;
+                }
+            }
+            break;
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (DeactivationTime), START (IntentionalDelayPowerControl), START (PowerReference)
+            if (EU_FrequencyDroopSettingsType->DeactivationTime_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (DeactivationTime, RationalNumberType); next=90
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->DeactivationTime);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 90;
+                    }
+                }
+            }
+            else if (EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (IntentionalDelayPowerControl, RationalNumberType); next=91
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 91;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (PowerReference, string); next=92
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 92;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        case 90:
+            // Grammar: ID=90; read/write bits=2; START (IntentionalDelayPowerControl), START (PowerReference)
+            if (EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (IntentionalDelayPowerControl, RationalNumberType); next=91
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->IntentionalDelayPowerControl);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 91;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (PowerReference, string); next=92
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 92;
+                            }
+                        }
+                    }
                 }
             }
             break;
         case 91:
-            // Grammar: ID=91; read/write bits=1; START (k)
+            // Grammar: ID=91; read/write bits=1; START (PowerReference)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=92
-                error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->k);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 92;
-                }
-            }
-            break;
-        case 92:
-            // Grammar: ID=92; read/write bits=1; START (PowerReference)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (string); next=93
+                // Event: START (string); next=92
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, US_FrequencyDroopSettingsType->PowerReference);
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, EU_FrequencyDroopSettingsType->PowerReference);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 93;
+                            grammar_id = 92;
                         }
                     }
                 }
             }
             break;
-        case 93:
-            // Grammar: ID=93; read/write bits=2; START (OpenLoopResponseTime), END Element
-            if (US_FrequencyDroopSettingsType->OpenLoopResponseTime_isUsed == 1u)
+        case 92:
+            // Grammar: ID=92; read/write bits=2; START (HysteresisControl), START (MaxReactionTime), END Element
+            if (EU_FrequencyDroopSettingsType->HysteresisControl_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OpenLoopResponseTime, RationalNumberType); next=2
-                    error = encode_iso20_ac_der_RationalNumberType(stream, &US_FrequencyDroopSettingsType->OpenLoopResponseTime);
+                    // Event: START (HysteresisControl, HysteresisControlType); next=93
+                    error = encode_iso20_ac_der_HysteresisControlType(stream, &EU_FrequencyDroopSettingsType->HysteresisControl);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 93;
+                    }
+                }
+            }
+            else if (EU_FrequencyDroopSettingsType->MaxReactionTime_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (MaxReactionTime, RationalNumberType); next=2
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->MaxReactionTime);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 2;
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                }
+            }
+            break;
+        case 93:
+            // Grammar: ID=93; read/write bits=2; START (MaxReactionTime), END Element
+            if (EU_FrequencyDroopSettingsType->MaxReactionTime_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (MaxReactionTime, RationalNumberType); next=2
+                    error = encode_iso20_ac_der_RationalNumberType(stream, &EU_FrequencyDroopSettingsType->MaxReactionTime);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
@@ -7089,7 +7089,7 @@ static int encode_iso20_ac_der_US_FrequencyDroopType(exi_bitstream_t* stream, co
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC-DER}FrequencyDroop; type={urn:iso:std:iso:15118:-20:AC-DER}FrequencyDroopType; base type=; content type=ELEMENT-ONLY;
 //          abstract=True; final=False;
-// Particle: Enable, boolean (0, 1); Priority, unsignedShort (0, 1); EU_FrequencyDroop, EU_FrequencyDroopType (0, 1); US_FrequencyDroop, US_FrequencyDroopType (0, 1);
+// Particle: Enable, boolean (0, 1); Priority, unsignedShort (0, 1); US_FrequencyDroop, US_FrequencyDroopType (0, 1); EU_FrequencyDroop, EU_FrequencyDroopType (0, 1);
 static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const struct iso20_ac_der_FrequencyDroopType* FrequencyDroopType) {
     int grammar_id = 146;
     int done = 0;
@@ -7100,7 +7100,7 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
         switch (grammar_id)
         {
         case 146:
-            // Grammar: ID=146; read/write bits=3; START (Enable), START (Priority), START (EU_FrequencyDroop), START (US_FrequencyDroop), END Element
+            // Grammar: ID=146; read/write bits=3; START (Enable), START (Priority), START (US_FrequencyDroop), START (EU_FrequencyDroop), END Element
             if (FrequencyDroopType->Enable_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
@@ -7145,26 +7145,26 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
                     }
                 }
             }
-            else if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
+            else if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=149
-                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
+                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=149
+                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 149;
                     }
                 }
             }
-            else if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
+            else if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=2
-                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
+                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=2
+                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
@@ -7183,7 +7183,7 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
             }
             break;
         case 147:
-            // Grammar: ID=147; read/write bits=3; START (Priority), START (EU_FrequencyDroop), START (US_FrequencyDroop), END Element
+            // Grammar: ID=147; read/write bits=3; START (Priority), START (US_FrequencyDroop), START (EU_FrequencyDroop), END Element
             if (FrequencyDroopType->Priority_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
@@ -7206,26 +7206,26 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
                     }
                 }
             }
-            else if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
+            else if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=149
-                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
+                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=149
+                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 149;
                     }
                 }
             }
-            else if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
+            else if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=2
-                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
+                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=2
+                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
@@ -7244,27 +7244,27 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
             }
             break;
         case 148:
-            // Grammar: ID=148; read/write bits=2; START (EU_FrequencyDroop), START (US_FrequencyDroop), END Element
-            if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
+            // Grammar: ID=148; read/write bits=2; START (US_FrequencyDroop), START (EU_FrequencyDroop), END Element
+            if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=149
-                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
+                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=149
+                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 149;
                     }
                 }
             }
-            else if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
+            else if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=2
-                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
+                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=2
+                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
@@ -7283,14 +7283,14 @@ static int encode_iso20_ac_der_FrequencyDroopType(exi_bitstream_t* stream, const
             }
             break;
         case 149:
-            // Grammar: ID=149; read/write bits=2; START (US_FrequencyDroop), END Element
-            if (FrequencyDroopType->US_FrequencyDroop_isUsed == 1u)
+            // Grammar: ID=149; read/write bits=2; START (EU_FrequencyDroop), END Element
+            if (FrequencyDroopType->EU_FrequencyDroop_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (US_FrequencyDroop, FrequencyDroopType); next=2
-                    error = encode_iso20_ac_der_US_FrequencyDroopType(stream, &FrequencyDroopType->US_FrequencyDroop);
+                    // Event: START (EU_FrequencyDroop, FrequencyDroopType); next=2
+                    error = encode_iso20_ac_der_EU_FrequencyDroopType(stream, &FrequencyDroopType->EU_FrequencyDroop);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         grammar_id = 2;
