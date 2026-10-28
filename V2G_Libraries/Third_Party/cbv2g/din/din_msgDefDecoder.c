@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <inttypes.h>
 
 #include "exi_basetypes.h"
@@ -73,6 +72,67 @@ static inline void xml_write_escaped_text(char* xmlOut, size_t xmlOut_size, size
 }
 static inline void xml_write_escaped_attr(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
     xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 1);
+}
+/* writes data as base64; skipped as a whole if it does not fit */
+static inline void xml_write_base64(char* xmlOut, size_t xmlOut_size, size_t* pos, const uint8_t* data, size_t len) {
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t i;
+    if (xmlOut == NULL || pos == NULL || *pos >= xmlOut_size) return;
+    if (4u * ((len + 2u) / 3u) > xmlOut_size - *pos - 1u) return;
+    for (i = 0u; i < len; i += 3u) {
+        uint32_t triple = ((uint32_t)data[i] << 16)
+            | (i + 1u < len ? (uint32_t)data[i + 1u] << 8 : 0u)
+            | (i + 2u < len ? (uint32_t)data[i + 2u] : 0u);
+        char quad[4];
+        quad[0] = table[(triple >> 18) & 0x3Fu];
+        quad[1] = table[(triple >> 12) & 0x3Fu];
+        quad[2] = i + 1u < len ? table[(triple >> 6) & 0x3Fu] : '=';
+        quad[3] = i + 2u < len ? table[triple & 0x3Fu] : '=';
+        xml_write(xmlOut, xmlOut_size, pos, quad, 4u);
+    }
+}
+/* closes a start tag left open for attributes, then writes the end tag */
+static inline void xml_end_tag(char* xmlOut, size_t xmlOut_size, size_t* pos, size_t tag_start, const char* end_tag, size_t len) {
+    while (tag_start < *pos && xmlOut[tag_start] != '>') tag_start++;
+    if (tag_start == *pos) xml_write(xmlOut, xmlOut_size, pos, ">", 1u);
+    xml_write(xmlOut, xmlOut_size, pos, end_tag, len);
+}
+/* writes an arbitrary-width EXI signed integer (-(magnitude + 1) if negative) as decimal */
+static inline void xml_write_signed(char* xmlOut, size_t xmlOut_size, size_t* pos, const exi_signed_t* value) {
+    uint8_t num[EXI_BASETYPES_MAX_OCTETS_SUPPORTED + 1u];
+    char digits[3u * (EXI_BASETYPES_MAX_OCTETS_SUPPORTED + 1u) + 2u];
+    size_t len = value->data.octets_count;
+    size_t first = 0u;
+    size_t n = sizeof(digits);
+    size_t i;
+    if (len > EXI_BASETYPES_MAX_OCTETS_SUPPORTED) return;
+    num[0] = 0u;
+    if (len > 0u) memcpy(&num[1], value->data.octets, len);
+    len++;
+    if (value->is_negative) {
+        for (i = len; i-- > 0u && ++num[i] == 0u;) {}
+    }
+    do {
+        unsigned int rest = 0u;
+        while (first < len && num[first] == 0u) first++;
+        for (i = first; i < len; i++) {
+            unsigned int cur = (rest << 8) | num[i];
+            num[i] = (uint8_t)(cur / 10u);
+            rest = cur % 10u;
+        }
+        digits[--n] = (char)('0' + rest);
+        while (first < len && num[first] == 0u) first++;
+    } while (first < len);
+    if (value->is_negative) digits[--n] = '-';
+    xml_write(xmlOut, xmlOut_size, pos, &digits[n], sizeof(digits) - n);
+}
+static inline void xml_write_hex(char* xmlOut, size_t xmlOut_size, size_t* pos, const uint8_t* data, size_t len) {
+    static const char digits[] = "0123456789ABCDEF";
+    size_t i;
+    for (i = 0u; i < len; i++) {
+        char pair[2] = { digits[data[i] >> 4], digits[data[i] & 0x0Fu] };
+        xml_write(xmlOut, xmlOut_size, pos, pair, 2u);
+    }
 }
 static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* CostType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_din_RelativeTimeIntervalType(exi_bitstream_t* stream, struct din_RelativeTimeIntervalType* RelativeTimeIntervalType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
@@ -205,7 +265,6 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:costKind", 13);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -252,16 +311,7 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:costKind>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:costKind>", 15);
                     }
                     break;
                 default:
@@ -287,7 +337,6 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:amount", 11);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &CostType->amount);
                     if (error == 0)
@@ -298,16 +347,7 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                         grammar_id = 2;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:amount>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:amount>", 13);
                     }
                     break;
                 default:
@@ -333,7 +373,6 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:amountMultiplier", 21);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -377,16 +416,7 @@ static int decode_din_CostType(exi_bitstream_t* stream, struct din_CostType* Cos
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:amountMultiplier>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:amountMultiplier>", 23);
                     }
                     break;
                 case 1:
@@ -463,7 +493,6 @@ static int decode_din_RelativeTimeIntervalType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:start", 10);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &RelativeTimeIntervalType->start);
                     if (error == 0)
@@ -474,16 +503,7 @@ static int decode_din_RelativeTimeIntervalType(exi_bitstream_t* stream, struct d
                         grammar_id = 6;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:start>", 12);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:start>", 12);
                     }
                     break;
                 default:
@@ -509,7 +529,6 @@ static int decode_din_RelativeTimeIntervalType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:duration", 13);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &RelativeTimeIntervalType->duration);
                     if (error == 0)
@@ -521,16 +540,7 @@ static int decode_din_RelativeTimeIntervalType(exi_bitstream_t* stream, struct d
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:duration>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:duration>", 15);
                     }
                     break;
                 case 1:
@@ -626,7 +636,6 @@ static int decode_din_ConsumptionCostType(exi_bitstream_t* stream, struct din_Co
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:startValue", 15);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &ConsumptionCostType->startValue);
                     if (error == 0)
@@ -637,16 +646,7 @@ static int decode_din_ConsumptionCostType(exi_bitstream_t* stream, struct din_Co
                         grammar_id = 8;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:startValue>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:startValue>", 17);
                     }
                     break;
                 default:
@@ -672,7 +672,6 @@ static int decode_din_ConsumptionCostType(exi_bitstream_t* stream, struct din_Co
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Cost", 9);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CostType(stream, &ConsumptionCostType->Cost, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -681,16 +680,7 @@ static int decode_din_ConsumptionCostType(exi_bitstream_t* stream, struct din_Co
                         grammar_id = 9;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Cost>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Cost>", 11);
                     }
                     break;
                 case 1:
@@ -721,21 +711,11 @@ static int decode_din_ConsumptionCostType(exi_bitstream_t* stream, struct din_Co
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Cost", 9);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Cost>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Cost>", 11);
                     }
                     break;
                 case 1:
@@ -853,7 +833,6 @@ static int decode_din_TransformType(exi_bitstream_t* stream, struct din_Transfor
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:XPath", 10);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -908,16 +887,7 @@ static int decode_din_TransformType(exi_bitstream_t* stream, struct din_Transfor
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:XPath>", 12);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:XPath>", 12);
                     }
                     break;
                 case 1:
@@ -930,20 +900,10 @@ static int decode_din_TransformType(exi_bitstream_t* stream, struct din_Transfor
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 2:
@@ -961,58 +921,18 @@ static int decode_din_TransformType(exi_bitstream_t* stream, struct din_Transfor
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &TransformType->ANY.bytesLen, &TransformType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        TransformType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((TransformType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < TransformType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < TransformType->ANY.bytesLen ? TransformType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < TransformType->ANY.bytesLen ? TransformType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < TransformType->ANY.bytesLen ? TransformType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[TransformType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, TransformType->ANY.bytes, TransformType->ANY.bytesLen);
+                        TransformType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -1084,7 +1004,6 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RelativeTimeInterval", 25);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_RelativeTimeIntervalType(stream, &PMaxScheduleEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1093,16 +1012,7 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                         grammar_id = 13;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RelativeTimeInterval>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:RelativeTimeInterval>", 27);
                     }
                     break;
                 case 1:
@@ -1115,7 +1025,6 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeInterval", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_IntervalType(stream, &PMaxScheduleEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1124,16 +1033,7 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                         grammar_id = 13;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeInterval>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TimeInterval>", 19);
                     }
                     break;
                 default:
@@ -1159,7 +1059,6 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PMax", 9);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &PMaxScheduleEntryType->PMax);
                     if (error == 0)
@@ -1170,16 +1069,7 @@ static int decode_din_PMaxScheduleEntryType(exi_bitstream_t* stream, struct din_
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PMax>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PMax>", 11);
                     }
                     break;
                 default:
@@ -1251,7 +1141,6 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RelativeTimeInterval", 25);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_RelativeTimeIntervalType(stream, &SalesTariffEntryType->RelativeTimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1260,16 +1149,7 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 15;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RelativeTimeInterval>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:RelativeTimeInterval>", 27);
                     }
                     break;
                 case 1:
@@ -1282,7 +1162,6 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TimeInterval", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_IntervalType(stream, &SalesTariffEntryType->TimeInterval, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1291,16 +1170,7 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 15;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TimeInterval>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TimeInterval>", 19);
                     }
                     break;
                 default:
@@ -1326,7 +1196,6 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EPriceLevel", 16);
-                        (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -1368,16 +1237,7 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EPriceLevel>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EPriceLevel>", 18);
                     }
                     break;
                 default:
@@ -1403,7 +1263,6 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ConsumptionCost", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ConsumptionCostType(stream, &SalesTariffEntryType->ConsumptionCost, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1412,16 +1271,7 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 17;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ConsumptionCost>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ConsumptionCost>", 22);
                     }
                     break;
                 case 1:
@@ -1452,21 +1302,11 @@ static int decode_din_SalesTariffEntryType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ConsumptionCost", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ConsumptionCost>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ConsumptionCost>", 22);
                     }
                     break;
                 case 1:
@@ -1543,7 +1383,6 @@ static int decode_din_TransformsType(exi_bitstream_t* stream, struct din_Transfo
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transform", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformType(stream, &TransformsType->Transform, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -1551,16 +1390,7 @@ static int decode_din_TransformsType(exi_bitstream_t* stream, struct din_Transfo
                         grammar_id = 19;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transform>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transform>", 16);
                     }
                     break;
                 default:
@@ -1586,21 +1416,11 @@ static int decode_din_TransformsType(exi_bitstream_t* stream, struct din_Transfo
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transform", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transform>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transform>", 16);
                     }
                     break;
                 case 1:
@@ -1677,58 +1497,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:P", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->P.bytesLen, &DSAKeyValueType->P.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->P_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->P.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->P.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->P.bytesLen ? DSAKeyValueType->P.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->P.bytesLen ? DSAKeyValueType->P.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->P.bytesLen ? DSAKeyValueType->P.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->P.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->P.bytes, DSAKeyValueType->P.bytesLen);
+                        DSAKeyValueType->P_isUsed = 1u;
                         grammar_id = 21;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:P>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:P>", 8);
                     }
                     break;
                 case 1:
@@ -1741,58 +1521,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:G", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->G.bytesLen, &DSAKeyValueType->G.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->G_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->G.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->G.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->G.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->G.bytes, DSAKeyValueType->G.bytesLen);
+                        DSAKeyValueType->G_isUsed = 1u;
                         grammar_id = 23;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:G>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:G>", 8);
                     }
                     break;
                 case 2:
@@ -1805,57 +1545,17 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Y", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Y.bytesLen, &DSAKeyValueType->Y.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Y.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Y.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Y.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Y.bytes, DSAKeyValueType->Y.bytesLen);
                         grammar_id = 24;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Y>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Y>", 8);
                     }
                     break;
                 default:
@@ -1881,58 +1581,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Q", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Q.bytesLen, &DSAKeyValueType->Q.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->Q_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Q.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Q.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Q.bytesLen ? DSAKeyValueType->Q.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Q.bytesLen ? DSAKeyValueType->Q.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Q.bytesLen ? DSAKeyValueType->Q.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Q.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Q.bytes, DSAKeyValueType->Q.bytesLen);
+                        DSAKeyValueType->Q_isUsed = 1u;
                         grammar_id = 22;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Q>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Q>", 8);
                     }
                     break;
                 default:
@@ -1958,58 +1618,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:G", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->G.bytesLen, &DSAKeyValueType->G.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->G_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->G.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->G.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->G.bytesLen ? DSAKeyValueType->G.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->G.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->G.bytes, DSAKeyValueType->G.bytesLen);
+                        DSAKeyValueType->G_isUsed = 1u;
                         grammar_id = 23;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:G>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:G>", 8);
                     }
                     break;
                 case 1:
@@ -2022,57 +1642,17 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Y", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Y.bytesLen, &DSAKeyValueType->Y.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Y.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Y.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Y.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Y.bytes, DSAKeyValueType->Y.bytesLen);
                         grammar_id = 24;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Y>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Y>", 8);
                     }
                     break;
                 default:
@@ -2098,57 +1678,17 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Y", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Y.bytesLen, &DSAKeyValueType->Y.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Y.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Y.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Y.bytesLen ? DSAKeyValueType->Y.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Y.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Y.bytes, DSAKeyValueType->Y.bytesLen);
                         grammar_id = 24;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Y>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Y>", 8);
                     }
                     break;
                 default:
@@ -2174,58 +1714,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:J", 6);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->J.bytesLen, &DSAKeyValueType->J.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->J_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->J.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->J.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->J.bytesLen ? DSAKeyValueType->J.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->J.bytesLen ? DSAKeyValueType->J.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->J.bytesLen ? DSAKeyValueType->J.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->J.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->J.bytes, DSAKeyValueType->J.bytesLen);
+                        DSAKeyValueType->J_isUsed = 1u;
                         grammar_id = 25;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:J>", 8);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:J>", 8);
                     }
                     break;
                 case 1:
@@ -2238,58 +1738,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Seed", 9);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Seed.bytesLen, &DSAKeyValueType->Seed.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->Seed_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Seed.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Seed.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Seed.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Seed.bytes, DSAKeyValueType->Seed.bytesLen);
+                        DSAKeyValueType->Seed_isUsed = 1u;
                         grammar_id = 26;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Seed>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Seed>", 11);
                     }
                     break;
                 case 2:
@@ -2320,58 +1780,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Seed", 9);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->Seed.bytesLen, &DSAKeyValueType->Seed.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->Seed_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->Seed.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->Seed.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->Seed.bytesLen ? DSAKeyValueType->Seed.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->Seed.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->Seed.bytes, DSAKeyValueType->Seed.bytesLen);
+                        DSAKeyValueType->Seed_isUsed = 1u;
                         grammar_id = 26;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Seed>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Seed>", 11);
                     }
                     break;
                 case 1:
@@ -2402,58 +1822,18 @@ static int decode_din_DSAKeyValueType(exi_bitstream_t* stream, struct din_DSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PgenCounter", 16);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DSAKeyValueType->PgenCounter.bytesLen, &DSAKeyValueType->PgenCounter.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DSAKeyValueType->PgenCounter_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DSAKeyValueType->PgenCounter.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DSAKeyValueType->PgenCounter.bytesLen;)
-                                {
-                                    uint32_t a = i < DSAKeyValueType->PgenCounter.bytesLen ? DSAKeyValueType->PgenCounter.bytes[i++] : 0;
-                                    uint32_t b = i < DSAKeyValueType->PgenCounter.bytesLen ? DSAKeyValueType->PgenCounter.bytes[i++] : 0;
-                                    uint32_t c = i < DSAKeyValueType->PgenCounter.bytesLen ? DSAKeyValueType->PgenCounter.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DSAKeyValueType->PgenCounter.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DSAKeyValueType->PgenCounter.bytes, DSAKeyValueType->PgenCounter.bytesLen);
+                        DSAKeyValueType->PgenCounter_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PgenCounter>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PgenCounter>", 18);
                     }
                     break;
                 case 1:
@@ -2530,7 +1910,6 @@ static int decode_din_X509IssuerSerialType(exi_bitstream_t* stream, struct din_X
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509IssuerName", 19);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -2584,16 +1963,7 @@ static int decode_din_X509IssuerSerialType(exi_bitstream_t* stream, struct din_X
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509IssuerName>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509IssuerName>", 21);
                     }
                     break;
                 default:
@@ -2619,7 +1989,6 @@ static int decode_din_X509IssuerSerialType(exi_bitstream_t* stream, struct din_X
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509SerialNumber", 21);
-                        (void)xml_tag_start;
                     // decode: signed
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -2629,22 +1998,13 @@ static int decode_din_X509IssuerSerialType(exi_bitstream_t* stream, struct din_X
                         {
                             // XML: emit value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            { int64_t _sv; exi_basetypes_convert_64_from_signed(&X509IssuerSerialType->X509SerialNumber, &_sv); char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRId64, _sv); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            xml_write_signed(xmlOut, xmlOut_size, xmlOut_pos, &X509IssuerSerialType->X509SerialNumber);
                             grammar_id = 3;
                         }
                         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509SerialNumber>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509SerialNumber>", 23);
                     }
                     break;
                 default:
@@ -2757,20 +2117,10 @@ static int decode_din_DigestMethodType(exi_bitstream_t* stream, struct din_Diges
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -2788,58 +2138,18 @@ static int decode_din_DigestMethodType(exi_bitstream_t* stream, struct din_Diges
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &DigestMethodType->ANY.bytesLen, &DigestMethodType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        DigestMethodType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((DigestMethodType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < DigestMethodType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < DigestMethodType->ANY.bytesLen ? DigestMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < DigestMethodType->ANY.bytesLen ? DigestMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < DigestMethodType->ANY.bytesLen ? DigestMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[DigestMethodType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, DigestMethodType->ANY.bytes, DigestMethodType->ANY.bytesLen);
+                        DigestMethodType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -2911,57 +2221,17 @@ static int decode_din_RSAKeyValueType(exi_bitstream_t* stream, struct din_RSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Modulus", 12);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &RSAKeyValueType->Modulus.bytesLen, &RSAKeyValueType->Modulus.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((RSAKeyValueType->Modulus.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < RSAKeyValueType->Modulus.bytesLen;)
-                                {
-                                    uint32_t a = i < RSAKeyValueType->Modulus.bytesLen ? RSAKeyValueType->Modulus.bytes[i++] : 0;
-                                    uint32_t b = i < RSAKeyValueType->Modulus.bytesLen ? RSAKeyValueType->Modulus.bytes[i++] : 0;
-                                    uint32_t c = i < RSAKeyValueType->Modulus.bytesLen ? RSAKeyValueType->Modulus.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[RSAKeyValueType->Modulus.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, RSAKeyValueType->Modulus.bytes, RSAKeyValueType->Modulus.bytesLen);
                         grammar_id = 32;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Modulus>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Modulus>", 14);
                     }
                     break;
                 default:
@@ -2987,57 +2257,17 @@ static int decode_din_RSAKeyValueType(exi_bitstream_t* stream, struct din_RSAKey
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Exponent", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &RSAKeyValueType->Exponent.bytesLen, &RSAKeyValueType->Exponent.bytes[0], din_CryptoBinary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((RSAKeyValueType->Exponent.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < RSAKeyValueType->Exponent.bytesLen;)
-                                {
-                                    uint32_t a = i < RSAKeyValueType->Exponent.bytesLen ? RSAKeyValueType->Exponent.bytes[i++] : 0;
-                                    uint32_t b = i < RSAKeyValueType->Exponent.bytesLen ? RSAKeyValueType->Exponent.bytes[i++] : 0;
-                                    uint32_t c = i < RSAKeyValueType->Exponent.bytesLen ? RSAKeyValueType->Exponent.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[RSAKeyValueType->Exponent.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, RSAKeyValueType->Exponent.bytes, RSAKeyValueType->Exponent.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Exponent>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Exponent>", 15);
                     }
                     break;
                 default:
@@ -3109,7 +2339,6 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PMaxScheduleID", 19);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &PMaxScheduleType->PMaxScheduleID);
                     if (error == 0)
@@ -3120,16 +2349,7 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                         grammar_id = 34;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PMaxScheduleID>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PMaxScheduleID>", 21);
                     }
                     break;
                 default:
@@ -3155,7 +2375,6 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PMaxScheduleEntry", 22);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < din_PMaxScheduleEntryType_5_ARRAY_SIZE)
                     {
@@ -3168,16 +2387,7 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                     }
                     grammar_id = 35;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PMaxScheduleEntry>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PMaxScheduleEntry>", 24);
                     }
                     break;
                 default:
@@ -3203,7 +2413,6 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PMaxScheduleEntry", 22);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (PMaxScheduleType->PMaxScheduleEntry.arrayLen < din_PMaxScheduleEntryType_5_ARRAY_SIZE)
                     {
@@ -3216,16 +2425,7 @@ static int decode_din_PMaxScheduleType(exi_bitstream_t* stream, struct din_PMaxS
                     }
                     grammar_id = 35;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PMaxScheduleEntry>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PMaxScheduleEntry>", 24);
                     }
                     break;
                 case 1:
@@ -3343,7 +2543,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SalesTariffID", 18);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &SalesTariffType->SalesTariffID);
                     if (error == 0)
@@ -3354,16 +2553,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                         grammar_id = 38;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SalesTariffID>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SalesTariffID>", 20);
                     }
                     break;
                 default:
@@ -3389,7 +2579,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SalesTariffDescription", 27);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3444,16 +2633,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SalesTariffDescription>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SalesTariffDescription>", 29);
                     }
                     break;
                 case 1:
@@ -3466,7 +2646,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NumEPriceLevels", 20);
-                        (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3508,16 +2687,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NumEPriceLevels>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:NumEPriceLevels>", 22);
                     }
                     break;
                 default:
@@ -3543,7 +2713,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NumEPriceLevels", 20);
-                        (void)xml_tag_start;
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3585,16 +2754,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NumEPriceLevels>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:NumEPriceLevels>", 22);
                     }
                     break;
                 default:
@@ -3620,7 +2780,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SalesTariffType->SalesTariffEntry.arrayLen < din_SalesTariffEntryType_5_ARRAY_SIZE)
                     {
@@ -3633,16 +2792,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     }
                     grammar_id = 41;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SalesTariffEntry>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SalesTariffEntry>", 23);
                     }
                     break;
                 default:
@@ -3668,7 +2818,6 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SalesTariffEntry", 21);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SalesTariffType->SalesTariffEntry.arrayLen < din_SalesTariffEntryType_5_ARRAY_SIZE)
                     {
@@ -3681,16 +2830,7 @@ static int decode_din_SalesTariffType(exi_bitstream_t* stream, struct din_SalesT
                     }
                     grammar_id = 41;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SalesTariffEntry>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SalesTariffEntry>", 23);
                     }
                     break;
                 case 1:
@@ -3808,20 +2948,10 @@ static int decode_din_CanonicalizationMethodType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -3839,58 +2969,18 @@ static int decode_din_CanonicalizationMethodType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CanonicalizationMethodType->ANY.bytesLen, &CanonicalizationMethodType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        CanonicalizationMethodType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CanonicalizationMethodType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CanonicalizationMethodType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < CanonicalizationMethodType->ANY.bytesLen ? CanonicalizationMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < CanonicalizationMethodType->ANY.bytesLen ? CanonicalizationMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < CanonicalizationMethodType->ANY.bytesLen ? CanonicalizationMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CanonicalizationMethodType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CanonicalizationMethodType->ANY.bytes, CanonicalizationMethodType->ANY.bytesLen);
+                        CanonicalizationMethodType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -3962,7 +3052,6 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SAScheduleTupleID", 22);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &SAScheduleTupleType->SAScheduleTupleID);
                     if (error == 0)
@@ -3973,16 +3062,7 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                         grammar_id = 45;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SAScheduleTupleID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SAScheduleTupleID>", 24);
                     }
                     break;
                 default:
@@ -4008,7 +3088,6 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PMaxSchedule", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PMaxScheduleType(stream, &SAScheduleTupleType->PMaxSchedule, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -4016,16 +3095,7 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                         grammar_id = 46;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PMaxSchedule>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PMaxSchedule>", 19);
                     }
                     break;
                 default:
@@ -4051,7 +3121,6 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SalesTariff", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SalesTariffType(stream, &SAScheduleTupleType->SalesTariff, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -4060,16 +3129,7 @@ static int decode_din_SAScheduleTupleType(exi_bitstream_t* stream, struct din_SA
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SalesTariff>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SalesTariff>", 18);
                     }
                     break;
                 case 1:
@@ -4146,7 +3206,6 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PowerSwitchClosed", 22);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4188,16 +3247,7 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PowerSwitchClosed>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PowerSwitchClosed>", 24);
                     }
                     break;
                 default:
@@ -4223,7 +3273,6 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RCD", 8);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4265,16 +3314,7 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RCD>", 10);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:RCD>", 10);
                     }
                     break;
                 default:
@@ -4300,7 +3340,6 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NotificationMaxDelay", 25);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AC_EVSEStatusType->NotificationMaxDelay);
                     if (error == 0)
@@ -4311,16 +3350,7 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                         grammar_id = 50;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NotificationMaxDelay>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:NotificationMaxDelay>", 27);
                     }
                     break;
                 default:
@@ -4346,7 +3376,6 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSENotification", 21);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4393,16 +3422,7 @@ static int decode_din_AC_EVSEStatusType(exi_bitstream_t* stream, struct din_AC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSENotification>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSENotification>", 23);
                     }
                     break;
                 default:
@@ -4474,7 +3494,6 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
-                        (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceTagType->ServiceID);
                     if (error == 0)
@@ -4485,16 +3504,7 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                         grammar_id = 52;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -4520,7 +3530,6 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceName", 16);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4575,16 +3584,7 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceName>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceName>", 18);
                     }
                     break;
                 case 1:
@@ -4597,7 +3597,6 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceCategory", 20);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4645,16 +3644,7 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceCategory>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceCategory>", 22);
                     }
                     break;
                 default:
@@ -4680,7 +3670,6 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceCategory", 20);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4728,16 +3717,7 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceCategory>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceCategory>", 22);
                     }
                     break;
                 default:
@@ -4763,7 +3743,6 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceScope", 17);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4818,16 +3797,7 @@ static int decode_din_ServiceTagType(exi_bitstream_t* stream, struct din_Service
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceScope>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceScope>", 19);
                     }
                     break;
                 case 1:
@@ -4904,7 +3874,6 @@ static int decode_din_ServiceType(exi_bitstream_t* stream, struct din_ServiceTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceTag", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceTagType(stream, &ServiceType->ServiceTag, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -4912,16 +3881,7 @@ static int decode_din_ServiceType(exi_bitstream_t* stream, struct din_ServiceTyp
                         grammar_id = 56;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceTag>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceTag>", 17);
                     }
                     break;
                 default:
@@ -4947,7 +3907,6 @@ static int decode_din_ServiceType(exi_bitstream_t* stream, struct din_ServiceTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FreeService", 16);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4989,16 +3948,7 @@ static int decode_din_ServiceType(exi_bitstream_t* stream, struct din_ServiceTyp
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FreeService>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FreeService>", 18);
                     }
                     break;
                 default:
@@ -5070,7 +4020,6 @@ static int decode_din_SelectedServiceType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceID", 14);
-                        (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &SelectedServiceType->ServiceID);
                     if (error == 0)
@@ -5081,16 +4030,7 @@ static int decode_din_SelectedServiceType(exi_bitstream_t* stream, struct din_Se
                         grammar_id = 58;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -5116,7 +4056,6 @@ static int decode_din_SelectedServiceType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSetID", 19);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &SelectedServiceType->ParameterSetID);
                     if (error == 0)
@@ -5128,16 +4067,7 @@ static int decode_din_SelectedServiceType(exi_bitstream_t* stream, struct din_Se
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSetID>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ParameterSetID>", 21);
                     }
                     break;
                 case 1:
@@ -5255,7 +4185,6 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:HMACOutputLength", 21);
-                        (void)xml_tag_start;
                     // decode: signed
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5266,22 +4195,13 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                             SignatureMethodType->HMACOutputLength_isUsed = 1u;
                             // XML: emit value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            { int64_t _sv; exi_basetypes_convert_64_from_signed(&SignatureMethodType->HMACOutputLength, &_sv); char _xv[64]; int _xl = snprintf(_xv, sizeof(_xv), "%" PRId64, _sv); xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, _xl); }
+                            xml_write_signed(xmlOut, xmlOut_size, xmlOut_pos, &SignatureMethodType->HMACOutputLength);
                             grammar_id = 61;
                         }
                         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:HMACOutputLength>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:HMACOutputLength>", 23);
                     }
                     break;
                 case 1:
@@ -5294,20 +4214,10 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 2:
@@ -5325,58 +4235,18 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignatureMethodType->ANY.bytesLen, &SignatureMethodType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        SignatureMethodType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SignatureMethodType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SignatureMethodType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SignatureMethodType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SignatureMethodType->ANY.bytes, SignatureMethodType->ANY.bytesLen);
+                        SignatureMethodType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -5402,20 +4272,10 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -5433,58 +4293,18 @@ static int decode_din_SignatureMethodType(exi_bitstream_t* stream, struct din_Si
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignatureMethodType->ANY.bytesLen, &SignatureMethodType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        SignatureMethodType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SignatureMethodType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SignatureMethodType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < SignatureMethodType->ANY.bytesLen ? SignatureMethodType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SignatureMethodType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SignatureMethodType->ANY.bytes, SignatureMethodType->ANY.bytesLen);
+                        SignatureMethodType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -5556,7 +4376,6 @@ static int decode_din_KeyValueType(exi_bitstream_t* stream, struct din_KeyValueT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DSAKeyValue", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DSAKeyValueType(stream, &KeyValueType->DSAKeyValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -5565,16 +4384,7 @@ static int decode_din_KeyValueType(exi_bitstream_t* stream, struct din_KeyValueT
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DSAKeyValue>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DSAKeyValue>", 18);
                     }
                     break;
                 case 1:
@@ -5587,7 +4397,6 @@ static int decode_din_KeyValueType(exi_bitstream_t* stream, struct din_KeyValueT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:RSAKeyValue", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_RSAKeyValueType(stream, &KeyValueType->RSAKeyValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -5596,16 +4405,7 @@ static int decode_din_KeyValueType(exi_bitstream_t* stream, struct din_KeyValueT
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:RSAKeyValue>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:RSAKeyValue>", 18);
                     }
                     break;
                 case 2:
@@ -5618,58 +4418,18 @@ static int decode_din_KeyValueType(exi_bitstream_t* stream, struct din_KeyValueT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &KeyValueType->ANY.bytesLen, &KeyValueType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        KeyValueType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((KeyValueType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < KeyValueType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < KeyValueType->ANY.bytesLen ? KeyValueType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < KeyValueType->ANY.bytesLen ? KeyValueType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < KeyValueType->ANY.bytesLen ? KeyValueType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[KeyValueType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, KeyValueType->ANY.bytes, KeyValueType->ANY.bytesLen);
+                        KeyValueType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -5741,57 +4501,17 @@ static int decode_din_SubCertificatesType(exi_bitstream_t* stream, struct din_Su
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.bytesLen, &SubCertificatesType->Certificate.bytes[0], din_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SubCertificatesType->Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SubCertificatesType->Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SubCertificatesType->Certificate.bytes, SubCertificatesType->Certificate.bytesLen);
                         grammar_id = 64;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Certificate>", 18);
                     }
                     break;
                 default:
@@ -5817,57 +4537,17 @@ static int decode_din_SubCertificatesType(exi_bitstream_t* stream, struct din_Su
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.bytesLen, &SubCertificatesType->Certificate.bytes[0], din_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SubCertificatesType->Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SubCertificatesType->Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < SubCertificatesType->Certificate.bytesLen ? SubCertificatesType->Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SubCertificatesType->Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SubCertificatesType->Certificate.bytes, SubCertificatesType->Certificate.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Certificate>", 18);
                     }
                     break;
                 case 1:
@@ -5944,7 +4624,6 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Multiplier", 15);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5987,16 +4666,7 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Multiplier>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Multiplier>", 17);
                     }
                     break;
                 default:
@@ -6022,7 +4692,6 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Unit", 9);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6077,16 +4746,7 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Unit>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Unit>", 11);
                     }
                     break;
                 case 1:
@@ -6099,7 +4759,6 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Value", 10);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &PhysicalValueType->Value);
                     if (error == 0)
@@ -6110,16 +4769,7 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Value>", 12);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Value>", 12);
                     }
                     break;
                 default:
@@ -6145,7 +4795,6 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Value", 10);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &PhysicalValueType->Value);
                     if (error == 0)
@@ -6156,16 +4805,7 @@ static int decode_din_PhysicalValueType(exi_bitstream_t* stream, struct din_Phys
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Value>", 12);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Value>", 12);
                     }
                     break;
                 default:
@@ -6317,7 +4957,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:boolValue", 14);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6360,16 +4999,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:boolValue>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:boolValue>", 16);
                     }
                     break;
                 case 1:
@@ -6382,7 +5012,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:byteValue", 14);
-                        (void)xml_tag_start;
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6426,16 +5055,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:byteValue>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:byteValue>", 16);
                     }
                     break;
                 case 2:
@@ -6448,7 +5068,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:shortValue", 15);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ParameterType->shortValue);
                     if (error == 0)
@@ -6460,16 +5079,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:shortValue>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:shortValue>", 17);
                     }
                     break;
                 case 3:
@@ -6482,7 +5092,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:intValue", 13);
-                        (void)xml_tag_start;
                     // decode: int
                     error = decode_exi_type_integer32(stream, &ParameterType->intValue);
                     if (error == 0)
@@ -6494,16 +5103,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:intValue>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:intValue>", 15);
                     }
                     break;
                 case 4:
@@ -6516,7 +5116,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:physicalValue", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &ParameterType->physicalValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -6525,16 +5124,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:physicalValue>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:physicalValue>", 20);
                     }
                     break;
                 case 5:
@@ -6547,7 +5137,6 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:stringValue", 16);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6602,16 +5191,7 @@ static int decode_din_ParameterType(exi_bitstream_t* stream, struct din_Paramete
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:stringValue>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:stringValue>", 18);
                     }
                     break;
                 default:
@@ -6683,7 +5263,6 @@ static int decode_din_ParameterSetType(exi_bitstream_t* stream, struct din_Param
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSetID", 19);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ParameterSetType->ParameterSetID);
                     if (error == 0)
@@ -6694,16 +5273,7 @@ static int decode_din_ParameterSetType(exi_bitstream_t* stream, struct din_Param
                         grammar_id = 72;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSetID>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ParameterSetID>", 21);
                     }
                     break;
                 default:
@@ -6729,7 +5299,6 @@ static int decode_din_ParameterSetType(exi_bitstream_t* stream, struct din_Param
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Parameter", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ParameterType(stream, &ParameterSetType->Parameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -6737,16 +5306,7 @@ static int decode_din_ParameterSetType(exi_bitstream_t* stream, struct din_Param
                         grammar_id = 73;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Parameter>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Parameter>", 16);
                     }
                     break;
                 default:
@@ -6772,21 +5332,11 @@ static int decode_din_ParameterSetType(exi_bitstream_t* stream, struct din_Param
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Parameter", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Parameter>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Parameter>", 16);
                     }
                     break;
                 case 1:
@@ -6863,7 +5413,6 @@ static int decode_din_ProfileEntryType(exi_bitstream_t* stream, struct din_Profi
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingProfileEntryStart", 30);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &ProfileEntryType->ChargingProfileEntryStart);
                     if (error == 0)
@@ -6874,16 +5423,7 @@ static int decode_din_ProfileEntryType(exi_bitstream_t* stream, struct din_Profi
                         grammar_id = 75;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingProfileEntryStart>", 32);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ChargingProfileEntryStart>", 32);
                     }
                     break;
                 default:
@@ -6909,7 +5449,6 @@ static int decode_din_ProfileEntryType(exi_bitstream_t* stream, struct din_Profi
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingProfileEntryMaxPower", 33);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ProfileEntryType->ChargingProfileEntryMaxPower);
                     if (error == 0)
@@ -6920,16 +5459,7 @@ static int decode_din_ProfileEntryType(exi_bitstream_t* stream, struct din_Profi
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingProfileEntryMaxPower>", 35);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ChargingProfileEntryMaxPower>", 35);
                     }
                     break;
                 default:
@@ -7088,7 +5618,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &ReferenceType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7097,16 +5626,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 80;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 4:
@@ -7119,7 +5639,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestMethod", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7127,16 +5646,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 81;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestMethod>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestMethod>", 19);
                     }
                     break;
                 default:
@@ -7220,7 +5730,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &ReferenceType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7229,16 +5738,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 80;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 3:
@@ -7251,7 +5751,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestMethod", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7259,16 +5758,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 81;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestMethod>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestMethod>", 19);
                     }
                     break;
                 default:
@@ -7323,7 +5813,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &ReferenceType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7332,16 +5821,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 80;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 2:
@@ -7354,7 +5834,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestMethod", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7362,16 +5841,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 81;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestMethod>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestMethod>", 19);
                     }
                     break;
                 default:
@@ -7397,7 +5867,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &ReferenceType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7406,16 +5875,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 80;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 1:
@@ -7428,7 +5888,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestMethod", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7436,16 +5895,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 81;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestMethod>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestMethod>", 19);
                     }
                     break;
                 default:
@@ -7471,7 +5921,6 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestMethod", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DigestMethodType(stream, &ReferenceType->DigestMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7479,16 +5928,7 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                         grammar_id = 81;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestMethod>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestMethod>", 19);
                     }
                     break;
                 default:
@@ -7514,57 +5954,17 @@ static int decode_din_ReferenceType(exi_bitstream_t* stream, struct din_Referenc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:DigestValue", 16);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ReferenceType->DigestValue.bytesLen, &ReferenceType->DigestValue.bytes[0], din_DigestValueType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ReferenceType->DigestValue.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ReferenceType->DigestValue.bytesLen;)
-                                {
-                                    uint32_t a = i < ReferenceType->DigestValue.bytesLen ? ReferenceType->DigestValue.bytes[i++] : 0;
-                                    uint32_t b = i < ReferenceType->DigestValue.bytesLen ? ReferenceType->DigestValue.bytes[i++] : 0;
-                                    uint32_t c = i < ReferenceType->DigestValue.bytesLen ? ReferenceType->DigestValue.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ReferenceType->DigestValue.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, ReferenceType->DigestValue.bytes, ReferenceType->DigestValue.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:DigestValue>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:DigestValue>", 18);
                     }
                     break;
                 default:
@@ -7694,7 +6094,6 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &RetrievalMethodType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7703,16 +6102,7 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 3:
@@ -7772,7 +6162,6 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &RetrievalMethodType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7781,16 +6170,7 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 2:
@@ -7821,7 +6201,6 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Transforms", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_TransformsType(stream, &RetrievalMethodType->Transforms, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7830,16 +6209,7 @@ static int decode_din_RetrievalMethodType(exi_bitstream_t* stream, struct din_Re
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Transforms>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Transforms>", 17);
                     }
                     break;
                 case 1:
@@ -7916,7 +6286,6 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509IssuerSerial", 21);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_X509IssuerSerialType(stream, &X509DataType->X509IssuerSerial, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -7925,16 +6294,7 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509IssuerSerial>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509IssuerSerial>", 23);
                     }
                     break;
                 case 1:
@@ -7947,58 +6307,18 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509SKI", 12);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &X509DataType->X509SKI.bytesLen, &X509DataType->X509SKI.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        X509DataType->X509SKI_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((X509DataType->X509SKI.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < X509DataType->X509SKI.bytesLen;)
-                                {
-                                    uint32_t a = i < X509DataType->X509SKI.bytesLen ? X509DataType->X509SKI.bytes[i++] : 0;
-                                    uint32_t b = i < X509DataType->X509SKI.bytesLen ? X509DataType->X509SKI.bytes[i++] : 0;
-                                    uint32_t c = i < X509DataType->X509SKI.bytesLen ? X509DataType->X509SKI.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[X509DataType->X509SKI.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->X509SKI.bytes, X509DataType->X509SKI.bytesLen);
+                        X509DataType->X509SKI_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509SKI>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509SKI>", 14);
                     }
                     break;
                 case 2:
@@ -8011,7 +6331,6 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509SubjectName", 20);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -8066,16 +6385,7 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509SubjectName>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509SubjectName>", 22);
                     }
                     break;
                 case 3:
@@ -8088,58 +6398,18 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509Certificate", 20);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &X509DataType->X509Certificate.bytesLen, &X509DataType->X509Certificate.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        X509DataType->X509Certificate_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((X509DataType->X509Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < X509DataType->X509Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < X509DataType->X509Certificate.bytesLen ? X509DataType->X509Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < X509DataType->X509Certificate.bytesLen ? X509DataType->X509Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < X509DataType->X509Certificate.bytesLen ? X509DataType->X509Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[X509DataType->X509Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->X509Certificate.bytes, X509DataType->X509Certificate.bytesLen);
+                        X509DataType->X509Certificate_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509Certificate>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509Certificate>", 22);
                     }
                     break;
                 case 4:
@@ -8152,58 +6422,18 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509CRL", 12);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &X509DataType->X509CRL.bytesLen, &X509DataType->X509CRL.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        X509DataType->X509CRL_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((X509DataType->X509CRL.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < X509DataType->X509CRL.bytesLen;)
-                                {
-                                    uint32_t a = i < X509DataType->X509CRL.bytesLen ? X509DataType->X509CRL.bytes[i++] : 0;
-                                    uint32_t b = i < X509DataType->X509CRL.bytesLen ? X509DataType->X509CRL.bytes[i++] : 0;
-                                    uint32_t c = i < X509DataType->X509CRL.bytesLen ? X509DataType->X509CRL.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[X509DataType->X509CRL.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->X509CRL.bytes, X509DataType->X509CRL.bytesLen);
+                        X509DataType->X509CRL_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509CRL>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509CRL>", 14);
                     }
                     break;
                 case 5:
@@ -8216,58 +6446,18 @@ static int decode_din_X509DataType(exi_bitstream_t* stream, struct din_X509DataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &X509DataType->ANY.bytesLen, &X509DataType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        X509DataType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((X509DataType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < X509DataType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < X509DataType->ANY.bytesLen ? X509DataType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < X509DataType->ANY.bytesLen ? X509DataType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < X509DataType->ANY.bytesLen ? X509DataType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[X509DataType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, X509DataType->ANY.bytes, X509DataType->ANY.bytesLen);
+                        X509DataType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -8339,57 +6529,17 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPKeyID", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_1.PGPKeyID.bytesLen, &PGPDataType->choice_1.PGPKeyID.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_1.PGPKeyID.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_1.PGPKeyID.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_1.PGPKeyID.bytesLen ? PGPDataType->choice_1.PGPKeyID.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_1.PGPKeyID.bytesLen ? PGPDataType->choice_1.PGPKeyID.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_1.PGPKeyID.bytesLen ? PGPDataType->choice_1.PGPKeyID.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_1.PGPKeyID.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_1.PGPKeyID.bytes, PGPDataType->choice_1.PGPKeyID.bytesLen);
                         grammar_id = 87;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPKeyID>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPKeyID>", 15);
                     }
                     break;
                 case 1:
@@ -8402,58 +6552,18 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPKeyPacket", 17);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_1.PGPKeyPacket.bytesLen, &PGPDataType->choice_1.PGPKeyPacket.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        PGPDataType->choice_1.PGPKeyPacket_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_1.PGPKeyPacket.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_1.PGPKeyPacket.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_1.PGPKeyPacket.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_1.PGPKeyPacket.bytes, PGPDataType->choice_1.PGPKeyPacket.bytesLen);
+                        PGPDataType->choice_1.PGPKeyPacket_isUsed = 1u;
                         grammar_id = 88;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPKeyPacket>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPKeyPacket>", 19);
                     }
                     break;
                 default:
@@ -8479,58 +6589,18 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPKeyPacket", 17);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_1.PGPKeyPacket.bytesLen, &PGPDataType->choice_1.PGPKeyPacket.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        PGPDataType->choice_1.PGPKeyPacket_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_1.PGPKeyPacket.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_1.PGPKeyPacket.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_1.PGPKeyPacket.bytesLen ? PGPDataType->choice_1.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_1.PGPKeyPacket.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_1.PGPKeyPacket.bytes, PGPDataType->choice_1.PGPKeyPacket.bytesLen);
+                        PGPDataType->choice_1.PGPKeyPacket_isUsed = 1u;
                         grammar_id = 88;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPKeyPacket>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPKeyPacket>", 19);
                     }
                     break;
                 case 1:
@@ -8543,20 +6613,10 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 2:
@@ -8574,58 +6634,18 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_1.ANY.bytesLen, &PGPDataType->choice_1.ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        PGPDataType->choice_1.ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_1.ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_1.ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_1.ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_1.ANY.bytes, PGPDataType->choice_1.ANY.bytesLen);
+                        PGPDataType->choice_1.ANY_isUsed = 1u;
                         grammar_id = 89;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -8651,20 +6671,10 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -8687,58 +6697,18 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_1.ANY.bytesLen, &PGPDataType->choice_1.ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        PGPDataType->choice_1.ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_1.ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_1.ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_1.ANY.bytesLen ? PGPDataType->choice_1.ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_1.ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_1.ANY.bytes, PGPDataType->choice_1.ANY.bytesLen);
+                        PGPDataType->choice_1.ANY_isUsed = 1u;
                         grammar_id = 89;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -8764,57 +6734,17 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPKeyPacket", 17);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_2.PGPKeyPacket.bytesLen, &PGPDataType->choice_2.PGPKeyPacket.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_2.PGPKeyPacket.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_2.PGPKeyPacket.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_2.PGPKeyPacket.bytesLen ? PGPDataType->choice_2.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_2.PGPKeyPacket.bytesLen ? PGPDataType->choice_2.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_2.PGPKeyPacket.bytesLen ? PGPDataType->choice_2.PGPKeyPacket.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_2.PGPKeyPacket.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_2.PGPKeyPacket.bytes, PGPDataType->choice_2.PGPKeyPacket.bytesLen);
                         grammar_id = 90;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPKeyPacket>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPKeyPacket>", 19);
                     }
                     break;
                 default:
@@ -8840,20 +6770,10 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -8871,58 +6791,18 @@ static int decode_din_PGPDataType(exi_bitstream_t* stream, struct din_PGPDataTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PGPDataType->choice_2.ANY.bytesLen, &PGPDataType->choice_2.ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        PGPDataType->choice_2.ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((PGPDataType->choice_2.ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < PGPDataType->choice_2.ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < PGPDataType->choice_2.ANY.bytesLen ? PGPDataType->choice_2.ANY.bytes[i++] : 0;
-                                    uint32_t b = i < PGPDataType->choice_2.ANY.bytesLen ? PGPDataType->choice_2.ANY.bytes[i++] : 0;
-                                    uint32_t c = i < PGPDataType->choice_2.ANY.bytesLen ? PGPDataType->choice_2.ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[PGPDataType->choice_2.ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, PGPDataType->choice_2.ANY.bytes, PGPDataType->choice_2.ANY.bytesLen);
+                        PGPDataType->choice_2.ANY_isUsed = 1u;
                         grammar_id = 89;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -8994,57 +6874,17 @@ static int decode_din_SPKIDataType(exi_bitstream_t* stream, struct din_SPKIDataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SPKISexp", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SPKIDataType->SPKISexp.bytesLen, &SPKIDataType->SPKISexp.bytes[0], din_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SPKIDataType->SPKISexp.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SPKIDataType->SPKISexp.bytesLen;)
-                                {
-                                    uint32_t a = i < SPKIDataType->SPKISexp.bytesLen ? SPKIDataType->SPKISexp.bytes[i++] : 0;
-                                    uint32_t b = i < SPKIDataType->SPKISexp.bytesLen ? SPKIDataType->SPKISexp.bytes[i++] : 0;
-                                    uint32_t c = i < SPKIDataType->SPKISexp.bytesLen ? SPKIDataType->SPKISexp.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SPKIDataType->SPKISexp.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SPKIDataType->SPKISexp.bytes, SPKIDataType->SPKISexp.bytesLen);
                         grammar_id = 92;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SPKISexp>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SPKISexp>", 15);
                     }
                     break;
                 default:
@@ -9070,20 +6910,10 @@ static int decode_din_SPKIDataType(exi_bitstream_t* stream, struct din_SPKIDataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -9101,58 +6931,18 @@ static int decode_din_SPKIDataType(exi_bitstream_t* stream, struct din_SPKIDataT
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SPKIDataType->ANY.bytesLen, &SPKIDataType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        SPKIDataType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((SPKIDataType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < SPKIDataType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < SPKIDataType->ANY.bytesLen ? SPKIDataType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < SPKIDataType->ANY.bytesLen ? SPKIDataType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < SPKIDataType->ANY.bytesLen ? SPKIDataType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[SPKIDataType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SPKIDataType->ANY.bytes, SPKIDataType->ANY.bytesLen);
+                        SPKIDataType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -9253,7 +7043,6 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -9261,16 +7050,7 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                         grammar_id = 95;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:CanonicalizationMethod>", 29);
                     }
                     break;
                 default:
@@ -9296,7 +7076,6 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:CanonicalizationMethod", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -9304,16 +7083,7 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                         grammar_id = 95;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:CanonicalizationMethod>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:CanonicalizationMethod>", 29);
                     }
                     break;
                 default:
@@ -9339,7 +7109,6 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignatureMethod", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignatureMethodType(stream, &SignedInfoType->SignatureMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -9347,16 +7116,7 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                         grammar_id = 96;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignatureMethod>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SignatureMethod>", 22);
                     }
                     break;
                 default:
@@ -9382,7 +7142,6 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ReferenceType(stream, &SignedInfoType->Reference, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -9390,16 +7149,7 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                         grammar_id = 97;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Reference>", 16);
                     }
                     break;
                 default:
@@ -9425,21 +7175,11 @@ static int decode_din_SignedInfoType(exi_bitstream_t* stream, struct din_SignedI
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Reference", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Reference>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Reference>", 16);
                     }
                     break;
                 case 1:
@@ -9516,7 +7256,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVReady", 12);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9558,16 +7297,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVReady>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVReady>", 14);
                     }
                     break;
                 default:
@@ -9593,7 +7323,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVCabinConditioning", 24);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9636,16 +7365,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVCabinConditioning>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVCabinConditioning>", 26);
                     }
                     break;
                 case 1:
@@ -9658,7 +7378,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVRESSConditioning", 23);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9701,16 +7420,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVRESSConditioning>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVRESSConditioning>", 25);
                     }
                     break;
                 case 2:
@@ -9723,7 +7433,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVErrorCode", 16);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9779,16 +7488,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVErrorCode>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVErrorCode>", 18);
                     }
                     break;
                 default:
@@ -9814,7 +7514,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVRESSConditioning", 23);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9857,16 +7556,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVRESSConditioning>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVRESSConditioning>", 25);
                     }
                     break;
                 case 1:
@@ -9879,7 +7569,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVErrorCode", 16);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9935,16 +7624,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVErrorCode>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVErrorCode>", 18);
                     }
                     break;
                 default:
@@ -9970,7 +7650,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVErrorCode", 16);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10026,16 +7705,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVErrorCode>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVErrorCode>", 18);
                     }
                     break;
                 default:
@@ -10061,7 +7731,6 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVRESSSOC", 14);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10103,16 +7772,7 @@ static int decode_din_DC_EVStatusType(exi_bitstream_t* stream, struct din_DC_EVS
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVRESSSOC>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVRESSSOC>", 16);
                     }
                     break;
                 default:
@@ -10205,15 +7865,6 @@ static int decode_din_SignatureValueType(exi_bitstream_t* stream, struct din_Sig
                     break;
                 case 1:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary (simple)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
                     if (error == 0)
@@ -10223,51 +7874,9 @@ static int decode_din_SignatureValueType(exi_bitstream_t* stream, struct din_Sig
                         {
                             // XML: emit base64 encoded value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
+                            xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->CONTENT.bytes, SignatureValueType->CONTENT.bytesLen);
                             grammar_id = 3;
                         }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
                     }
                     break;
                 default:
@@ -10285,15 +7894,6 @@ static int decode_din_SignatureValueType(exi_bitstream_t* stream, struct din_Sig
                 {
                 case 0:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=3
-                    // XML: open tag
-                    if (*xmlOut_pos > 0 && xmlOut[*xmlOut_pos - 1] != '>')
-                    {
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                    }
-                    {
-                        size_t xml_tag_start = *xmlOut_pos;
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<CONTENT", 8);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary (simple)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->CONTENT.bytesLen);
                     if (error == 0)
@@ -10303,51 +7903,9 @@ static int decode_din_SignatureValueType(exi_bitstream_t* stream, struct din_Sig
                         {
                             // XML: emit base64 encoded value
                             xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                            {
-                                static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                                static const int mod_table[] = {0, 2, 1};
-                                size_t output_length = 4 * ((SignatureValueType->CONTENT.bytesLen + 2) / 3);
-                                unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                                if (encoded_data != NULL)
-                                {
-                                    size_t i, j;
-                                    for (i = 0, j = 0; i < SignatureValueType->CONTENT.bytesLen;)
-                                    {
-                                        uint32_t a = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t b = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t c = i < SignatureValueType->CONTENT.bytesLen ? SignatureValueType->CONTENT.bytes[i++] : 0;
-                                        uint32_t triple = (a << 16) + (b << 8) + c;
-                                        encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                        encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                        encoded_data[j++] = encoding_table[triple & 0x3F];
-                                    }
-                                    for (i = 0; i < (size_t)mod_table[SignatureValueType->CONTENT.bytesLen % 3]; i++)
-                                    {
-                                        encoded_data[output_length - 1 - i] = '=';
-                                    }
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                    free(encoded_data);
-                                }
-                                else
-                                {
-                                    xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                                }
-                            }
+                            xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, SignatureValueType->CONTENT.bytes, SignatureValueType->CONTENT.bytesLen);
                             grammar_id = 3;
                         }
-                    }
-                        // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</CONTENT>", 10);
                     }
                     break;
                 default:
@@ -10419,7 +7977,6 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEIsolationStatus", 24);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10468,16 +8025,7 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEIsolationStatus>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEIsolationStatus>", 26);
                     }
                     break;
                 case 1:
@@ -10490,7 +8038,6 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEStatusCode", 19);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10546,16 +8093,7 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEStatusCode>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEStatusCode>", 21);
                     }
                     break;
                 default:
@@ -10581,7 +8119,6 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEStatusCode", 19);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10637,16 +8174,7 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEStatusCode>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEStatusCode>", 21);
                     }
                     break;
                 default:
@@ -10672,7 +8200,6 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:NotificationMaxDelay", 25);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DC_EVSEStatusType->NotificationMaxDelay);
                     if (error == 0)
@@ -10683,16 +8210,7 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                         grammar_id = 108;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:NotificationMaxDelay>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:NotificationMaxDelay>", 27);
                     }
                     break;
                 default:
@@ -10718,7 +8236,6 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSENotification", 21);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10765,16 +8282,7 @@ static int decode_din_DC_EVSEStatusType(exi_bitstream_t* stream, struct din_DC_E
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSENotification>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSENotification>", 23);
                     }
                     break;
                 default:
@@ -10846,7 +8354,6 @@ static int decode_din_ListOfRootCertificateIDsType(exi_bitstream_t* stream, stru
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RootCertificateID", 22);
-                        (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < din_rootCertificateIDType_5_ARRAY_SIZE)
                     {
@@ -10908,16 +8415,7 @@ static int decode_din_ListOfRootCertificateIDsType(exi_bitstream_t* stream, stru
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RootCertificateID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:RootCertificateID>", 24);
                     }
                     break;
                 default:
@@ -10943,7 +8441,6 @@ static int decode_din_ListOfRootCertificateIDsType(exi_bitstream_t* stream, stru
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:RootCertificateID", 22);
-                        (void)xml_tag_start;
                     // decode: string (len, characters) (Array)
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < din_rootCertificateIDType_5_ARRAY_SIZE)
                     {
@@ -11005,16 +8502,7 @@ static int decode_din_ListOfRootCertificateIDsType(exi_bitstream_t* stream, stru
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:RootCertificateID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:RootCertificateID>", 24);
                     }
                     break;
                 case 1:
@@ -11091,57 +8579,17 @@ static int decode_din_CertificateChainType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Certificate", 16);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], din_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateChainType->Certificate.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateChainType->Certificate.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateChainType->Certificate.bytesLen ? CertificateChainType->Certificate.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateChainType->Certificate.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateChainType->Certificate.bytes, CertificateChainType->Certificate.bytesLen);
                         grammar_id = 112;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Certificate>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Certificate>", 18);
                     }
                     break;
                 default:
@@ -11167,7 +8615,6 @@ static int decode_din_CertificateChainType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SubCertificates", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SubCertificatesType(stream, &CertificateChainType->SubCertificates, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11176,16 +8623,7 @@ static int decode_din_CertificateChainType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SubCertificates>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SubCertificates>", 22);
                     }
                     break;
                 case 1:
@@ -11262,7 +8700,6 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DepartureTime", 18);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AC_EVChargeParameterType->DepartureTime);
                     if (error == 0)
@@ -11273,16 +8710,7 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 114;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DepartureTime>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DepartureTime>", 20);
                     }
                     break;
                 default:
@@ -11308,7 +8736,6 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EAmount", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EAmount, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11316,16 +8743,7 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 115;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EAmount>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EAmount>", 14);
                     }
                     break;
                 default:
@@ -11351,7 +8769,6 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaxVoltage", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11359,16 +8776,7 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 116;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaxVoltage>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaxVoltage>", 19);
                     }
                     break;
                 default:
@@ -11394,7 +8802,6 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaxCurrent", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMaxCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11402,16 +8809,7 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 117;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaxCurrent>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaxCurrent>", 19);
                     }
                     break;
                 default:
@@ -11437,7 +8835,6 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMinCurrent", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVChargeParameterType->EVMinCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11445,16 +8842,7 @@ static int decode_din_AC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMinCurrent>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMinCurrent>", 19);
                     }
                     break;
                 default:
@@ -11526,7 +8914,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &DC_EVChargeParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11534,16 +8921,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 119;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -11569,7 +8947,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumCurrentLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11577,16 +8954,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 120;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumCurrentLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaximumCurrentLimit>", 28);
                     }
                     break;
                 default:
@@ -11612,7 +8980,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumPowerLimit", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11621,16 +8988,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 121;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumPowerLimit>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaximumPowerLimit>", 26);
                     }
                     break;
                 case 1:
@@ -11643,7 +9001,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumVoltageLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11651,16 +9008,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 122;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumVoltageLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaximumVoltageLimit>", 28);
                     }
                     break;
                 default:
@@ -11686,7 +9034,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVMaximumVoltageLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11694,16 +9041,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 122;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVMaximumVoltageLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVMaximumVoltageLimit>", 28);
                     }
                     break;
                 default:
@@ -11729,7 +9067,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyCapacity", 21);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyCapacity, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11738,16 +9075,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 123;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyCapacity>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVEnergyCapacity>", 23);
                     }
                     break;
                 case 1:
@@ -11760,7 +9088,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyRequest", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11769,16 +9096,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 124;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyRequest>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVEnergyRequest>", 22);
                     }
                     break;
                 case 2:
@@ -11791,7 +9109,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FullSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -11834,16 +9151,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FullSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FullSOC>", 14);
                     }
                     break;
                 case 3:
@@ -11856,7 +9164,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BulkSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -11899,16 +9206,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BulkSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:BulkSOC>", 14);
                     }
                     break;
                 case 4:
@@ -11939,7 +9237,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVEnergyRequest", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVChargeParameterType->EVEnergyRequest, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -11948,16 +9245,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         grammar_id = 124;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVEnergyRequest>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVEnergyRequest>", 22);
                     }
                     break;
                 case 1:
@@ -11970,7 +9258,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FullSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12013,16 +9300,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FullSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FullSOC>", 14);
                     }
                     break;
                 case 2:
@@ -12035,7 +9313,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BulkSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12078,16 +9355,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BulkSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:BulkSOC>", 14);
                     }
                     break;
                 case 3:
@@ -12118,7 +9386,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FullSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12161,16 +9428,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FullSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FullSOC>", 14);
                     }
                     break;
                 case 1:
@@ -12183,7 +9441,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BulkSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12226,16 +9483,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BulkSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:BulkSOC>", 14);
                     }
                     break;
                 case 2:
@@ -12266,7 +9514,6 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BulkSOC", 12);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12309,16 +9556,7 @@ static int decode_din_DC_EVChargeParameterType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BulkSOC>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:BulkSOC>", 14);
                     }
                     break;
                 case 1:
@@ -12414,7 +9652,6 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SAScheduleTupleID", 22);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ChargingProfileType->SAScheduleTupleID);
                     if (error == 0)
@@ -12425,16 +9662,7 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                         grammar_id = 127;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SAScheduleTupleID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SAScheduleTupleID>", 24);
                     }
                     break;
                 default:
@@ -12460,7 +9688,6 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ProfileEntry", 17);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (ChargingProfileType->ProfileEntry.arrayLen < din_ProfileEntryType_24_ARRAY_SIZE)
                     {
@@ -12473,16 +9700,7 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                     }
                     grammar_id = 128;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ProfileEntry>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ProfileEntry>", 19);
                     }
                     break;
                 default:
@@ -12508,7 +9726,6 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ProfileEntry", 17);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (ChargingProfileType->ProfileEntry.arrayLen < din_ProfileEntryType_24_ARRAY_SIZE)
                     {
@@ -12521,16 +9738,7 @@ static int decode_din_ChargingProfileType(exi_bitstream_t* stream, struct din_Ch
                     }
                     grammar_id = 128;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ProfileEntry>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ProfileEntry>", 19);
                     }
                     break;
                 case 1:
@@ -12626,7 +9834,6 @@ static int decode_din_PaymentOptionsType(exi_bitstream_t* stream, struct din_Pay
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PaymentOption", 18);
-                        (void)xml_tag_start;
                     // decode: enum array
                     if (PaymentOptionsType->PaymentOption.arrayLen < din_paymentOptionType_2_ARRAY_SIZE)
                     {
@@ -12679,16 +9886,7 @@ static int decode_din_PaymentOptionsType(exi_bitstream_t* stream, struct din_Pay
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PaymentOption>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PaymentOption>", 20);
                     }
                     break;
                 default:
@@ -12714,7 +9912,6 @@ static int decode_din_PaymentOptionsType(exi_bitstream_t* stream, struct din_Pay
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:PaymentOption", 18);
-                        (void)xml_tag_start;
                     // decode: enum array
                     if (PaymentOptionsType->PaymentOption.arrayLen < din_paymentOptionType_2_ARRAY_SIZE)
                     {
@@ -12767,16 +9964,7 @@ static int decode_din_PaymentOptionsType(exi_bitstream_t* stream, struct din_Pay
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:PaymentOption>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:PaymentOption>", 20);
                     }
                     break;
                 case 1:
@@ -12853,7 +10041,6 @@ static int decode_din_SelectedServiceListType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedService", 20);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < din_SelectedServiceType_16_ARRAY_SIZE)
                     {
@@ -12866,16 +10053,7 @@ static int decode_din_SelectedServiceListType(exi_bitstream_t* stream, struct di
                     }
                     grammar_id = 132;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedService>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SelectedService>", 22);
                     }
                     break;
                 default:
@@ -12901,7 +10079,6 @@ static int decode_din_SelectedServiceListType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SelectedService", 20);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < din_SelectedServiceType_16_ARRAY_SIZE)
                     {
@@ -12914,16 +10091,7 @@ static int decode_din_SelectedServiceListType(exi_bitstream_t* stream, struct di
                     }
                     grammar_id = 132;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SelectedService>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SelectedService>", 22);
                     }
                     break;
                 case 1:
@@ -13029,7 +10197,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:KeyName", 12);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13084,16 +10251,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:KeyName>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:KeyName>", 14);
                     }
                     break;
                 case 2:
@@ -13106,7 +10264,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:KeyValue", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_KeyValueType(stream, &KeyInfoType->KeyValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13115,16 +10272,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:KeyValue>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:KeyValue>", 15);
                     }
                     break;
                 case 3:
@@ -13137,7 +10285,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:RetrievalMethod", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_RetrievalMethodType(stream, &KeyInfoType->RetrievalMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13146,16 +10293,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:RetrievalMethod>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:RetrievalMethod>", 22);
                     }
                     break;
                 case 4:
@@ -13168,7 +10306,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509Data", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_X509DataType(stream, &KeyInfoType->X509Data, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13177,16 +10314,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509Data>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509Data>", 15);
                     }
                     break;
                 case 5:
@@ -13199,7 +10327,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPData", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PGPDataType(stream, &KeyInfoType->PGPData, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13208,16 +10335,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPData>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPData>", 14);
                     }
                     break;
                 case 6:
@@ -13230,7 +10348,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SPKIData", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SPKIDataType(stream, &KeyInfoType->SPKIData, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13239,16 +10356,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SPKIData>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SPKIData>", 15);
                     }
                     break;
                 case 7:
@@ -13261,7 +10369,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:MgmtData", 13);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13316,16 +10423,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:MgmtData>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:MgmtData>", 15);
                     }
                     break;
                 case 8:
@@ -13338,58 +10436,18 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &KeyInfoType->ANY.bytesLen, &KeyInfoType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        KeyInfoType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((KeyInfoType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < KeyInfoType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[KeyInfoType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->ANY.bytes, KeyInfoType->ANY.bytesLen);
+                        KeyInfoType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -13415,7 +10473,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:KeyName", 12);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13470,16 +10527,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:KeyName>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:KeyName>", 14);
                     }
                     break;
                 case 1:
@@ -13492,7 +10540,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:KeyValue", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_KeyValueType(stream, &KeyInfoType->KeyValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13501,16 +10548,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:KeyValue>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:KeyValue>", 15);
                     }
                     break;
                 case 2:
@@ -13523,7 +10561,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:RetrievalMethod", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_RetrievalMethodType(stream, &KeyInfoType->RetrievalMethod, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13532,16 +10569,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:RetrievalMethod>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:RetrievalMethod>", 22);
                     }
                     break;
                 case 3:
@@ -13554,7 +10582,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:X509Data", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_X509DataType(stream, &KeyInfoType->X509Data, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13563,16 +10590,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:X509Data>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:X509Data>", 15);
                     }
                     break;
                 case 4:
@@ -13585,7 +10603,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:PGPData", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PGPDataType(stream, &KeyInfoType->PGPData, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13594,16 +10611,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:PGPData>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:PGPData>", 14);
                     }
                     break;
                 case 5:
@@ -13616,7 +10624,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SPKIData", 13);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SPKIDataType(stream, &KeyInfoType->SPKIData, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -13625,16 +10632,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SPKIData>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SPKIData>", 15);
                     }
                     break;
                 case 6:
@@ -13647,7 +10645,6 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:MgmtData", 13);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13702,16 +10699,7 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:MgmtData>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:MgmtData>", 15);
                     }
                     break;
                 case 7:
@@ -13724,58 +10712,18 @@ static int decode_din_KeyInfoType(exi_bitstream_t* stream, struct din_KeyInfoTyp
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &KeyInfoType->ANY.bytesLen, &KeyInfoType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        KeyInfoType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((KeyInfoType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < KeyInfoType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < KeyInfoType->ANY.bytesLen ? KeyInfoType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[KeyInfoType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, KeyInfoType->ANY.bytes, KeyInfoType->ANY.bytesLen);
+                        KeyInfoType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -13847,7 +10795,6 @@ static int decode_din_SAScheduleListType(exi_bitstream_t* stream, struct din_SAS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SAScheduleTuple", 20);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SAScheduleListType->SAScheduleTuple.arrayLen < din_SAScheduleTupleType_5_ARRAY_SIZE)
                     {
@@ -13860,16 +10807,7 @@ static int decode_din_SAScheduleListType(exi_bitstream_t* stream, struct din_SAS
                     }
                     grammar_id = 136;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SAScheduleTuple>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SAScheduleTuple>", 22);
                     }
                     break;
                 default:
@@ -13895,7 +10833,6 @@ static int decode_din_SAScheduleListType(exi_bitstream_t* stream, struct din_SAS
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SAScheduleTuple", 20);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (SAScheduleListType->SAScheduleTuple.arrayLen < din_SAScheduleTupleType_5_ARRAY_SIZE)
                     {
@@ -13908,16 +10845,7 @@ static int decode_din_SAScheduleListType(exi_bitstream_t* stream, struct din_SAS
                     }
                     grammar_id = 136;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SAScheduleTuple>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SAScheduleTuple>", 22);
                     }
                     break;
                 case 1:
@@ -14013,7 +10941,6 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &DC_EVPowerDeliveryParameterType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -14021,16 +10948,7 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                         grammar_id = 138;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -14056,7 +10974,6 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14099,16 +11016,7 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:BulkChargingComplete>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:BulkChargingComplete>", 27);
                     }
                     break;
                 case 1:
@@ -14121,7 +11029,6 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14163,16 +11070,7 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -14198,7 +11096,6 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14240,16 +11137,7 @@ static int decode_din_DC_EVPowerDeliveryParameterType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -14340,7 +11228,6 @@ static int decode_din_ServiceParameterListType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSet", 17);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < din_ParameterSetType_5_ARRAY_SIZE)
                     {
@@ -14353,16 +11240,7 @@ static int decode_din_ServiceParameterListType(exi_bitstream_t* stream, struct d
                     }
                     grammar_id = 141;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSet>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ParameterSet>", 19);
                     }
                     break;
                 default:
@@ -14388,7 +11266,6 @@ static int decode_din_ServiceParameterListType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ParameterSet", 17);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < din_ParameterSetType_5_ARRAY_SIZE)
                     {
@@ -14401,16 +11278,7 @@ static int decode_din_ServiceParameterListType(exi_bitstream_t* stream, struct d
                     }
                     grammar_id = 141;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ParameterSet>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ParameterSet>", 19);
                     }
                     break;
                 case 1:
@@ -14487,7 +11355,6 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:ServiceTag", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceTagType(stream, &ServiceChargeType->ServiceTag, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -14495,16 +11362,7 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                         grammar_id = 143;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:ServiceTag>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:ServiceTag>", 17);
                     }
                     break;
                 default:
@@ -14530,7 +11388,6 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FreeService", 16);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14572,16 +11429,7 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FreeService>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FreeService>", 18);
                     }
                     break;
                 default:
@@ -14607,7 +11455,6 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EnergyTransferType", 23);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14661,16 +11508,7 @@ static int decode_din_ServiceChargeType(exi_bitstream_t* stream, struct din_Serv
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EnergyTransferType>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EnergyTransferType>", 25);
                     }
                     break;
                 default:
@@ -14829,20 +11667,10 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 4:
@@ -14860,58 +11688,18 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        ObjectType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->ANY.bytes, ObjectType->ANY.bytesLen);
+                        ObjectType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -14995,20 +11783,10 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 3:
@@ -15026,58 +11804,18 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        ObjectType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->ANY.bytes, ObjectType->ANY.bytesLen);
+                        ObjectType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -15132,20 +11870,10 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 2:
@@ -15163,58 +11891,18 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        ObjectType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->ANY.bytes, ObjectType->ANY.bytesLen);
+                        ObjectType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -15240,20 +11928,10 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode: event not accepted
                     error = EXI_ERROR__UNKNOWN_EVENT_FOR_DECODING;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 case 1:
@@ -15271,58 +11949,18 @@ static int decode_din_ObjectType(exi_bitstream_t* stream, struct din_ObjectType*
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ANY", 4);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ObjectType->ANY.bytesLen, &ObjectType->ANY.bytes[0], din_anyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        ObjectType->ANY_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((ObjectType->ANY.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < ObjectType->ANY.bytesLen;)
-                                {
-                                    uint32_t a = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t b = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t c = i < ObjectType->ANY.bytesLen ? ObjectType->ANY.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[ObjectType->ANY.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, ObjectType->ANY.bytes, ObjectType->ANY.bytesLen);
+                        ObjectType->ANY_isUsed = 1u;
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ANY>", 6);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ANY>", 6);
                     }
                     break;
                 default:
@@ -15394,7 +12032,6 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVSEStatusType(stream, &AC_EVSEChargeParameterType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15402,16 +12039,7 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 150;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:AC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -15437,7 +12065,6 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaxVoltage", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15445,16 +12072,7 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 151;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaxVoltage>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaxVoltage>", 21);
                     }
                     break;
                 default:
@@ -15480,7 +12098,6 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaxCurrent", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMaxCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15488,16 +12105,7 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 152;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaxCurrent>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaxCurrent>", 21);
                     }
                     break;
                 default:
@@ -15523,7 +12131,6 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMinCurrent", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &AC_EVSEChargeParameterType->EVSEMinCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15531,16 +12138,7 @@ static int decode_din_AC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMinCurrent>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMinCurrent>", 21);
                     }
                     break;
                 default:
@@ -15612,7 +12210,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &DC_EVSEChargeParameterType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15620,16 +12217,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 154;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -15655,7 +12243,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaximumCurrentLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15663,16 +12250,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 155;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaximumCurrentLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaximumCurrentLimit>", 30);
                     }
                     break;
                 default:
@@ -15698,7 +12276,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaximumPowerLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15707,16 +12284,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 156;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaximumPowerLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaximumPowerLimit>", 28);
                     }
                     break;
                 case 1:
@@ -15729,7 +12297,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaximumVoltageLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15737,16 +12304,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 157;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaximumVoltageLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaximumVoltageLimit>", 30);
                     }
                     break;
                 default:
@@ -15772,7 +12330,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMaximumVoltageLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15780,16 +12337,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 157;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMaximumVoltageLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMaximumVoltageLimit>", 30);
                     }
                     break;
                 default:
@@ -15815,7 +12363,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMinimumCurrentLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15823,16 +12370,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 158;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMinimumCurrentLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMinimumCurrentLimit>", 30);
                     }
                     break;
                 default:
@@ -15858,7 +12396,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEMinimumVoltageLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEMinimumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15866,16 +12403,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 159;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEMinimumVoltageLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEMinimumVoltageLimit>", 30);
                     }
                     break;
                 default:
@@ -15901,7 +12429,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSECurrentRegulationTolerance", 35);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSECurrentRegulationTolerance, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15910,16 +12437,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 160;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSECurrentRegulationTolerance>", 37);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSECurrentRegulationTolerance>", 37);
                     }
                     break;
                 case 1:
@@ -15932,7 +12450,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEPeakCurrentRipple", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15940,16 +12457,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 161;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEPeakCurrentRipple>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEPeakCurrentRipple>", 28);
                     }
                     break;
                 default:
@@ -15975,7 +12483,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEPeakCurrentRipple", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEPeakCurrentRipple, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -15983,16 +12490,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 161;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEPeakCurrentRipple>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEPeakCurrentRipple>", 28);
                     }
                     break;
                 default:
@@ -16018,7 +12516,6 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEEnergyToBeDelivered", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -16027,16 +12524,7 @@ static int decode_din_DC_EVSEChargeParameterType(exi_bitstream_t* stream, struct
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEEnergyToBeDelivered>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEEnergyToBeDelivered>", 30);
                     }
                     break;
                 case 1:
@@ -16132,7 +12620,6 @@ static int decode_din_ServiceTagListType(exi_bitstream_t* stream, struct din_Ser
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Service", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceType(stream, &ServiceTagListType->Service, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -16140,16 +12627,7 @@ static int decode_din_ServiceTagListType(exi_bitstream_t* stream, struct din_Ser
                         grammar_id = 163;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Service>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Service>", 14);
                     }
                     break;
                 default:
@@ -16175,21 +12653,11 @@ static int decode_din_ServiceTagListType(exi_bitstream_t* stream, struct din_Ser
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:Service", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:Service>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:Service>", 14);
                     }
                     break;
                 case 1:
@@ -16266,7 +12734,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterID", 12);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16320,16 +12787,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterID>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:MeterID>", 14);
                     }
                     break;
                 default:
@@ -16355,7 +12813,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterReading", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &MeterInfoType->MeterReading, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -16364,16 +12821,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 166;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterReading>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:MeterReading>", 19);
                     }
                     break;
                 case 1:
@@ -16386,58 +12834,18 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SigMeterReading", 20);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->SigMeterReading.bytesLen, &MeterInfoType->SigMeterReading.bytes[0], din_sigMeterReadingType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        MeterInfoType->SigMeterReading_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((MeterInfoType->SigMeterReading.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < MeterInfoType->SigMeterReading.bytesLen;)
-                                {
-                                    uint32_t a = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t b = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t c = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[MeterInfoType->SigMeterReading.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, MeterInfoType->SigMeterReading.bytes, MeterInfoType->SigMeterReading.bytesLen);
+                        MeterInfoType->SigMeterReading_isUsed = 1u;
                         grammar_id = 167;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SigMeterReading>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SigMeterReading>", 22);
                     }
                     break;
                 case 2:
@@ -16450,7 +12858,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
@@ -16462,16 +12869,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 168;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 3:
@@ -16484,7 +12882,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TMeter", 11);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &MeterInfoType->TMeter);
                     if (error == 0)
@@ -16496,16 +12893,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TMeter>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TMeter>", 13);
                     }
                     break;
                 case 4:
@@ -16536,58 +12924,18 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SigMeterReading", 20);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->SigMeterReading.bytesLen, &MeterInfoType->SigMeterReading.bytes[0], din_sigMeterReadingType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        MeterInfoType->SigMeterReading_isUsed = 1u;
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((MeterInfoType->SigMeterReading.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < MeterInfoType->SigMeterReading.bytesLen;)
-                                {
-                                    uint32_t a = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t b = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t c = i < MeterInfoType->SigMeterReading.bytesLen ? MeterInfoType->SigMeterReading.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[MeterInfoType->SigMeterReading.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, MeterInfoType->SigMeterReading.bytes, MeterInfoType->SigMeterReading.bytesLen);
+                        MeterInfoType->SigMeterReading_isUsed = 1u;
                         grammar_id = 167;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SigMeterReading>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SigMeterReading>", 22);
                     }
                     break;
                 case 1:
@@ -16600,7 +12948,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
@@ -16612,16 +12959,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 168;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 2:
@@ -16634,7 +12972,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TMeter", 11);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &MeterInfoType->TMeter);
                     if (error == 0)
@@ -16646,16 +12983,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TMeter>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TMeter>", 13);
                     }
                     break;
                 case 3:
@@ -16686,7 +13014,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:MeterStatus", 16);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
@@ -16698,16 +13025,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 168;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:MeterStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:MeterStatus>", 18);
                     }
                     break;
                 case 1:
@@ -16720,7 +13038,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TMeter", 11);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &MeterInfoType->TMeter);
                     if (error == 0)
@@ -16732,16 +13049,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TMeter>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TMeter>", 13);
                     }
                     break;
                 case 2:
@@ -16772,7 +13080,6 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:TMeter", 11);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &MeterInfoType->TMeter);
                     if (error == 0)
@@ -16784,16 +13091,7 @@ static int decode_din_MeterInfoType(exi_bitstream_t* stream, struct din_MeterInf
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:TMeter>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:TMeter>", 13);
                     }
                     break;
                 case 1:
@@ -16870,7 +13168,6 @@ static int decode_din_CableCheckReqType(exi_bitstream_t* stream, struct din_Cabl
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &CableCheckReqType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -16878,16 +13175,7 @@ static int decode_din_CableCheckReqType(exi_bitstream_t* stream, struct din_Cabl
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -16959,7 +13247,6 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17026,16 +13313,7 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -17061,7 +13339,6 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &CableCheckResType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -17069,16 +13346,7 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                         grammar_id = 172;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -17104,7 +13372,6 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17150,16 +13417,7 @@ static int decode_din_CableCheckResType(exi_bitstream_t* stream, struct din_Cabl
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -17260,57 +13518,17 @@ static int decode_din_CertificateInstallationReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OEMProvisioningCert", 24);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateInstallationReqType->OEMProvisioningCert.bytesLen, &CertificateInstallationReqType->OEMProvisioningCert.bytes[0], din_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateInstallationReqType->OEMProvisioningCert.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateInstallationReqType->OEMProvisioningCert.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateInstallationReqType->OEMProvisioningCert.bytes, CertificateInstallationReqType->OEMProvisioningCert.bytesLen);
                         grammar_id = 175;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OEMProvisioningCert>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:OEMProvisioningCert>", 26);
                     }
                     break;
                 default:
@@ -17336,57 +13554,17 @@ static int decode_din_CertificateInstallationReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:OEMProvisioningCert", 24);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateInstallationReqType->OEMProvisioningCert.bytesLen, &CertificateInstallationReqType->OEMProvisioningCert.bytes[0], din_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateInstallationReqType->OEMProvisioningCert.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateInstallationReqType->OEMProvisioningCert.bytesLen ? CertificateInstallationReqType->OEMProvisioningCert.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateInstallationReqType->OEMProvisioningCert.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateInstallationReqType->OEMProvisioningCert.bytes, CertificateInstallationReqType->OEMProvisioningCert.bytesLen);
                         grammar_id = 175;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:OEMProvisioningCert>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:OEMProvisioningCert>", 26);
                     }
                     break;
                 default:
@@ -17412,7 +13590,6 @@ static int decode_din_CertificateInstallationReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ListOfRootCertificateIDs", 29);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ListOfRootCertificateIDsType(stream, &CertificateInstallationReqType->ListOfRootCertificateIDs, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -17420,16 +13597,7 @@ static int decode_din_CertificateInstallationReqType(exi_bitstream_t* stream, st
                         grammar_id = 176;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ListOfRootCertificateIDs>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ListOfRootCertificateIDs>", 31);
                     }
                     break;
                 default:
@@ -17455,57 +13623,17 @@ static int decode_din_CertificateInstallationReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DHParams", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateInstallationReqType->DHParams.bytesLen, &CertificateInstallationReqType->DHParams.bytes[0], din_dHParamsType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateInstallationReqType->DHParams.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateInstallationReqType->DHParams.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateInstallationReqType->DHParams.bytesLen ? CertificateInstallationReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateInstallationReqType->DHParams.bytesLen ? CertificateInstallationReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateInstallationReqType->DHParams.bytesLen ? CertificateInstallationReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateInstallationReqType->DHParams.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateInstallationReqType->DHParams.bytes, CertificateInstallationReqType->DHParams.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DHParams>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DHParams>", 15);
                     }
                     break;
                 default:
@@ -17618,7 +13746,6 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17685,16 +13812,7 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -17720,7 +13838,6 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureCertChain", 31);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CertificateChainType(stream, &CertificateInstallationResType->ContractSignatureCertChain, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -17728,16 +13845,7 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                         grammar_id = 180;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureCertChain>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureCertChain>", 33);
                     }
                     break;
                 default:
@@ -17763,57 +13871,17 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureEncryptedPrivateKey", 41);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen, &CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytes[0], din_privateKeyType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytes, CertificateInstallationResType->ContractSignatureEncryptedPrivateKey.bytesLen);
                         grammar_id = 181;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureEncryptedPrivateKey>", 43);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureEncryptedPrivateKey>", 43);
                     }
                     break;
                 default:
@@ -17839,57 +13907,17 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DHParams", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateInstallationResType->DHParams.bytesLen, &CertificateInstallationResType->DHParams.bytes[0], din_dHParamsType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateInstallationResType->DHParams.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateInstallationResType->DHParams.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateInstallationResType->DHParams.bytesLen ? CertificateInstallationResType->DHParams.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateInstallationResType->DHParams.bytesLen ? CertificateInstallationResType->DHParams.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateInstallationResType->DHParams.bytesLen ? CertificateInstallationResType->DHParams.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateInstallationResType->DHParams.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateInstallationResType->DHParams.bytes, CertificateInstallationResType->DHParams.bytesLen);
                         grammar_id = 182;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DHParams>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DHParams>", 15);
                     }
                     break;
                 default:
@@ -17915,7 +13943,6 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractID", 15);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17969,16 +13996,7 @@ static int decode_din_CertificateInstallationResType(exi_bitstream_t* stream, st
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractID>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractID>", 17);
                     }
                     break;
                 default:
@@ -18079,7 +14097,6 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureCertChain", 31);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CertificateChainType(stream, &CertificateUpdateReqType->ContractSignatureCertChain, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -18087,16 +14104,7 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                         grammar_id = 185;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureCertChain>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureCertChain>", 33);
                     }
                     break;
                 default:
@@ -18122,7 +14130,6 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureCertChain", 31);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CertificateChainType(stream, &CertificateUpdateReqType->ContractSignatureCertChain, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -18130,16 +14137,7 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                         grammar_id = 185;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureCertChain>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureCertChain>", 33);
                     }
                     break;
                 default:
@@ -18165,7 +14163,6 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractID", 15);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18219,16 +14216,7 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractID>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractID>", 17);
                     }
                     break;
                 default:
@@ -18254,7 +14242,6 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ListOfRootCertificateIDs", 29);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ListOfRootCertificateIDsType(stream, &CertificateUpdateReqType->ListOfRootCertificateIDs, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -18262,16 +14249,7 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                         grammar_id = 187;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ListOfRootCertificateIDs>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ListOfRootCertificateIDs>", 31);
                     }
                     break;
                 default:
@@ -18297,57 +14275,17 @@ static int decode_din_CertificateUpdateReqType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DHParams", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateUpdateReqType->DHParams.bytesLen, &CertificateUpdateReqType->DHParams.bytes[0], din_dHParamsType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateUpdateReqType->DHParams.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateUpdateReqType->DHParams.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateUpdateReqType->DHParams.bytesLen ? CertificateUpdateReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateUpdateReqType->DHParams.bytesLen ? CertificateUpdateReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateUpdateReqType->DHParams.bytesLen ? CertificateUpdateReqType->DHParams.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateUpdateReqType->DHParams.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateUpdateReqType->DHParams.bytes, CertificateUpdateReqType->DHParams.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DHParams>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DHParams>", 15);
                     }
                     break;
                 default:
@@ -18460,7 +14398,6 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18527,16 +14464,7 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -18562,7 +14490,6 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureCertChain", 31);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CertificateChainType(stream, &CertificateUpdateResType->ContractSignatureCertChain, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -18570,16 +14497,7 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                         grammar_id = 191;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureCertChain>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureCertChain>", 33);
                     }
                     break;
                 default:
@@ -18605,57 +14523,17 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureEncryptedPrivateKey", 41);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen, &CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytes[0], din_privateKeyType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen ? CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytes, CertificateUpdateResType->ContractSignatureEncryptedPrivateKey.bytesLen);
                         grammar_id = 192;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureEncryptedPrivateKey>", 43);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureEncryptedPrivateKey>", 43);
                     }
                     break;
                 default:
@@ -18681,57 +14559,17 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DHParams", 13);
-                        (void)xml_tag_start;
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateUpdateResType->DHParams.bytesLen, &CertificateUpdateResType->DHParams.bytes[0], din_dHParamsType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit base64 encoded value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                            static const int mod_table[] = {0, 2, 1};
-                            size_t output_length = 4 * ((CertificateUpdateResType->DHParams.bytesLen + 2) / 3);
-                            unsigned char* encoded_data = (unsigned char*)malloc(output_length + 1);
-                            if (encoded_data != NULL)
-                            {
-                                size_t i, j;
-                                for (i = 0, j = 0; i < CertificateUpdateResType->DHParams.bytesLen;)
-                                {
-                                    uint32_t a = i < CertificateUpdateResType->DHParams.bytesLen ? CertificateUpdateResType->DHParams.bytes[i++] : 0;
-                                    uint32_t b = i < CertificateUpdateResType->DHParams.bytesLen ? CertificateUpdateResType->DHParams.bytes[i++] : 0;
-                                    uint32_t c = i < CertificateUpdateResType->DHParams.bytesLen ? CertificateUpdateResType->DHParams.bytes[i++] : 0;
-                                    uint32_t triple = (a << 16) + (b << 8) + c;
-                                    encoded_data[j++] = encoding_table[(triple >> 18) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 12) & 0x3F];
-                                    encoded_data[j++] = encoding_table[(triple >> 6) & 0x3F];
-                                    encoded_data[j++] = encoding_table[triple & 0x3F];
-                                }
-                                for (i = 0; i < (size_t)mod_table[CertificateUpdateResType->DHParams.bytesLen % 3]; i++)
-                                {
-                                    encoded_data[output_length - 1 - i] = '=';
-                                }
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, (char*)encoded_data, output_length);
-                                free(encoded_data);
-                            }
-                            else
-                            {
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, "(base64-alloc-failed)", 21);
-                            }
-                        }
+                        xml_write_base64(xmlOut, xmlOut_size, xmlOut_pos, CertificateUpdateResType->DHParams.bytes, CertificateUpdateResType->DHParams.bytesLen);
                         grammar_id = 193;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DHParams>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DHParams>", 15);
                     }
                     break;
                 default:
@@ -18757,7 +14595,6 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractID", 15);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18811,16 +14648,7 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractID>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractID>", 17);
                     }
                     break;
                 default:
@@ -18846,7 +14674,6 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RetryCounter", 17);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &CertificateUpdateResType->RetryCounter);
                     if (error == 0)
@@ -18857,16 +14684,7 @@ static int decode_din_CertificateUpdateResType(exi_bitstream_t* stream, struct d
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RetryCounter>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:RetryCounter>", 19);
                     }
                     break;
                 default:
@@ -18938,7 +14756,6 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVRequestedEnergyTransferType", 34);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18988,16 +14805,7 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVRequestedEnergyTransferType>", 36);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVRequestedEnergyTransferType>", 36);
                     }
                     break;
                 default:
@@ -19023,7 +14831,6 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AC_EVChargeParameter", 25);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVChargeParameterType(stream, &ChargeParameterDiscoveryReqType->AC_EVChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19032,16 +14839,7 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AC_EVChargeParameter>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:AC_EVChargeParameter>", 27);
                     }
                     break;
                 case 1:
@@ -19054,7 +14852,6 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVChargeParameter", 25);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVChargeParameterType(stream, &ChargeParameterDiscoveryReqType->DC_EVChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19063,16 +14860,7 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVChargeParameter>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVChargeParameter>", 27);
                     }
                     break;
                 case 2:
@@ -19085,7 +14873,6 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVChargeParameter", 22);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_EVChargeParameterType(stream, &ChargeParameterDiscoveryReqType->EVChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19094,16 +14881,7 @@ static int decode_din_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVChargeParameter>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVChargeParameter>", 24);
                     }
                     break;
                 default:
@@ -19175,7 +14953,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19242,16 +15019,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -19277,7 +15045,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19323,16 +15090,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -19358,7 +15116,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SAScheduleList", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SAScheduleListType(stream, &ChargeParameterDiscoveryResType->SAScheduleList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19367,16 +15124,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         grammar_id = 200;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SAScheduleList>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SAScheduleList>", 21);
                     }
                     break;
                 case 1:
@@ -19389,7 +15137,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:SASchedules", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SASchedulesType(stream, &ChargeParameterDiscoveryResType->SASchedules, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19398,16 +15145,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         grammar_id = 200;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:SASchedules>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:SASchedules>", 18);
                     }
                     break;
                 default:
@@ -19433,7 +15171,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AC_EVSEChargeParameter", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVSEChargeParameterType(stream, &ChargeParameterDiscoveryResType->AC_EVSEChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19442,16 +15179,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AC_EVSEChargeParameter>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:AC_EVSEChargeParameter>", 29);
                     }
                     break;
                 case 1:
@@ -19464,7 +15192,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVSEChargeParameter", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEChargeParameterType(stream, &ChargeParameterDiscoveryResType->DC_EVSEChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19473,16 +15200,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVSEChargeParameter>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVSEChargeParameter>", 29);
                     }
                     break;
                 case 2:
@@ -19495,7 +15213,6 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEChargeParameter", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_EVSEChargeParameterType(stream, &ChargeParameterDiscoveryResType->EVSEChargeParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19504,16 +15221,7 @@ static int decode_din_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, s
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEChargeParameter>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEChargeParameter>", 26);
                     }
                     break;
                 default:
@@ -19604,7 +15312,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19671,16 +15378,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -19706,35 +15404,17 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEID", 11);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &ChargingStatusResType->EVSEID.bytesLen, &ChargingStatusResType->EVSEID.bytes[0], din_evseIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < ChargingStatusResType->EVSEID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", ChargingStatusResType->EVSEID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, ChargingStatusResType->EVSEID.bytes, ChargingStatusResType->EVSEID.bytesLen);
                         grammar_id = 203;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEID>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEID>", 13);
                     }
                     break;
                 default:
@@ -19760,7 +15440,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SAScheduleTupleID", 22);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &ChargingStatusResType->SAScheduleTupleID);
                     if (error == 0)
@@ -19771,16 +15450,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 204;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SAScheduleTupleID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SAScheduleTupleID>", 24);
                     }
                     break;
                 default:
@@ -19806,7 +15476,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaxCurrent", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &ChargingStatusResType->EVSEMaxCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19815,16 +15484,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 205;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaxCurrent>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaxCurrent>", 21);
                     }
                     break;
                 case 1:
@@ -19837,7 +15497,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeterInfo", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_MeterInfoType(stream, &ChargingStatusResType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19846,16 +15505,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 206;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeterInfo>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeterInfo>", 16);
                     }
                     break;
                 case 2:
@@ -19868,7 +15518,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ReceiptRequired", 20);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19910,16 +15559,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ReceiptRequired>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ReceiptRequired>", 22);
                     }
                     break;
                 default:
@@ -19945,7 +15585,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeterInfo", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_MeterInfoType(stream, &ChargingStatusResType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -19954,16 +15593,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 206;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeterInfo>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeterInfo>", 16);
                     }
                     break;
                 case 1:
@@ -19976,7 +15606,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ReceiptRequired", 20);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20018,16 +15647,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ReceiptRequired>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ReceiptRequired>", 22);
                     }
                     break;
                 default:
@@ -20053,7 +15673,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ReceiptRequired", 20);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20095,16 +15714,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ReceiptRequired>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ReceiptRequired>", 22);
                     }
                     break;
                 default:
@@ -20130,7 +15740,6 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVSEStatusType(stream, &ChargingStatusResType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20138,16 +15747,7 @@ static int decode_din_ChargingStatusResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:AC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -20248,7 +15848,6 @@ static int decode_din_ContractAuthenticationReqType(exi_bitstream_t* stream, str
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GenChallenge", 17);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20303,16 +15902,7 @@ static int decode_din_ContractAuthenticationReqType(exi_bitstream_t* stream, str
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GenChallenge>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:GenChallenge>", 19);
                     }
                     break;
                 case 2:
@@ -20343,7 +15933,6 @@ static int decode_din_ContractAuthenticationReqType(exi_bitstream_t* stream, str
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GenChallenge", 17);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20398,16 +15987,7 @@ static int decode_din_ContractAuthenticationReqType(exi_bitstream_t* stream, str
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GenChallenge>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:GenChallenge>", 19);
                     }
                     break;
                 case 1:
@@ -20484,7 +16064,6 @@ static int decode_din_ContractAuthenticationResType(exi_bitstream_t* stream, str
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20551,16 +16130,7 @@ static int decode_din_ContractAuthenticationResType(exi_bitstream_t* stream, str
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -20586,7 +16156,6 @@ static int decode_din_ContractAuthenticationResType(exi_bitstream_t* stream, str
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEProcessing", 19);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20632,16 +16201,7 @@ static int decode_din_ContractAuthenticationResType(exi_bitstream_t* stream, str
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEProcessing>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEProcessing>", 21);
                     }
                     break;
                 default:
@@ -20713,7 +16273,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &CurrentDemandReqType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20721,16 +16280,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 213;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -20756,7 +16306,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetCurrent", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVTargetCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20764,16 +16313,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 214;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetCurrent>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetCurrent>", 22);
                     }
                     break;
                 default:
@@ -20799,7 +16339,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumVoltageLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20808,16 +16347,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 215;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumVoltageLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumVoltageLimit>", 28);
                     }
                     break;
                 case 1:
@@ -20830,7 +16360,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumCurrentLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20839,16 +16368,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 216;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumCurrentLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumCurrentLimit>", 28);
                     }
                     break;
                 case 2:
@@ -20861,7 +16381,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumPowerLimit", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -20870,16 +16389,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 217;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumPowerLimit>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumPowerLimit>", 26);
                     }
                     break;
                 case 3:
@@ -20892,7 +16402,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20935,16 +16444,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BulkChargingComplete>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:BulkChargingComplete>", 27);
                     }
                     break;
                 case 4:
@@ -20957,7 +16457,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -20999,16 +16498,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -21034,7 +16524,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumCurrentLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21043,16 +16532,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 216;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumCurrentLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumCurrentLimit>", 28);
                     }
                     break;
                 case 1:
@@ -21065,7 +16545,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumPowerLimit", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21074,16 +16553,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 217;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumPowerLimit>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumPowerLimit>", 26);
                     }
                     break;
                 case 2:
@@ -21096,7 +16566,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21139,16 +16608,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BulkChargingComplete>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:BulkChargingComplete>", 27);
                     }
                     break;
                 case 3:
@@ -21161,7 +16621,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21203,16 +16662,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -21238,7 +16688,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVMaximumPowerLimit", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21247,16 +16696,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 217;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVMaximumPowerLimit>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVMaximumPowerLimit>", 26);
                     }
                     break;
                 case 1:
@@ -21269,7 +16709,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21312,16 +16751,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BulkChargingComplete>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:BulkChargingComplete>", 27);
                     }
                     break;
                 case 2:
@@ -21334,7 +16764,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21376,16 +16805,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -21411,7 +16831,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:BulkChargingComplete", 25);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21454,16 +16873,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:BulkChargingComplete>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:BulkChargingComplete>", 27);
                     }
                     break;
                 case 1:
@@ -21476,7 +16886,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21518,16 +16927,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -21553,7 +16953,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingComplete", 21);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21595,16 +16994,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingComplete>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingComplete>", 23);
                     }
                     break;
                 default:
@@ -21630,7 +17020,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RemainingTimeToFullSoC", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->RemainingTimeToFullSoC, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21639,16 +17028,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 220;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RemainingTimeToFullSoC>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:RemainingTimeToFullSoC>", 29);
                     }
                     break;
                 case 1:
@@ -21661,7 +17041,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RemainingTimeToBulkSoC", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->RemainingTimeToBulkSoC, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21670,16 +17049,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 221;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RemainingTimeToBulkSoC>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:RemainingTimeToBulkSoC>", 29);
                     }
                     break;
                 case 2:
@@ -21692,7 +17062,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetVoltage", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVTargetVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21700,16 +17069,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetVoltage>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetVoltage>", 22);
                     }
                     break;
                 default:
@@ -21735,7 +17095,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:RemainingTimeToBulkSoC", 27);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->RemainingTimeToBulkSoC, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21744,16 +17103,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 221;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:RemainingTimeToBulkSoC>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:RemainingTimeToBulkSoC>", 29);
                     }
                     break;
                 case 1:
@@ -21766,7 +17116,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetVoltage", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVTargetVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21774,16 +17123,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetVoltage>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetVoltage>", 22);
                     }
                     break;
                 default:
@@ -21809,7 +17149,6 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetVoltage", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandReqType->EVTargetVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -21817,16 +17156,7 @@ static int decode_din_CurrentDemandReqType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetVoltage>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetVoltage>", 22);
                     }
                     break;
                 default:
@@ -21898,7 +17228,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -21965,16 +17294,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -22000,7 +17320,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &CurrentDemandResType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22008,16 +17327,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 224;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -22043,7 +17353,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEPresentVoltage", 23);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEPresentVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22051,16 +17360,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 225;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEPresentVoltage>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEPresentVoltage>", 25);
                     }
                     break;
                 default:
@@ -22086,7 +17386,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEPresentCurrent", 23);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEPresentCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22094,16 +17393,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 226;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEPresentCurrent>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEPresentCurrent>", 25);
                     }
                     break;
                 default:
@@ -22129,7 +17419,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSECurrentLimitAchieved", 29);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -22171,16 +17460,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSECurrentLimitAchieved>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSECurrentLimitAchieved>", 31);
                     }
                     break;
                 default:
@@ -22206,7 +17486,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEVoltageLimitAchieved", 29);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -22248,16 +17527,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEVoltageLimitAchieved>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEVoltageLimitAchieved>", 31);
                     }
                     break;
                 default:
@@ -22283,7 +17553,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEPowerLimitAchieved", 27);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -22325,16 +17594,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEPowerLimitAchieved>", 29);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEPowerLimitAchieved>", 29);
                     }
                     break;
                 default:
@@ -22360,7 +17620,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumVoltageLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumVoltageLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22369,16 +17628,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 230;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumVoltageLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumVoltageLimit>", 30);
                     }
                     break;
                 case 1:
@@ -22391,7 +17641,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumCurrentLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22400,16 +17649,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 231;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumCurrentLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumCurrentLimit>", 30);
                     }
                     break;
                 case 2:
@@ -22422,7 +17662,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumPowerLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22431,16 +17670,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumPowerLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumPowerLimit>", 28);
                     }
                     break;
                 case 3:
@@ -22471,7 +17701,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumCurrentLimit", 28);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumCurrentLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22480,16 +17709,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 231;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumCurrentLimit>", 30);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumCurrentLimit>", 30);
                     }
                     break;
                 case 1:
@@ -22502,7 +17722,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumPowerLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22511,16 +17730,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumPowerLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumPowerLimit>", 28);
                     }
                     break;
                 case 2:
@@ -22551,7 +17761,6 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEMaximumPowerLimit", 26);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &CurrentDemandResType->EVSEMaximumPowerLimit, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22560,16 +17769,7 @@ static int decode_din_CurrentDemandResType(exi_bitstream_t* stream, struct din_C
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEMaximumPowerLimit>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEMaximumPowerLimit>", 28);
                     }
                     break;
                 case 1:
@@ -22675,35 +17875,17 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionID", 14);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MeteringReceiptReqType->SessionID.bytesLen, &MeteringReceiptReqType->SessionID.bytes[0], din_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < MeteringReceiptReqType->SessionID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", MeteringReceiptReqType->SessionID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, MeteringReceiptReqType->SessionID.bytes, MeteringReceiptReqType->SessionID.bytesLen);
                         grammar_id = 234;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionID>", 16);
                     }
                     break;
                 default:
@@ -22729,35 +17911,17 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionID", 14);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MeteringReceiptReqType->SessionID.bytesLen, &MeteringReceiptReqType->SessionID.bytes[0], din_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < MeteringReceiptReqType->SessionID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", MeteringReceiptReqType->SessionID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, MeteringReceiptReqType->SessionID.bytes, MeteringReceiptReqType->SessionID.bytesLen);
                         grammar_id = 234;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionID>", 16);
                     }
                     break;
                 default:
@@ -22783,7 +17947,6 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SAScheduleTupleID", 22);
-                        (void)xml_tag_start;
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeteringReceiptReqType->SAScheduleTupleID);
                     if (error == 0)
@@ -22795,16 +17958,7 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                         grammar_id = 235;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SAScheduleTupleID>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SAScheduleTupleID>", 24);
                     }
                     break;
                 case 1:
@@ -22817,7 +17971,6 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeterInfo", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_MeterInfoType(stream, &MeteringReceiptReqType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22825,16 +17978,7 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeterInfo>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeterInfo>", 16);
                     }
                     break;
                 default:
@@ -22860,7 +18004,6 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeterInfo", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_MeterInfoType(stream, &MeteringReceiptReqType->MeterInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -22868,16 +18011,7 @@ static int decode_din_MeteringReceiptReqType(exi_bitstream_t* stream, struct din
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeterInfo>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeterInfo>", 16);
                     }
                     break;
                 default:
@@ -22949,7 +18083,6 @@ static int decode_din_MeteringReceiptResType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23016,16 +18149,7 @@ static int decode_din_MeteringReceiptResType(exi_bitstream_t* stream, struct din
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -23051,7 +18175,6 @@ static int decode_din_MeteringReceiptResType(exi_bitstream_t* stream, struct din
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:AC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVSEStatusType(stream, &MeteringReceiptResType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23059,16 +18182,7 @@ static int decode_din_MeteringReceiptResType(exi_bitstream_t* stream, struct din
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:AC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:AC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -23140,7 +18254,6 @@ static int decode_din_PaymentDetailsReqType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractID", 15);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23194,16 +18307,7 @@ static int decode_din_PaymentDetailsReqType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractID>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractID>", 17);
                     }
                     break;
                 default:
@@ -23229,7 +18333,6 @@ static int decode_din_PaymentDetailsReqType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractSignatureCertChain", 31);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_CertificateChainType(stream, &PaymentDetailsReqType->ContractSignatureCertChain, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23237,16 +18340,7 @@ static int decode_din_PaymentDetailsReqType(exi_bitstream_t* stream, struct din_
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractSignatureCertChain>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractSignatureCertChain>", 33);
                     }
                     break;
                 default:
@@ -23318,7 +18412,6 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23385,16 +18478,7 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -23420,7 +18504,6 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:GenChallenge", 17);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23474,16 +18557,7 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:GenChallenge>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:GenChallenge>", 19);
                     }
                     break;
                 default:
@@ -23509,7 +18583,6 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DateTimeNow", 16);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &PaymentDetailsResType->DateTimeNow);
                     if (error == 0)
@@ -23520,16 +18593,7 @@ static int decode_din_PaymentDetailsResType(exi_bitstream_t* stream, struct din_
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DateTimeNow>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DateTimeNow>", 18);
                     }
                     break;
                 default:
@@ -23601,7 +18665,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ReadyToChargeState", 23);
-                        (void)xml_tag_start;
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23643,16 +18706,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ReadyToChargeState>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ReadyToChargeState>", 25);
                     }
                     break;
                 default:
@@ -23678,7 +18732,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingProfile", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ChargingProfileType(stream, &PowerDeliveryReqType->ChargingProfile, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23687,16 +18740,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 245;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingProfile>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingProfile>", 22);
                     }
                     break;
                 case 1:
@@ -23709,7 +18753,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVPowerDeliveryParameter", 32);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVPowerDeliveryParameterType(stream, &PowerDeliveryReqType->DC_EVPowerDeliveryParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23718,16 +18761,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVPowerDeliveryParameter>", 34);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVPowerDeliveryParameter>", 34);
                     }
                     break;
                 case 2:
@@ -23740,7 +18774,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerDeliveryParameter", 29);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_EVPowerDeliveryParameterType(stream, &PowerDeliveryReqType->EVPowerDeliveryParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23749,16 +18782,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerDeliveryParameter>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVPowerDeliveryParameter>", 31);
                     }
                     break;
                 case 3:
@@ -23789,7 +18813,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVPowerDeliveryParameter", 32);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVPowerDeliveryParameterType(stream, &PowerDeliveryReqType->DC_EVPowerDeliveryParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23798,16 +18821,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVPowerDeliveryParameter>", 34);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVPowerDeliveryParameter>", 34);
                     }
                     break;
                 case 1:
@@ -23820,7 +18834,6 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVPowerDeliveryParameter", 29);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_EVPowerDeliveryParameterType(stream, &PowerDeliveryReqType->EVPowerDeliveryParameter, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -23829,16 +18842,7 @@ static int decode_din_PowerDeliveryReqType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVPowerDeliveryParameter>", 31);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVPowerDeliveryParameter>", 31);
                     }
                     break;
                 case 2:
@@ -23915,7 +18919,6 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -23982,16 +18985,7 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -24017,7 +19011,6 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:AC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_AC_EVSEStatusType(stream, &PowerDeliveryResType->AC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24026,16 +19019,7 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:AC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:AC_EVSEStatus>", 20);
                     }
                     break;
                 case 1:
@@ -24048,7 +19032,6 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &PowerDeliveryResType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24057,16 +19040,7 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:DC_EVSEStatus>", 20);
                     }
                     break;
                 case 2:
@@ -24079,7 +19053,6 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:EVSEStatus", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_EVSEStatusType(stream, &PowerDeliveryResType->EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24088,16 +19061,7 @@ static int decode_din_PowerDeliveryResType(exi_bitstream_t* stream, struct din_P
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:EVSEStatus>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:EVSEStatus>", 17);
                     }
                     break;
                 default:
@@ -24169,7 +19133,6 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &PreChargeReqType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24177,16 +19140,7 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                         grammar_id = 249;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -24212,7 +19166,6 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetVoltage", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &PreChargeReqType->EVTargetVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24220,16 +19173,7 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                         grammar_id = 250;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetVoltage>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetVoltage>", 22);
                     }
                     break;
                 default:
@@ -24255,7 +19199,6 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVTargetCurrent", 20);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &PreChargeReqType->EVTargetCurrent, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24263,16 +19206,7 @@ static int decode_din_PreChargeReqType(exi_bitstream_t* stream, struct din_PreCh
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVTargetCurrent>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVTargetCurrent>", 22);
                     }
                     break;
                 default:
@@ -24344,7 +19278,6 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -24411,16 +19344,7 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -24446,7 +19370,6 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &PreChargeResType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24454,16 +19377,7 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                         grammar_id = 253;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -24489,7 +19403,6 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEPresentVoltage", 23);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &PreChargeResType->EVSEPresentVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24497,16 +19410,7 @@ static int decode_din_PreChargeResType(exi_bitstream_t* stream, struct din_PreCh
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEPresentVoltage>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEPresentVoltage>", 25);
                     }
                     break;
                 default:
@@ -24578,7 +19482,6 @@ static int decode_din_ServiceDetailReqType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
-                        (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceDetailReqType->ServiceID);
                     if (error == 0)
@@ -24589,16 +19492,7 @@ static int decode_din_ServiceDetailReqType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -24670,7 +19564,6 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -24737,16 +19630,7 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -24772,7 +19656,6 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceID", 14);
-                        (void)xml_tag_start;
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceDetailResType->ServiceID);
                     if (error == 0)
@@ -24783,16 +19666,7 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 257;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceID>", 16);
                     }
                     break;
                 default:
@@ -24818,7 +19692,6 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceParameterList", 25);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceParameterListType(stream, &ServiceDetailResType->ServiceParameterList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -24827,16 +19700,7 @@ static int decode_din_ServiceDetailResType(exi_bitstream_t* stream, struct din_S
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceParameterList>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceParameterList>", 27);
                     }
                     break;
                 case 1:
@@ -24913,7 +19777,6 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceScope", 17);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -24968,16 +19831,7 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceScope>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceScope>", 19);
                     }
                     break;
                 case 1:
@@ -24990,7 +19844,6 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceCategory", 20);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25039,16 +19892,7 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceCategory>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceCategory>", 22);
                     }
                     break;
                 case 2:
@@ -25079,7 +19923,6 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceCategory", 20);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25128,16 +19971,7 @@ static int decode_din_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct di
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceCategory>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceCategory>", 22);
                     }
                     break;
                 case 1:
@@ -25214,7 +20048,6 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25281,16 +20114,7 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -25316,7 +20140,6 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PaymentOptions", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PaymentOptionsType(stream, &ServiceDiscoveryResType->PaymentOptions, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -25324,16 +20147,7 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                         grammar_id = 262;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PaymentOptions>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PaymentOptions>", 21);
                     }
                     break;
                 default:
@@ -25359,7 +20173,6 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargeService", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceChargeType(stream, &ServiceDiscoveryResType->ChargeService, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -25367,16 +20180,7 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                         grammar_id = 263;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargeService>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargeService>", 20);
                     }
                     break;
                 default:
@@ -25402,7 +20206,6 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceList", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ServiceTagListType(stream, &ServiceDiscoveryResType->ServiceList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -25411,16 +20214,7 @@ static int decode_din_ServiceDiscoveryResType(exi_bitstream_t* stream, struct di
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceList>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceList>", 18);
                     }
                     break;
                 case 1:
@@ -25497,7 +20291,6 @@ static int decode_din_ServicePaymentSelectionReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedPaymentOption", 26);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25543,16 +20336,7 @@ static int decode_din_ServicePaymentSelectionReqType(exi_bitstream_t* stream, st
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedPaymentOption>", 28);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SelectedPaymentOption>", 28);
                     }
                     break;
                 default:
@@ -25578,7 +20362,6 @@ static int decode_din_ServicePaymentSelectionReqType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SelectedServiceList", 24);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SelectedServiceListType(stream, &ServicePaymentSelectionReqType->SelectedServiceList, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -25586,16 +20369,7 @@ static int decode_din_ServicePaymentSelectionReqType(exi_bitstream_t* stream, st
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SelectedServiceList>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SelectedServiceList>", 26);
                     }
                     break;
                 default:
@@ -25667,7 +20441,6 @@ static int decode_din_ServicePaymentSelectionResType(exi_bitstream_t* stream, st
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25734,16 +20507,7 @@ static int decode_din_ServicePaymentSelectionResType(exi_bitstream_t* stream, st
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -25815,35 +20579,17 @@ static int decode_din_SessionSetupReqType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVCCID", 11);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &SessionSetupReqType->EVCCID.bytesLen, &SessionSetupReqType->EVCCID.bytes[0], din_evccIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < SessionSetupReqType->EVCCID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", SessionSetupReqType->EVCCID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupReqType->EVCCID.bytes, SessionSetupReqType->EVCCID.bytesLen);
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVCCID>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVCCID>", 13);
                     }
                     break;
                 default:
@@ -25915,7 +20661,6 @@ static int decode_din_SessionSetupResType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -25982,16 +20727,7 @@ static int decode_din_SessionSetupResType(exi_bitstream_t* stream, struct din_Se
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -26017,35 +20753,17 @@ static int decode_din_SessionSetupResType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEID", 11);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &SessionSetupResType->EVSEID.bytesLen, &SessionSetupResType->EVSEID.bytes[0], din_evseIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < SessionSetupResType->EVSEID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", SessionSetupResType->EVSEID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, SessionSetupResType->EVSEID.bytes, SessionSetupResType->EVSEID.bytesLen);
                         grammar_id = 270;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEID>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEID>", 13);
                     }
                     break;
                 default:
@@ -26071,7 +20789,6 @@ static int decode_din_SessionSetupResType(exi_bitstream_t* stream, struct din_Se
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DateTimeNow", 16);
-                        (void)xml_tag_start;
                     // decode: long int
                     error = decode_exi_type_integer64(stream, &SessionSetupResType->DateTimeNow);
                     if (error == 0)
@@ -26083,16 +20800,7 @@ static int decode_din_SessionSetupResType(exi_bitstream_t* stream, struct din_Se
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DateTimeNow>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DateTimeNow>", 18);
                     }
                     break;
                 case 1:
@@ -26188,7 +20896,6 @@ static int decode_din_SessionStopResType(exi_bitstream_t* stream, struct din_Ses
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -26255,16 +20962,7 @@ static int decode_din_SessionStopResType(exi_bitstream_t* stream, struct din_Ses
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -26336,7 +21034,6 @@ static int decode_din_WeldingDetectionReqType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVStatus", 16);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVStatusType(stream, &WeldingDetectionReqType->DC_EVStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -26344,16 +21041,7 @@ static int decode_din_WeldingDetectionReqType(exi_bitstream_t* stream, struct di
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVStatus>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVStatus>", 18);
                     }
                     break;
                 default:
@@ -26425,7 +21113,6 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ResponseCode", 17);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -26492,16 +21179,7 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ResponseCode>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ResponseCode>", 19);
                     }
                     break;
                 default:
@@ -26527,7 +21205,6 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:DC_EVSEStatus", 18);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_DC_EVSEStatusType(stream, &WeldingDetectionResType->DC_EVSEStatus, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -26535,16 +21212,7 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                         grammar_id = 275;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:DC_EVSEStatus>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:DC_EVSEStatus>", 20);
                     }
                     break;
                 default:
@@ -26570,7 +21238,6 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:EVSEPresentVoltage", 23);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_PhysicalValueType(stream, &WeldingDetectionResType->EVSEPresentVoltage, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -26578,16 +21245,7 @@ static int decode_din_WeldingDetectionResType(exi_bitstream_t* stream, struct di
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:EVSEPresentVoltage>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:EVSEPresentVoltage>", 25);
                     }
                     break;
                 default:
@@ -26678,7 +21336,6 @@ static int decode_din_NotificationType(exi_bitstream_t* stream, struct din_Notif
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FaultCode", 14);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -26725,16 +21382,7 @@ static int decode_din_NotificationType(exi_bitstream_t* stream, struct din_Notif
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FaultCode>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FaultCode>", 16);
                     }
                     break;
                 default:
@@ -26760,7 +21408,6 @@ static int decode_din_NotificationType(exi_bitstream_t* stream, struct din_Notif
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns3:FaultMsg", 13);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -26815,16 +21462,7 @@ static int decode_din_NotificationType(exi_bitstream_t* stream, struct din_Notif
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns3:FaultMsg>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns3:FaultMsg>", 15);
                     }
                     break;
                 case 1:
@@ -26930,7 +21568,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignedInfo", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignedInfoType(stream, &SignatureType->SignedInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -26938,16 +21575,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 280;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignedInfo>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SignedInfo>", 17);
                     }
                     break;
                 default:
@@ -26973,7 +21601,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignedInfo", 15);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignedInfoType(stream, &SignatureType->SignedInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -26981,16 +21608,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 280;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignedInfo>", 17);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SignedInfo>", 17);
                     }
                     break;
                 default:
@@ -27016,7 +21634,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:SignatureValue", 19);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignatureValueType(stream, &SignatureType->SignatureValue, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27024,16 +21641,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 281;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:SignatureValue>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:SignatureValue>", 21);
                     }
                     break;
                 default:
@@ -27059,7 +21667,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:KeyInfo", 12);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_KeyInfoType(stream, &SignatureType->KeyInfo, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27068,16 +21675,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 283;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:KeyInfo>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:KeyInfo>", 14);
                     }
                     break;
                 case 1:
@@ -27090,7 +21688,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Object", 11);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ObjectType(stream, &SignatureType->Object, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27099,16 +21696,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 282;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Object>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Object>", 13);
                     }
                     break;
                 case 2:
@@ -27139,21 +21727,11 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Object", 11);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Object>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Object>", 13);
                     }
                     break;
                 case 1:
@@ -27184,7 +21762,6 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Object", 11);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_ObjectType(stream, &SignatureType->Object, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27193,16 +21770,7 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                         grammar_id = 284;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Object>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Object>", 13);
                     }
                     break;
                 case 1:
@@ -27233,21 +21801,11 @@ static int decode_din_SignatureType(exi_bitstream_t* stream, struct din_Signatur
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Object", 11);
-                        (void)xml_tag_start;
                     // decode: element
                     // This element should not occur a further time, its representation was reduced to a single element
                     error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Object>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Object>", 13);
                     }
                     break;
                 case 1:
@@ -27324,35 +21882,17 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns5:SessionID", 14);
-                        (void)xml_tag_start;
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], din_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
                         // XML: emit hex binary value
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1);
-                        {
-                            uint16_t _i;
-                            for (_i = 0; _i < MessageHeaderType->SessionID.bytesLen; _i++)
-                            {
-                                char _xv[3];
-                                snprintf(_xv, sizeof(_xv), "%02X", MessageHeaderType->SessionID.bytes[_i]);
-                                xml_write(xmlOut, xmlOut_size, xmlOut_pos, _xv, 2);
-                            }
-                        }
+                        xml_write_hex(xmlOut, xmlOut_size, xmlOut_pos, MessageHeaderType->SessionID.bytes, MessageHeaderType->SessionID.bytesLen);
                         grammar_id = 286;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns5:SessionID>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns5:SessionID>", 16);
                     }
                     break;
                 default:
@@ -27378,7 +21918,6 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns5:Notification", 17);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_NotificationType(stream, &MessageHeaderType->Notification, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27387,16 +21926,7 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                         grammar_id = 287;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns5:Notification>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns5:Notification>", 19);
                     }
                     break;
                 case 1:
@@ -27409,7 +21939,6 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Signature", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignatureType(stream, &MessageHeaderType->Signature, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27418,16 +21947,7 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Signature>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Signature>", 16);
                     }
                     break;
                 case 2:
@@ -27458,7 +21978,6 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns1:Signature", 14);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_SignatureType(stream, &MessageHeaderType->Signature, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27467,16 +21986,7 @@ static int decode_din_MessageHeaderType(exi_bitstream_t* stream, struct din_Mess
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns1:Signature>", 16);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns1:Signature>", 16);
                     }
                     break;
                 case 1:
@@ -27553,7 +22063,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:BodyElement", 16);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_BodyBaseType(stream, &BodyType->BodyElement, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27562,16 +22071,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:BodyElement>", 18);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns4:BodyElement>", 18);
                     }
                     break;
                 case 1:
@@ -27584,7 +22084,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CableCheckReq", 18);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CableCheckReqType(stream, &BodyType->CableCheckReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27593,16 +22092,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CableCheckReq>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CableCheckReq>", 20);
                     }
                     break;
                 case 2:
@@ -27615,7 +22105,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CableCheckRes", 18);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CableCheckResType(stream, &BodyType->CableCheckRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27624,16 +22113,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CableCheckRes>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CableCheckRes>", 20);
                     }
                     break;
                 case 3:
@@ -27646,7 +22126,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateInstallationReq", 31);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CertificateInstallationReqType(stream, &BodyType->CertificateInstallationReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27655,16 +22134,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateInstallationReq>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CertificateInstallationReq>", 33);
                     }
                     break;
                 case 4:
@@ -27677,7 +22147,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateInstallationRes", 31);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CertificateInstallationResType(stream, &BodyType->CertificateInstallationRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27686,16 +22155,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateInstallationRes>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CertificateInstallationRes>", 33);
                     }
                     break;
                 case 5:
@@ -27708,7 +22168,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateUpdateReq", 25);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CertificateUpdateReqType(stream, &BodyType->CertificateUpdateReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27717,16 +22176,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateUpdateReq>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CertificateUpdateReq>", 27);
                     }
                     break;
                 case 6:
@@ -27739,7 +22189,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CertificateUpdateRes", 25);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CertificateUpdateResType(stream, &BodyType->CertificateUpdateRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27748,16 +22197,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CertificateUpdateRes>", 27);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CertificateUpdateRes>", 27);
                     }
                     break;
                 case 7:
@@ -27770,7 +22210,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargeParameterDiscoveryReq", 32);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ChargeParameterDiscoveryReqType(stream, &BodyType->ChargeParameterDiscoveryReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27779,16 +22218,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargeParameterDiscoveryReq>", 34);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargeParameterDiscoveryReq>", 34);
                     }
                     break;
                 case 8:
@@ -27801,7 +22231,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargeParameterDiscoveryRes", 32);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ChargeParameterDiscoveryResType(stream, &BodyType->ChargeParameterDiscoveryRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27810,16 +22239,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargeParameterDiscoveryRes>", 34);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargeParameterDiscoveryRes>", 34);
                     }
                     break;
                 case 9:
@@ -27832,7 +22252,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingStatusReq", 22);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ChargingStatusReqType(stream, &BodyType->ChargingStatusReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27841,16 +22260,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingStatusReq>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingStatusReq>", 24);
                     }
                     break;
                 case 10:
@@ -27863,7 +22273,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ChargingStatusRes", 22);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ChargingStatusResType(stream, &BodyType->ChargingStatusRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27872,16 +22281,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ChargingStatusRes>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ChargingStatusRes>", 24);
                     }
                     break;
                 case 11:
@@ -27894,7 +22294,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractAuthenticationReq", 30);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ContractAuthenticationReqType(stream, &BodyType->ContractAuthenticationReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27903,16 +22302,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractAuthenticationReq>", 32);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractAuthenticationReq>", 32);
                     }
                     break;
                 case 12:
@@ -27925,7 +22315,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ContractAuthenticationRes", 30);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ContractAuthenticationResType(stream, &BodyType->ContractAuthenticationRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27934,16 +22323,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ContractAuthenticationRes>", 32);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ContractAuthenticationRes>", 32);
                     }
                     break;
                 case 13:
@@ -27956,7 +22336,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CurrentDemandReq", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CurrentDemandReqType(stream, &BodyType->CurrentDemandReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27965,16 +22344,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CurrentDemandReq>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CurrentDemandReq>", 23);
                     }
                     break;
                 case 14:
@@ -27987,7 +22357,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:CurrentDemandRes", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_CurrentDemandResType(stream, &BodyType->CurrentDemandRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -27996,16 +22365,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:CurrentDemandRes>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:CurrentDemandRes>", 23);
                     }
                     break;
                 case 15:
@@ -28018,7 +22378,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeteringReceiptReq", 23);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_MeteringReceiptReqType(stream, &BodyType->MeteringReceiptReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28027,16 +22386,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeteringReceiptReq>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeteringReceiptReq>", 25);
                     }
                     break;
                 case 16:
@@ -28049,7 +22399,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:MeteringReceiptRes", 23);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_MeteringReceiptResType(stream, &BodyType->MeteringReceiptRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28058,16 +22407,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:MeteringReceiptRes>", 25);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:MeteringReceiptRes>", 25);
                     }
                     break;
                 case 17:
@@ -28080,7 +22420,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PaymentDetailsReq", 22);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PaymentDetailsReqType(stream, &BodyType->PaymentDetailsReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28089,16 +22428,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PaymentDetailsReq>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PaymentDetailsReq>", 24);
                     }
                     break;
                 case 18:
@@ -28111,7 +22441,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PaymentDetailsRes", 22);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PaymentDetailsResType(stream, &BodyType->PaymentDetailsRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28120,16 +22449,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PaymentDetailsRes>", 24);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PaymentDetailsRes>", 24);
                     }
                     break;
                 case 19:
@@ -28142,7 +22462,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerDeliveryReq", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PowerDeliveryReqType(stream, &BodyType->PowerDeliveryReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28151,16 +22470,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerDeliveryReq>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PowerDeliveryReq>", 23);
                     }
                     break;
                 case 20:
@@ -28173,7 +22483,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PowerDeliveryRes", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PowerDeliveryResType(stream, &BodyType->PowerDeliveryRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28182,16 +22491,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PowerDeliveryRes>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PowerDeliveryRes>", 23);
                     }
                     break;
                 case 21:
@@ -28204,7 +22504,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PreChargeReq", 17);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PreChargeReqType(stream, &BodyType->PreChargeReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28213,16 +22512,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PreChargeReq>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PreChargeReq>", 19);
                     }
                     break;
                 case 22:
@@ -28235,7 +22525,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:PreChargeRes", 17);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_PreChargeResType(stream, &BodyType->PreChargeRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28244,16 +22533,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:PreChargeRes>", 19);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:PreChargeRes>", 19);
                     }
                     break;
                 case 23:
@@ -28266,7 +22546,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceDetailReq", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServiceDetailReqType(stream, &BodyType->ServiceDetailReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28275,16 +22554,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceDetailReq>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceDetailReq>", 23);
                     }
                     break;
                 case 24:
@@ -28297,7 +22567,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceDetailRes", 21);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServiceDetailResType(stream, &BodyType->ServiceDetailRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28306,16 +22575,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceDetailRes>", 23);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceDetailRes>", 23);
                     }
                     break;
                 case 25:
@@ -28328,7 +22588,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceDiscoveryReq", 24);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServiceDiscoveryReqType(stream, &BodyType->ServiceDiscoveryReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28337,16 +22596,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceDiscoveryReq>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceDiscoveryReq>", 26);
                     }
                     break;
                 case 26:
@@ -28359,7 +22609,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServiceDiscoveryRes", 24);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServiceDiscoveryResType(stream, &BodyType->ServiceDiscoveryRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28368,16 +22617,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServiceDiscoveryRes>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServiceDiscoveryRes>", 26);
                     }
                     break;
                 case 27:
@@ -28390,7 +22630,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServicePaymentSelectionReq", 31);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServicePaymentSelectionReqType(stream, &BodyType->ServicePaymentSelectionReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28399,16 +22638,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServicePaymentSelectionReq>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServicePaymentSelectionReq>", 33);
                     }
                     break;
                 case 28:
@@ -28421,7 +22651,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:ServicePaymentSelectionRes", 31);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_ServicePaymentSelectionResType(stream, &BodyType->ServicePaymentSelectionRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28430,16 +22659,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:ServicePaymentSelectionRes>", 33);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:ServicePaymentSelectionRes>", 33);
                     }
                     break;
                 case 29:
@@ -28452,7 +22672,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionSetupReq", 20);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_SessionSetupReqType(stream, &BodyType->SessionSetupReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28461,16 +22680,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionSetupReq>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionSetupReq>", 22);
                     }
                     break;
                 case 30:
@@ -28483,7 +22693,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionSetupRes", 20);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_SessionSetupResType(stream, &BodyType->SessionSetupRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28492,16 +22701,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionSetupRes>", 22);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionSetupRes>", 22);
                     }
                     break;
                 case 31:
@@ -28514,7 +22714,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionStopReq", 19);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_SessionStopType(stream, &BodyType->SessionStopReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28523,16 +22722,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionStopReq>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionStopReq>", 21);
                     }
                     break;
                 case 32:
@@ -28545,7 +22735,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:SessionStopRes", 19);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_SessionStopResType(stream, &BodyType->SessionStopRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28554,16 +22743,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:SessionStopRes>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:SessionStopRes>", 21);
                     }
                     break;
                 case 33:
@@ -28576,7 +22756,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:WeldingDetectionReq", 24);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_WeldingDetectionReqType(stream, &BodyType->WeldingDetectionReq, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28585,16 +22764,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:WeldingDetectionReq>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:WeldingDetectionReq>", 26);
                     }
                     break;
                 case 34:
@@ -28607,7 +22777,6 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns2:WeldingDetectionRes", 24);
-                        (void)xml_tag_start;
                     // decode: namespace element
                     error = decode_din_WeldingDetectionResType(stream, &BodyType->WeldingDetectionRes, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28616,16 +22785,7 @@ static int decode_din_BodyType(exi_bitstream_t* stream, struct din_BodyType* Bod
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns2:WeldingDetectionRes>", 26);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns2:WeldingDetectionRes>", 26);
                     }
                     break;
 
@@ -28699,7 +22859,6 @@ static int decode_din_V2G_Message(exi_bitstream_t* stream, struct din_V2G_Messag
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Header", 11);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_MessageHeaderType(stream, &V2G_Message->Header, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28707,16 +22866,7 @@ static int decode_din_V2G_Message(exi_bitstream_t* stream, struct din_V2G_Messag
                         grammar_id = 290;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Header>", 13);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns4:Header>", 13);
                     }
                     break;
                 default:
@@ -28742,7 +22892,6 @@ static int decode_din_V2G_Message(exi_bitstream_t* stream, struct din_V2G_Messag
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ns4:Body", 9);
-                        (void)xml_tag_start;
                     // decode: element
                     error = decode_din_BodyType(stream, &V2G_Message->Body, xmlOut, xmlOut_size, xmlOut_pos);
                     if (error == 0)
@@ -28750,16 +22899,7 @@ static int decode_din_V2G_Message(exi_bitstream_t* stream, struct din_V2G_Messag
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ns4:Body>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ns4:Body>", 11);
                     }
                     break;
                 default:
@@ -28807,6 +22947,7 @@ int decode_din_exiDocument(exi_bitstream_t* stream, struct din_exiDocument* exiD
     int error = exi_header_read_and_check(stream);
 
     size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
+    size_t xml_tag_start = 0;
 
     if (error == EXI_ERROR__NO_ERROR)
     {
@@ -28822,11 +22963,14 @@ int decode_din_exiDocument(exi_bitstream_t* stream, struct din_exiDocument* exiD
             {
             case 0:
             case 77:
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns4:V2G_Message xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:din:70121:2012:MsgBody\" xmlns:ns3=\"urn:din:70121:2012:MsgDataTypes\" xmlns:ns4=\"urn:din:70121:2012:MsgDef\" xmlns:ns5=\"urn:din:70121:2012:MsgHeader\">", 226);
+                // XML: open tag with xmlns declarations, left unclosed so the decoder can add attributes
+                xml_tag_start = xmlOut_pos;
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns4:V2G_Message xmlns:ns1=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:ns2=\"urn:din:70121:2012:MsgBody\" xmlns:ns3=\"urn:din:70121:2012:MsgDataTypes\" xmlns:ns4=\"urn:din:70121:2012:MsgDef\" xmlns:ns5=\"urn:din:70121:2012:MsgHeader\"", 225);
                 error = decode_din_V2G_Message(stream, &exiDoc->V2G_Message, xmlOut, xmlOut_size, &xmlOut_pos);
+                // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns4:V2G_Message>", 18);
+                    xml_end_tag(xmlOut, xmlOut_size, &xmlOut_pos, xml_tag_start, "</ns4:V2G_Message>", 18);
                 }
                 break;
             default:

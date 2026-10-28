@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <inttypes.h>
 
 #include "exi_basetypes.h"
@@ -74,6 +73,67 @@ static inline void xml_write_escaped_text(char* xmlOut, size_t xmlOut_size, size
 static inline void xml_write_escaped_attr(char* xmlOut, size_t xmlOut_size, size_t* pos, const char* str, size_t len) {
     xml_write_escaped(xmlOut, xmlOut_size, pos, str, len, 1);
 }
+/* writes data as base64; skipped as a whole if it does not fit */
+static inline void xml_write_base64(char* xmlOut, size_t xmlOut_size, size_t* pos, const uint8_t* data, size_t len) {
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t i;
+    if (xmlOut == NULL || pos == NULL || *pos >= xmlOut_size) return;
+    if (4u * ((len + 2u) / 3u) > xmlOut_size - *pos - 1u) return;
+    for (i = 0u; i < len; i += 3u) {
+        uint32_t triple = ((uint32_t)data[i] << 16)
+            | (i + 1u < len ? (uint32_t)data[i + 1u] << 8 : 0u)
+            | (i + 2u < len ? (uint32_t)data[i + 2u] : 0u);
+        char quad[4];
+        quad[0] = table[(triple >> 18) & 0x3Fu];
+        quad[1] = table[(triple >> 12) & 0x3Fu];
+        quad[2] = i + 1u < len ? table[(triple >> 6) & 0x3Fu] : '=';
+        quad[3] = i + 2u < len ? table[triple & 0x3Fu] : '=';
+        xml_write(xmlOut, xmlOut_size, pos, quad, 4u);
+    }
+}
+/* closes a start tag left open for attributes, then writes the end tag */
+static inline void xml_end_tag(char* xmlOut, size_t xmlOut_size, size_t* pos, size_t tag_start, const char* end_tag, size_t len) {
+    while (tag_start < *pos && xmlOut[tag_start] != '>') tag_start++;
+    if (tag_start == *pos) xml_write(xmlOut, xmlOut_size, pos, ">", 1u);
+    xml_write(xmlOut, xmlOut_size, pos, end_tag, len);
+}
+/* writes an arbitrary-width EXI signed integer (-(magnitude + 1) if negative) as decimal */
+static inline void xml_write_signed(char* xmlOut, size_t xmlOut_size, size_t* pos, const exi_signed_t* value) {
+    uint8_t num[EXI_BASETYPES_MAX_OCTETS_SUPPORTED + 1u];
+    char digits[3u * (EXI_BASETYPES_MAX_OCTETS_SUPPORTED + 1u) + 2u];
+    size_t len = value->data.octets_count;
+    size_t first = 0u;
+    size_t n = sizeof(digits);
+    size_t i;
+    if (len > EXI_BASETYPES_MAX_OCTETS_SUPPORTED) return;
+    num[0] = 0u;
+    if (len > 0u) memcpy(&num[1], value->data.octets, len);
+    len++;
+    if (value->is_negative) {
+        for (i = len; i-- > 0u && ++num[i] == 0u;) {}
+    }
+    do {
+        unsigned int rest = 0u;
+        while (first < len && num[first] == 0u) first++;
+        for (i = first; i < len; i++) {
+            unsigned int cur = (rest << 8) | num[i];
+            num[i] = (uint8_t)(cur / 10u);
+            rest = cur % 10u;
+        }
+        digits[--n] = (char)('0' + rest);
+        while (first < len && num[first] == 0u) first++;
+    } while (first < len);
+    if (value->is_negative) digits[--n] = '-';
+    xml_write(xmlOut, xmlOut_size, pos, &digits[n], sizeof(digits) - n);
+}
+static inline void xml_write_hex(char* xmlOut, size_t xmlOut_size, size_t* pos, const uint8_t* data, size_t len) {
+    static const char digits[] = "0123456789ABCDEF";
+    size_t i;
+    for (i = 0u; i < len; i++) {
+        char pair[2] = { digits[data[i] >> 4], digits[data[i] & 0x0Fu] };
+        xml_write(xmlOut, xmlOut_size, pos, pair, 2u);
+    }
+}
 static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHand_AppProtocolType* AppProtocolType, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struct appHand_supportedAppProtocolReq* supportedAppProtocolReq, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
 static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struct appHand_supportedAppProtocolRes* supportedAppProtocolRes, char* xmlOut, size_t xmlOut_size, size_t* xmlOut_pos);
@@ -110,7 +170,6 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ProtocolNamespace", 18);
-                        (void)xml_tag_start;
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -164,16 +223,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ProtocolNamespace>", 20);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ProtocolNamespace>", 20);
                     }
                     break;
                 default:
@@ -199,7 +249,6 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<VersionNumberMajor", 19);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AppProtocolType->VersionNumberMajor);
                     if (error == 0)
@@ -210,16 +259,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                         grammar_id = 2;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</VersionNumberMajor>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</VersionNumberMajor>", 21);
                     }
                     break;
                 default:
@@ -245,7 +285,6 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<VersionNumberMinor", 19);
-                        (void)xml_tag_start;
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AppProtocolType->VersionNumberMinor);
                     if (error == 0)
@@ -256,16 +295,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                         grammar_id = 3;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</VersionNumberMinor>", 21);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</VersionNumberMinor>", 21);
                     }
                     break;
                 default:
@@ -291,7 +321,6 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<SchemaID", 9);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -333,16 +362,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</SchemaID>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</SchemaID>", 11);
                     }
                     break;
                 default:
@@ -368,7 +388,6 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<Priority", 9);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -411,16 +430,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</Priority>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</Priority>", 11);
                     }
                     break;
                 default:
@@ -492,7 +502,6 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<AppProtocol", 12);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (supportedAppProtocolReq->AppProtocol.arrayLen < appHand_AppProtocolType_5_ARRAY_SIZE)
                     {
@@ -505,16 +514,7 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                     }
                     grammar_id = 8;
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</AppProtocol>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</AppProtocol>", 14);
                     }
                     break;
                 default:
@@ -540,7 +540,6 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<AppProtocol", 12);
-                        (void)xml_tag_start;
                     // decode: element array
                     if (supportedAppProtocolReq->AppProtocol.arrayLen < appHand_AppProtocolType_5_ARRAY_SIZE)
                     {
@@ -561,16 +560,7 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                         grammar_id = 5;
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</AppProtocol>", 14);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</AppProtocol>", 14);
                     }
                     break;
                 case 1:
@@ -647,7 +637,6 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<ResponseCode", 13);
-                        (void)xml_tag_start;
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -694,16 +683,7 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</ResponseCode>", 15);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</ResponseCode>", 15);
                     }
                     break;
                 default:
@@ -729,7 +709,6 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                     {
                         size_t xml_tag_start = *xmlOut_pos;
                         xml_write(xmlOut, xmlOut_size, xmlOut_pos, "<SchemaID", 9);
-                        (void)xml_tag_start;
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -772,16 +751,7 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                         }
                     }
                         // XML: close tag
-                        {
-                            int xml_closed = 0;
-                            size_t i;
-                            for (i = xml_tag_start; i < *xmlOut_pos; i++)
-                            {
-                                if (xmlOut[i] == '>') { xml_closed = 1; break; }
-                            }
-                            if (!xml_closed) { xml_write(xmlOut, xmlOut_size, xmlOut_pos, ">", 1); }
-                        }
-                        xml_write(xmlOut, xmlOut_size, xmlOut_pos, "</SchemaID>", 11);
+                        xml_end_tag(xmlOut, xmlOut_size, xmlOut_pos, xml_tag_start, "</SchemaID>", 11);
                     }
                     break;
                 case 1:
@@ -833,6 +803,7 @@ int decode_appHand_exiDocument(exi_bitstream_t* stream, struct appHand_exiDocume
     int error = exi_header_read_and_check(stream);
 
     size_t xmlOut_pos = xml_init(xmlOut, xmlOut_size);
+    size_t xml_tag_start = 0;
 
     if (error == 0)
     {
@@ -847,25 +818,27 @@ int decode_appHand_exiDocument(exi_bitstream_t* stream, struct appHand_exiDocume
             switch (eventCode)
             {
             case 0:
-                // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:supportedAppProtocolReq xmlns:ns1=\"urn:iso:15118:2:2010:AppProtocol\">", 74);
+                // XML: open tag with xmlns declarations, left unclosed so the decoder can add attributes
+                xml_tag_start = xmlOut_pos;
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:supportedAppProtocolReq xmlns:ns1=\"urn:iso:15118:2:2010:AppProtocol\"", 73);
                 error = decode_appHand_supportedAppProtocolReq(stream, &exiDoc->supportedAppProtocolReq, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->supportedAppProtocolReq_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:supportedAppProtocolReq>", 30);
+                    xml_end_tag(xmlOut, xmlOut_size, &xmlOut_pos, xml_tag_start, "</ns1:supportedAppProtocolReq>", 30);
                 }
                 break;
             case 1:
-                // XML: open tag with xmlns declarations
-                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:supportedAppProtocolRes xmlns:ns1=\"urn:iso:15118:2:2010:AppProtocol\">", 74);
+                // XML: open tag with xmlns declarations, left unclosed so the decoder can add attributes
+                xml_tag_start = xmlOut_pos;
+                xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "<ns1:supportedAppProtocolRes xmlns:ns1=\"urn:iso:15118:2:2010:AppProtocol\"", 73);
                 error = decode_appHand_supportedAppProtocolRes(stream, &exiDoc->supportedAppProtocolRes, xmlOut, xmlOut_size, &xmlOut_pos);
                 exiDoc->supportedAppProtocolRes_isUsed = 1u;
                 // XML: close tag
                 if (error == 0)
                 {
-                    xml_write(xmlOut, xmlOut_size, &xmlOut_pos, "</ns1:supportedAppProtocolRes>", 30);
+                    xml_end_tag(xmlOut, xmlOut_size, &xmlOut_pos, xml_tag_start, "</ns1:supportedAppProtocolRes>", 30);
                 }
                 break;
             default:
